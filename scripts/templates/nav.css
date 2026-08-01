@@ -1,0 +1,18 @@
+
+  .nav-tabs{display:flex;gap:10px;margin-bottom:32px;flex-wrap:wrap;}
+  .nav-tab{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.04em;
+    background:var(--panel);
+    border:1px solid var(--line);
+    color:var(--muted);
+    padding:12px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .nav-tab:hover{color:var(--text);border-color:#3a4a5c;}
+  .nav-tab.active{background:var(--amber);color:#161006;border-color:var(--amber);font-weight:700;}
+  .page{display:none;}
+  .page.active{display:block;}

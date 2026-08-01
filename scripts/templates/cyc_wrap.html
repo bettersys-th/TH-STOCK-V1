@@ -1,0 +1,36 @@
+
+  <div class="eyebrow">SET Cycle Analyzer</div>
+  <h1>วิเคราะห์รอบวัฏจักรราคาหุ้น (Bull/Bear Cycle)</h1>
+  <p class="sub">หา cycle ขาขึ้น-ขาลงของหุ้น โดยนับเป็นรอบเมื่อราคาขึ้นหรือลงอย่างน้อย <b>20%</b> จากจุดสูงสุด/ต่ำสุดก่อนหน้า (ราคารายวัน ปรับ split แล้วสำหรับหุ้นที่มีข้อมูล)</p>
+
+  <div class="panel">
+    <div class="field">
+      <label for="ticker">สัญลักษณ์หุ้น (Ticker)</label>
+      <input list="tickerList" id="ticker" placeholder="เช่น PTT, CPALL, AOT" autocomplete="off">
+      <datalist id="tickerList"></datalist>
+      <div class="ticker-info" id="tickerInfo"></div>
+      <div class="badge" id="adjBadge"></div>
+    </div>
+    <button class="btn" id="analyzeBtn">วิเคราะห์</button>
+  </div>
+
+  <div class="panel result" id="resultPanel">
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="chart-wrap">
+      <svg id="waveChart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ทิศทาง</th><th>จาก</th><th>ถึง</th><th>ระยะเวลา (วัน)</th><th>% เปลี่ยนแปลง</th></tr>
+        </thead>
+        <tbody id="cycleTable"></tbody>
+      </table>
+    </div>
+    <div class="disclaimer">
+      <b>วิธีอ่าน:</b> "ขาขึ้น" = จากจุดต่ำสุด (trough) ไปจุดสูงสุด (peak) ถัดไป, "ขาลง" = จากจุดสูงสุดไปจุดต่ำสุดถัดไป จำนวนวันนับแบบปฏิทิน (ไม่ใช่วันทำการซื้อขาย)<br><br>
+      ใช้ราคารายวัน (close) ตั้งแต่ปีที่มีข้อมูล — หุ้นที่ไม่มี badge ยืนยัน split จะใช้ราคาดิบ อาจมี cycle ปลอมจากการแตกพาร์ที่ไม่รู้ข้อมูล เพื่อการศึกษาเบื้องต้นเท่านั้น ไม่ใช่คำแนะนำการลงทุน
+    </div>
+  </div>
+
+  <footer>ข้อมูล: SET EOD Archive (ราคารายวัน) · zigzag threshold 20% · ปรับ split จาก Yahoo Finance (363 หุ้น)</footer>

@@ -1,0 +1,13 @@
+
+  .scan-info{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:680px;}
+  .scan-controls{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+  .scan-controls input{width:auto;flex:1;min-width:180px;}
+  .scan-controls select{
+    background:#0b1017;border:1px solid var(--line);color:var(--text);
+    font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 12px;border-radius:8px;
+  }
+  .scan-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .scan-row{cursor:pointer;transition:background .1s;}
+  .scan-row:hover{background:rgba(217,164,65,0.06);}
+  .scan-row td:first-child{color:var(--amber);font-weight:700;}
+  .scan-updated{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:20px;}

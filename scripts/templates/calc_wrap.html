@@ -1,0 +1,92 @@
+
+  <div class="eyebrow">SET Historical Return Calculator</div>
+  <h1>ถ้าซื้อหุ้นตัวนี้ไว้ตั้งแต่ปีนั้น วันนี้จะได้เท่าไหร่?</h1>
+  <p class="sub">คำนวณมูลค่าและผลตอบแทนจากราคาปิดสิ้นปีของตลาดหลักทรัพย์แห่งประเทศไทย (SET) ย้อนหลังถึงปี 1975</p>
+
+  <div class="panel">
+    <div class="field">
+      <label for="ticker">สัญลักษณ์หุ้น (Ticker)</label>
+      <input list="tickerList" id="ticker" placeholder="เช่น PTT, CPALL, AOT, ADVANC" autocomplete="off">
+      <datalist id="tickerList"></datalist>
+      <div class="ticker-info" id="tickerInfo"></div>
+      <div class="split-badge" id="splitBadge"></div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="buyYear">ปีที่ซื้อ</label>
+        <select id="buyYear"></select>
+      </div>
+      <div class="field">
+        <label for="sellYear">ปีที่ต้องการดูมูลค่า</label>
+        <select id="sellYear"></select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="shares">จำนวนหุ้น</label>
+      <input type="number" id="shares" value="100" min="1" step="1">
+    </div>
+
+    <div class="field checkbox-field">
+      <label class="checkbox-label">
+        <input type="checkbox" id="reinvestToggle">
+        <span>นำเงินปันผลไปซื้อหุ้นเพิ่มอัตโนมัติ (Reinvest) — ถ้าไม่ติ๊ก จะคิดปันผลเป็นเงินสดสะสมเฉยๆ</span>
+      </label>
+    </div>
+
+    <button class="btn" id="calcBtn">คำนวณผลตอบแทน</button>
+  </div>
+
+  <div class="panel result" id="resultPanel">
+    <div class="hero-stat">
+      <div class="hero-label">มูลค่าพอร์ตรวม (ราคา + ปันผล)</div>
+      <div class="hero-value" id="finalValue">-- <span>บาท</span></div>
+      <div class="hero-note" id="heroNote"></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-label">ผลตอบแทนรวม (ราคา+ปันผล)</div>
+        <div class="stat-value" id="totalReturnDiv">--</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">ผลตอบแทนราคาอย่างเดียว</div>
+        <div class="stat-value" id="totalReturn">--</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">ระยะเวลาถือครอง</div>
+        <div class="stat-value" id="years">--</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-label">CAGR รวม (ราคา+ปันผล)</div>
+        <div class="stat-value" id="cagrDiv">--</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">CAGR ราคาอย่างเดียว</div>
+        <div class="stat-value" id="cagr">--</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">มูลค่าปันผลที่เพิ่มขึ้น</div>
+        <div class="stat-value pos" id="divContribution">--</div>
+      </div>
+    </div>
+    <div class="breakdown">
+      <div class="breakdown-row"><span class="k">ราคาปิด ณ ปีที่ซื้อ</span><span class="v" id="buyPrice">--</span></div>
+      <div class="breakdown-row"><span class="k">เงินลงทุนเริ่มต้น</span><span class="v" id="investAmt">--</span></div>
+      <div class="breakdown-row"><span class="k">ราคาปิด ณ ปีที่ดูมูลค่า</span><span class="v" id="sellPrice">--</span></div>
+      <div class="breakdown-row"><span class="k">จำนวนหุ้นเริ่มต้น</span><span class="v" id="shareCountInitial">--</span></div>
+      <div class="breakdown-row" id="shareCountAdjRow" style="display:none;"><span class="k">จำนวนหุ้นหลังปรับ split</span><span class="v" id="shareCountAdj">--</span></div>
+      <div class="breakdown-row" id="divCashRow" style="display:none;"><span class="k">เงินปันผลสะสม (ไม่ reinvest)</span><span class="v" id="divCash">--</span></div>
+      <div class="breakdown-row" id="reinvestSharesRow" style="display:none;"><span class="k">หุ้นเพิ่มจากการ reinvest ปันผล</span><span class="v" id="reinvestShares">--</span></div>
+      <div class="breakdown-row" id="capitalOnlyRow" style="display:none;"><span class="k">มูลค่าไม่รวมปันผล (capital gain ล้วนๆ)</span><span class="v" id="capitalOnlyVal">--</span></div>
+    </div>
+    <div class="disclaimer" id="disclaimerBox">
+      <b>เกี่ยวกับข้อมูล split:</b> ปรับจำนวนหุ้นอัตโนมัติสำหรับหุ้นที่มีข้อมูล split ยืนยันแล้ว (badge สีเขียวด้านบน) ถ้าหุ้นไม่มี badge แปลว่า<b>ไม่พบข้อมูล</b> ในฐานข้อมูล — อาจแปลว่าไม่เคยแตกพาร์จริงๆ หรือแหล่งข้อมูล (Yahoo Finance) ไม่มีข้อมูลย้อนหลังพอ<br><br>
+      <b>เกี่ยวกับปันผล:</b> โหมด reinvest ใช้ราคาปิด<b>สิ้นปี</b>เป็นราคาซื้อหุ้นเพิ่ม (ประมาณการ ไม่ใช่ราคาจริง ณ วันจ่ายปันผล) หุ้นที่ไม่มีข้อมูลปันผลจะคิดเป็น capital gain ล้วนๆ<br><br>
+      ข้อมูลทั้งหมดเพื่อการศึกษาเบื้องต้นเท่านั้น ไม่ใช่คำแนะนำการลงทุน โปรดตรวจสอบกับแหล่งข้อมูลทางการ (SETSMART) ก่อนตัดสินใจจริง
+    </div>
+  </div>
+
+  <footer>ข้อมูลราคา: SET EOD Archive (ราคาปิดสิ้นปี) 1975–2026 · ข้อมูล split &amp; ปันผล: Yahoo Finance (yfinance) ~763 หุ้น</footer>

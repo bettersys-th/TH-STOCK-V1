@@ -1,0 +1,32 @@
+
+  <div class="eyebrow">SET Downtrend Scanner</div>
+  <h1>หุ้นที่กำลังอยู่ในขาลงตอนนี้</h1>
+  <p class="scan-info">วัดจาก<b> ราคาสูงสุดนับตั้งแต่จุด peak/trough ที่ยืนยันล่าสุดของแต่ละหุ้น เทียบกับราคาล่าสุด</b> (ครอบคลุมทั้งกรณีที่จุดยืนยันล่าสุดเป็น peak หรือ trough) เฉพาะหุ้นที่มีการซื้อขายล่าสุดในช่วง 60 วันที่ผ่านมา เรียงจากลดลงมากสุดไปน้อยสุด — <b>คลิกแถวเพื่อดูรายละเอียด cycle ของหุ้นนั้น</b></p>
+  <div class="scan-updated" id="scanUpdated"></div>
+
+  <div class="panel">
+    <div class="scan-controls">
+      <input type="text" id="scanFilter" placeholder="ค้นหา ticker...">
+      <select id="scanThreshold">
+        <option value="0" selected>แสดงทั้งหมด (ลงทุกระดับ)</option>
+        <option value="-15">ลดลงอย่างน้อย 15%</option>
+        <option value="-20">ลดลงอย่างน้อย 20%</option>
+        <option value="-30">ลดลงอย่างน้อย 30%</option>
+      </select>
+    </div>
+    <div class="scan-count" id="scanCount"></div>
+    <div class="table-wrap" style="padding:0;">
+      <table>
+        <thead>
+          <tr><th>Ticker</th><th>วันที่ล่าสุดที่เป็นจุดสูงสุด</th><th>ราคาสูงสุดนั้น</th><th>ราคาล่าสุด</th><th>% จากจุดสูงสุด</th><th>จำนวนวัน</th></tr>
+        </thead>
+        <tbody id="scanTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="disclaimer" style="border-top:none;padding:0;">
+      <b>ข้อควรระวัง:</b> นี่คือการ<b>ระบุ pattern ราคาที่ผ่านมาแล้ว</b> ไม่ใช่การพยากรณ์ทิศทางในอนาคต หุ้นที่ "ลง" ต่อไปอาจจะลงต่อ หรือกลับตัวขึ้นก็ได้ ไม่ใช่คำแนะนำให้ซื้อ/ขาย ใช้เพื่อการศึกษาเบื้องต้นเท่านั้น
+    </div>
+  </div>

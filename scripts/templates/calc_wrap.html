@@ -82,6 +82,25 @@
       <div class="breakdown-row" id="reinvestSharesRow" style="display:none;"><span class="k">หุ้นเพิ่มจากการ reinvest ปันผล</span><span class="v" id="reinvestShares">--</span></div>
       <div class="breakdown-row" id="capitalOnlyRow" style="display:none;"><span class="k">มูลค่าไม่รวมปันผล (capital gain ล้วนๆ)</span><span class="v" id="capitalOnlyVal">--</span></div>
     </div>
+    <div class="div-table-section" id="divTableSection" style="display:none;">
+      <div class="div-table-title">ตารางปันผลรายครั้ง (ตรวจสอบกับข้อมูลจริงได้)</div>
+      <div class="table-wrap" style="padding:0;">
+        <table>
+          <thead>
+            <tr>
+              <th>วันที่ขึ้นเครื่องหมาย</th>
+              <th>บาท/หุ้น</th>
+              <th>จำนวนหุ้นตอนนั้น</th>
+              <th>เงินที่ได้รับ</th>
+              <th class="div-table-reinvest-col">ราคาอ้างอิงตอน reinvest</th>
+              <th class="div-table-reinvest-col">หุ้นที่ซื้อเพิ่ม</th>
+              <th>ปันผลสะสม</th>
+            </tr>
+          </thead>
+          <tbody id="divTableBody"></tbody>
+        </table>
+      </div>
+    </div>
     <div class="disclaimer" id="disclaimerBox">
       <b>เกี่ยวกับข้อมูล split:</b> ปรับจำนวนหุ้นอัตโนมัติสำหรับหุ้นที่มีข้อมูล split ยืนยันแล้ว (badge สีเขียวด้านบน) ถ้าหุ้นไม่มี badge แปลว่า<b>ไม่พบข้อมูล</b> ในฐานข้อมูล — อาจแปลว่าไม่เคยแตกพาร์จริงๆ หรือแหล่งข้อมูล (Yahoo Finance) ไม่มีข้อมูลย้อนหลังพอ<br><br>
       <b>เกี่ยวกับปันผล:</b> โหมด reinvest ใช้ราคาปิด<b>สิ้นปี</b>เป็นราคาซื้อหุ้นเพิ่ม (ประมาณการ ไม่ใช่ราคาจริง ณ วันจ่ายปันผล) หุ้นที่ไม่มีข้อมูลปันผลจะคิดเป็น capital gain ล้วนๆ<br><br>

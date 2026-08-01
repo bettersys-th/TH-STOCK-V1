@@ -44,6 +44,15 @@ ACTIVE_WINDOW_DAYS = 60      # ถือว่า "ยังเทรดอย�
 SLEEP_SECONDS = 1.0          # หน่วงระหว่าง ticker กัน Yahoo rate-limit
 DAILY_FETCH_LOOKBACK = "10d" # ดึงย้อนหลังกี่วันทุกครั้ง (กันวันหยุด/ข้อมูลตกหล่น)
 
+# --- นิยาม "ช่วงสะสม/ทยอยขาย" (ราคานิ่ง + volume เพิ่มขึ้นเรื่อยๆ ก่อนจุดกลับตัว) ---
+# ทดลองสแกนหน้าต่างเวลาหลายขนาดก่อนถึงจุด peak/trough แต่ละจุด เลือกขนาดที่ใหญ่ที่สุด
+# ที่ยัง (ก) ราคาไม่วิ่งเกิน QUIET_PRICE_RANGE_PCT ตลอดหน้าต่างนั้น และ (ข) volume เฉลี่ย
+# ครึ่งหลังของหน้าต่าง >= ครึ่งแรก x VOL_RISE_RATIO — เป็นการประมาณแบบ heuristic ไม่ใช่
+# สัญญาณที่พิสูจน์ทางสถิติ ปรับค่าได้ตามต้องการ
+ACCUM_WINDOW_SIZES = [10, 20, 30, 40, 60, 80, 100, 120, 150, 180]
+QUIET_PRICE_RANGE_PCT = 0.15   # ราคาสูงสุด-ต่ำสุดในหน้าต่างต้องไม่เกิน 15% ของราคาต่ำสุด
+VOL_RISE_RATIO = 1.05          # volume เฉลี่ยครึ่งหลัง ต้อง >= ครึ่งแรก x 1.05
+
 
 # -----------------------------------------------------------------------
 # 1) โหลด/บันทึก prices.json.gz
@@ -77,21 +86,26 @@ def update_prices(prices, tickers):
             hist = yf.Ticker(f"{t}.BK").history(period=DAILY_FETCH_LOOKBACK, interval="1d")
             if hist.empty:
                 continue
-            entry = prices.setdefault(t, {"d": [], "c": []})
+            entry = prices.setdefault(t, {"d": [], "c": [], "v": []})
+            entry.setdefault("v", [0] * len(entry["d"]))  # migrate เก่าไม่มี volume
             existing = set(entry["d"])
-            new_d, new_c = [], []
+            new_d, new_c, new_v = [], [], []
             for idx, row in hist.iterrows():
                 d_int = int(idx.strftime("%Y%m%d"))
                 if d_int in existing:
                     continue
                 new_d.append(d_int)
                 new_c.append(round(float(row["Close"]), 4))
+                new_v.append(int(row["Volume"]) if row["Volume"] == row["Volume"] else 0)  # NaN check
             if new_d:
-                combined = dict(zip(entry["d"], entry["c"]))
-                combined.update(dict(zip(new_d, new_c)))
-                all_dates = sorted(combined.keys())
+                combined_c = dict(zip(entry["d"], entry["c"]))
+                combined_v = dict(zip(entry["d"], entry["v"]))
+                combined_c.update(dict(zip(new_d, new_c)))
+                combined_v.update(dict(zip(new_d, new_v)))
+                all_dates = sorted(combined_c.keys())
                 entry["d"] = all_dates
-                entry["c"] = [combined[d] for d in all_dates]
+                entry["c"] = [combined_c[d] for d in all_dates]
+                entry["v"] = [combined_v.get(d, 0) for d in all_dates]
                 n_updated += 1
         except Exception as e:
             print(f"  [{i}/{len(tickers)}] {t}: fetch error ({e})")
@@ -125,30 +139,27 @@ def fetch_splits_dividends(tickers):
 # -----------------------------------------------------------------------
 # 3) คำนวณ derived data ทั้งหมด (เหมือนที่เคยทำแบบ manual มาก่อน)
 # -----------------------------------------------------------------------
-def group_splits_by_year(splits_raw):
-    from collections import defaultdict
-    out = defaultdict(list)
+def sort_splits(splits_raw):
+    """เก็บ split เป็น exact date ต่อครั้ง (ไม่ aggregate ตามปี) เพื่อให้คำนวณปันผลแม่นยำระดับวัน
+    (กรณีมี split มากกว่า 1 ครั้งในปีเดียวกัน หรือปันผลจ่ายก่อน/หลัง split ในปีเดียวกัน)"""
+    out = {}
     for t, evs in splits_raw.items():
-        by_year = defaultdict(lambda: {"ratio": 1.0, "notes": []})
-        for e in evs:
-            y = int(e["date"][:4])
-            by_year[y]["ratio"] *= e["ratio"]
-            by_year[y]["notes"].append(f"{e['ratio']:g}-for-1 ({e['date']})")
-        for y in sorted(by_year):
-            out[t].append({"year": y, "ratio": round(by_year[y]["ratio"], 4), "note": " + ".join(by_year[y]["notes"])})
-    return dict(out)
+        clean = [{"date": e["date"], "ratio": float(e["ratio"])} for e in evs if e.get("ratio") and e["ratio"] != 1.0]
+        clean.sort(key=lambda e: e["date"])
+        if clean:
+            out[t] = clean
+    return out
 
 
-def group_dividends_by_year(div_raw):
-    from collections import defaultdict
-    out = defaultdict(list)
+def sort_dividends(div_raw):
+    """เก็บปันผลแบบ exact ex-date ต่อครั้ง (ไม่ sum รายปี) เพื่อให้ตรวจสอบกับข้อมูลจริงได้"""
+    out = {}
     for t, evs in div_raw.items():
-        by_year = defaultdict(float)
-        for e in evs:
-            by_year[int(e["date"][:4])] += e["amount"]
-        for y in sorted(by_year):
-            out[t].append({"year": y, "amount": round(by_year[y], 4)})
-    return dict(out)
+        clean = [{"date": e["date"], "amount": round(e["amount"], 4)} for e in evs if e.get("amount")]
+        clean.sort(key=lambda e: e["date"])
+        if clean:
+            out[t] = clean
+    return out
 
 
 def split_adjust(dates, closes, split_events):
@@ -163,6 +174,27 @@ def split_adjust(dates, closes, split_events):
                 factor *= ratio
         out.append(c / factor)
     return out
+
+
+def accum_window(idx, closes, volumes):
+    """หาหน้าต่างเวลา (วัน) ที่ใหญ่ที่สุดก่อนถึง index idx ที่ราคานิ่ง+volume เพิ่มขึ้น
+    คืน 0 ถ้าไม่เจอแม้แต่หน้าต่างเล็กสุด"""
+    best = 0
+    for W in ACCUM_WINDOW_SIZES:
+        if idx - W < 0:
+            break
+        seg_p = closes[idx - W:idx]
+        seg_v = volumes[idx - W:idx]
+        lo, hi = min(seg_p), max(seg_p)
+        if lo <= 0:
+            continue
+        price_range_pct = (hi - lo) / lo
+        half = W // 2
+        v1 = sum(seg_v[:half]) / half if half else 0
+        v2 = sum(seg_v[half:]) / (W - half) if (W - half) else 0
+        if price_range_pct <= QUIET_PRICE_RANGE_PCT and v1 > 0 and v2 / v1 >= VOL_RISE_RATIO:
+            best = W
+    return best
 
 
 def zigzag(points, pct=0.20):
@@ -208,8 +240,8 @@ def ymd_to_iso(d):
     return f"{d[0:4]}-{d[4:6]}-{d[6:8]}"
 
 
-def build_derived(prices, splits_by_year_raw_dated, splits_by_year, tickers):
-    """คืน (yearend, cycles_compact, downlist)"""
+def build_derived(prices, splits_raw, tickers):
+    """คืน (yearend, cycles_compact, downlist) — splits_raw: {ticker: [{date, ratio}]} exact date"""
     yearend = {}
     cycles_compact = {}
     downlist = []
@@ -224,9 +256,10 @@ def build_derived(prices, splits_by_year_raw_dated, splits_by_year, tickers):
         if len(dates) < 5:
             continue
 
-        split_events = [(int(e["date"].replace("-", "")), e["ratio"]) for e in splits_by_year_raw_dated.get(t, [])]
+        split_events = [(int(e["date"].replace("-", "")), e["ratio"]) for e in splits_raw.get(t, [])]
         adj_closes = split_adjust(dates, closes, split_events)
         pts = list(zip(dates, adj_closes))
+        vols = prices[t].get("v") or [0] * len(dates)
 
         # --- year-end close (ราคาปิดวันซื้อขายสุดท้ายของแต่ละปี, ปรับ split แล้ว) ---
         by_year_last = {}
@@ -246,8 +279,10 @@ def build_derived(prices, splits_by_year_raw_dated, splits_by_year, tickers):
         pivots = zigzag(pts, pct=ZIGZAG_PCT)
         if len(pivots) < 2:
             continue
-        events = [[ymd_to_iso(pts[idx][0]), round(pts[idx][1], 3), 1 if typ == "peak" else 0] for idx, typ in pivots]
-        has_split = t in splits_by_year_raw_dated
+        events = [[ymd_to_iso(pts[idx][0]), round(pts[idx][1], 3), 1 if typ == "peak" else 0,
+                   accum_window(idx, adj_closes, vols)]
+                  for idx, typ in pivots]
+        has_split = t in splits_raw
         cycles_compact[t] = {"sa": 1 if has_split else 0, "e": events}
 
         # --- downlist: ราคาสูงสุดตั้งแต่จุดยืนยันล่าสุด เทียบราคาล่าสุด ---
@@ -290,14 +325,14 @@ def main():
 
     print("\n== STEP 2: refresh splits & dividends ==")
     splits_raw, div_raw = fetch_splits_dividends(tickers)
-    splits_by_year = group_splits_by_year(splits_raw)
-    dividends_by_year = group_dividends_by_year(div_raw)
-    json.dump(splits_by_year, open(os.path.join(DATA_DIR, "splits.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    json.dump(dividends_by_year, open(os.path.join(DATA_DIR, "dividends.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"splits: {len(splits_by_year)} tickers, dividends: {len(dividends_by_year)} tickers")
+    splits_sorted = sort_splits(splits_raw)
+    dividends_sorted = sort_dividends(div_raw)
+    json.dump(splits_sorted, open(os.path.join(DATA_DIR, "splits.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    json.dump(dividends_sorted, open(os.path.join(DATA_DIR, "dividends.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    print(f"splits: {len(splits_sorted)} tickers, dividends: {len(dividends_sorted)} tickers")
 
     print("\n== STEP 3: recompute year-end / cycles / downlist ==")
-    yearend, cycles_compact, downlist = build_derived(prices, splits_raw, splits_by_year, tickers)
+    yearend, cycles_compact, downlist = build_derived(prices, splits_sorted, tickers)
     json.dump({"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend},
               open(os.path.join(DATA_DIR, "stock_yearend.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     json.dump(cycles_compact, open(os.path.join(DATA_DIR, "cycles_compact.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

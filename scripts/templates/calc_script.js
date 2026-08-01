@@ -26,13 +26,30 @@ function fmtNum(n, dec=2){
 
 // Returns the cumulative share multiplier for splits strictly after buyYear
 // and up to and including sellYear (a year-end price already reflects any
-// split that happened earlier that same year).
+// split that happened earlier that same year). SPLITS[ticker] = [{date, ratio}].
 function splitMultiplier(ticker, buyYear, sellYear){
   const events = SPLITS[ticker];
   if(!events) return 1;
   let mult = 1;
   for(const ev of events){
-    if(ev.year > Number(buyYear) && ev.year <= Number(sellYear)){
+    const y = Number(ev.date.slice(0,4));
+    if(y > Number(buyYear) && y <= Number(sellYear)){
+      mult *= ev.ratio;
+    }
+  }
+  return mult;
+}
+
+// Same idea but date-precise (YYYY-MM-DD strings) — used for dividend share
+// counts, where getting the split boundary right down to the day matters
+// (a dividend paid a month before a same-year split must NOT get the
+// post-split share count).
+function splitMultiplierByDate(ticker, fromDate, toDate){
+  const events = SPLITS[ticker];
+  if(!events) return 1;
+  let mult = 1;
+  for(const ev of events){
+    if(ev.date > fromDate && ev.date <= toDate){
       mult *= ev.ratio;
     }
   }
@@ -40,54 +57,60 @@ function splitMultiplier(ticker, buyYear, sellYear){
 }
 
 // Sums dividends received between buyYear and sellYear (inclusive), scaling
-// the share count held at each dividend's year by any splits that already
-// happened between the purchase and that dividend's year. (No reinvestment —
-// dividends are just summed as cash.)
+// the share count held at each dividend's date by any splits that already
+// happened between the purchase and that date. (No reinvestment — dividends
+// are just summed as cash.)
 function totalDividends(ticker, buyYear, sellYear, initialShares){
-  const events = DIVIDENDS[ticker];
-  if(!events) return 0;
-  let total = 0;
-  for(const ev of events){
-    if(ev.year >= Number(buyYear) && ev.year <= Number(sellYear)){
-      const sharesAtTime = initialShares * splitMultiplier(ticker, buyYear, ev.year);
-      total += ev.amount * sharesAtTime;
-    }
-  }
-  return total;
+  return walkDividends(ticker, buyYear, sellYear, initialShares, false).cashPile;
 }
 
-// Walks splits + dividends in chronological order. Each dividend buys more
-// shares at that year's closing price (approximation — real purchases would
-// happen on the ex-dividend date, not year-end). Returns final share count
-// plus any "stray" cash that couldn't be reinvested because no price exists
-// for that year.
-function reinvestWalk(ticker, buyYear, sellYear, initialShares){
+// Walks splits + dividends in chronological order (exact ex-dividend dates).
+// reinvest=true: each dividend buys more shares at that year's closing price
+// (approximation — real purchases would happen on the ex-dividend date, not
+// year-end, since we only have annual price granularity). reinvest=false:
+// dividends just accumulate as cash. Always returns the per-event `rows` so
+// the UI can render a verifiable line-by-line table either way.
+function walkDividends(ticker, buyYear, sellYear, initialShares, reinvest){
   buyYear = Number(buyYear); sellYear = Number(sellYear);
+  const buyBound = buyYear + '-12-31';   // exclude split ที่เกิดในปีที่ซื้อเอง (ราคาปีนั้นสะท้อนแล้ว)
+  const sellBound = sellYear + '-12-31';
   let events = [];
   (SPLITS[ticker]||[]).forEach(ev => {
-    if(ev.year > buyYear && ev.year <= sellYear) events.push({year:ev.year, order:0, type:'split', ratio:ev.ratio});
+    if(ev.date > buyBound && ev.date <= sellBound) events.push({date: ev.date, order:0, type:'split', ratio:ev.ratio});
   });
   (DIVIDENDS[ticker]||[]).forEach(ev => {
-    if(ev.year >= buyYear && ev.year <= sellYear) events.push({year:ev.year, order:1, type:'div', amount:ev.amount});
+    const y = Number(ev.date.slice(0,4));
+    if(y >= buyYear && y <= sellYear) events.push({date: ev.date, order:1, type:'div', amount:ev.amount});
   });
-  events.sort((a,b) => a.year - b.year || a.order - b.order);
+  events.sort((a,b) => a.date.localeCompare(b.date) || a.order - b.order);
 
   let shares = initialShares;
-  let strayCash = 0;
+  let cashPile = 0;
+  const rows = [];
   for(const ev of events){
     if(ev.type === 'split'){
       shares *= ev.ratio;
-    } else {
-      const cash = ev.amount * shares;
-      const price = tickers[ticker][ev.year];
-      if(price && price > 0){
-        shares += cash / price;
-      } else {
-        strayCash += cash;
-      }
+      continue;
     }
+    const y = Number(ev.date.slice(0,4));
+    const sharesAtTime = shares;
+    const cashReceived = ev.amount * sharesAtTime;
+    let sharesBought = 0, refPrice = null, note = '';
+    if(reinvest){
+      refPrice = tickers[ticker][y];
+      if(refPrice && refPrice > 0){
+        sharesBought = cashReceived / refPrice;
+        shares += sharesBought;
+      } else {
+        cashPile += cashReceived;
+        note = 'ไม่มีราคาปีนี้ — เก็บเป็นเงินสดแทน';
+      }
+    } else {
+      cashPile += cashReceived;
+    }
+    rows.push({ date: ev.date, amount: ev.amount, sharesAtTime, cash: cashReceived, sharesBought, refPrice, note });
   }
-  return { shares, strayCash };
+  return { rows, finalShares: shares, cashPile };
 }
 
 function populateYears(){
@@ -112,7 +135,7 @@ function populateYears(){
     let parts = [];
     if(hasSplitData) parts.push('split ✓ (' + SPLITS[t].length + ' ครั้ง)');
     else parts.push('split: ไม่พบ (สันนิษฐานว่าไม่เคยแตกพาร์)');
-    if(hasDivData) parts.push('ปันผล ✓ (' + DIVIDENDS[t].length + ' ปีที่มีจ่าย)');
+    if(hasDivData) parts.push('ปันผล ✓ (' + DIVIDENDS[t].length + ' ครั้ง)');
     else parts.push('ปันผล: ไม่มีข้อมูล');
     splitBadge.textContent = '✓ ' + parts.join(' · ');
     splitBadge.className = 'split-badge adjusted';
@@ -162,15 +185,18 @@ calcBtn.addEventListener('click', () => {
   const cagr = yrs > 0 ? (Math.pow(capitalOnlyVal / investAmt, 1/yrs) - 1) * 100 : 0;
 
   // Combined (price + dividend) figures — mode depends on the reinvest checkbox
-  let combinedVal, extraSharesFromReinvest = 0, cashDivTotal = 0;
+  let combinedVal, extraSharesFromReinvest = 0, cashDivTotal = 0, divRows = [];
   const hasDiv = !!DIVIDENDS[t];
-  if(hasDiv && reinvest){
-    const { shares, strayCash } = reinvestWalk(t, buyYear, sellYear, initialShares);
-    extraSharesFromReinvest = shares - finalShares;
-    combinedVal = shares * sellPrice + strayCash;
-  } else if(hasDiv){
-    cashDivTotal = totalDividends(t, buyYear, sellYear, initialShares);
-    combinedVal = capitalOnlyVal + cashDivTotal;
+  if(hasDiv){
+    const walk = walkDividends(t, buyYear, sellYear, initialShares, reinvest);
+    divRows = walk.rows;
+    if(reinvest){
+      extraSharesFromReinvest = walk.finalShares - finalShares;
+      combinedVal = walk.finalShares * sellPrice + walk.cashPile;
+    } else {
+      cashDivTotal = walk.cashPile;
+      combinedVal = capitalOnlyVal + cashDivTotal;
+    }
   } else {
     combinedVal = capitalOnlyVal;
   }
@@ -236,6 +262,35 @@ calcBtn.addEventListener('click', () => {
     divCashRow.style.display = 'none';
     reinvestRow.style.display = 'none';
     capOnlyRow.style.display = 'none';
+  }
+
+  // --- ตารางปันผลรายครั้ง (ไว้ตรวจสอบกับข้อมูลจริง) ---
+  const divTableSection = document.getElementById('divTableSection');
+  const divTableBody = document.getElementById('divTableBody');
+  const divTableReinvestCols = document.querySelectorAll('.div-table-reinvest-col');
+  if(hasDiv && divRows.length){
+    divTableSection.style.display = 'block';
+    divTableReinvestCols.forEach(el => el.style.display = reinvest ? '' : 'none');
+    let running = 0;
+    divTableBody.innerHTML = divRows.map(r => {
+      running += r.cash;
+      const reinvestCells = reinvest ? `
+        <td class="div-table-reinvest-col">${r.refPrice ? fmtNum(r.refPrice,2) : '—'}</td>
+        <td class="div-table-reinvest-col">${r.sharesBought ? '+'+fmtNum(r.sharesBought,2) : (r.note || '—')}</td>
+      ` : '';
+      return `
+        <tr>
+          <td>${r.date}</td>
+          <td>${fmtNum(r.amount,4)} บ./หุ้น</td>
+          <td>${fmtNum(r.sharesAtTime,2)} หุ้น</td>
+          <td class="pos">+${fmtNum(r.cash,2)} บ.</td>
+          ${reinvestCells}
+          <td>${fmtNum(running,2)} บ.</td>
+        </tr>
+      `;
+    }).join('');
+  } else {
+    divTableSection.style.display = 'none';
   }
 
   resultPanel.classList.add('show');

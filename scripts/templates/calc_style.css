@@ -206,6 +206,10 @@
   }
   .stat-value.pos{color:var(--teal);}
   .stat-value.neg{color:var(--red);}
+  .div-table-section{padding:20px 0 4px;border-top:1px solid var(--line);margin-top:4px;}
+  .div-table-title{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);padding:0 24px 12px;}
+  td.pos{color:var(--teal);}
+  td.neg{color:var(--red);}
   .div-grid{background:rgba(63,184,166,0.35);}
   .div-grid .stat{background:linear-gradient(180deg, var(--panel2), var(--panel));}
 

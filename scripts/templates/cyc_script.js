@@ -47,13 +47,14 @@ function buildCycles(events){
   const cycles = [];
   for(let i=1;i<events.length;i++){
     const prev = events[i-1], cur = events[i];
-    const [pd,pp] = prev, [cd,cp] = cur;
+    const [pd,pp,,prevPreDays] = prev, [cd,cp] = cur;
     const days = Math.round((new Date(cd) - new Date(pd)) / 86400000);
     const pct = ((cp - pp) / pp) * 100;
     cycles.push({
       from: pd, to: cd, days,
       direction: cp > pp ? 'up' : 'down',
-      pct
+      pct,
+      preDays: prevPreDays || 0   // วันที่ราคานิ่ง+volume ขึ้น ก่อนเริ่ม cycle นี้ (0 = ไม่เจอ)
     });
   }
   return cycles;
@@ -143,6 +144,7 @@ function renderTable(cycles){
       <td>${c.to}</td>
       <td>${c.days}</td>
       <td class="dir-${c.direction}">${c.pct>=0?'+':''}${fmtNum(c.pct,2)}%</td>
+      <td>${c.preDays > 0 ? c.preDays + ' วัน' : '—'}</td>
     </tr>
   `).join('');
 }

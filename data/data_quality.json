@@ -1,0 +1,39 @@
+{
+  "mode": "offline_audit",
+  "generatedAt": "2026-08-02T00:09:58",
+  "status": "unverified",
+  "configuredTickers": 965,
+  "priceTickers": 965,
+  "latestDate": "2026-07-31",
+  "freshness": {
+    "current": 732,
+    "2to7Days": 10,
+    "8to60Days": 14,
+    "over60Days": 209
+  },
+  "malformedTickers": [],
+  "splitTickers": 363,
+  "splitEvents": 778,
+  "dividendTickers": 762,
+  "dividendEvents": 14438,
+  "crossCheck": {
+    "providers": [
+      {
+        "source": "SET SMART Marketplace",
+        "configured": false,
+        "comparisons": [],
+        "errors": []
+      },
+      {
+        "source": "Twelve Data (XBKK)",
+        "configured": false,
+        "comparisons": [],
+        "errors": []
+      }
+    ],
+    "comparisonCount": 0,
+    "mismatchCount": 0,
+    "errorCount": 0,
+    "mismatches": []
+  }
+}

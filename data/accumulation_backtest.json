@@ -1,0 +1,247 @@
+{
+  "method": "Point-in-time, current ticker universe, sampled every 20 trading days; price return excludes fees/dividends",
+  "startYear": 2016,
+  "generatedAt": "2026-08-01T23:53:50",
+  "results": {
+    "building_20d": {
+      "n": 7618,
+      "meanPct": -0.11,
+      "medianPct": -1.0,
+      "positivePct": 41.0,
+      "p10Pct": -11.27,
+      "p90Pct": 11.23
+    },
+    "building_60d": {
+      "n": 7618,
+      "meanPct": -1.16,
+      "medianPct": -3.0,
+      "positivePct": 38.2,
+      "p10Pct": -21.35,
+      "p90Pct": 19.72
+    },
+    "building_120d": {
+      "n": 7618,
+      "meanPct": -1.76,
+      "medianPct": -5.35,
+      "positivePct": 37.3,
+      "p10Pct": -30.33,
+      "p90Pct": 29.73
+    },
+    "confirmed_20d": {
+      "n": 3906,
+      "meanPct": 0.38,
+      "medianPct": -1.05,
+      "positivePct": 42.7,
+      "p10Pct": -12.23,
+      "p90Pct": 13.58
+    },
+    "confirmed_60d": {
+      "n": 3906,
+      "meanPct": -0.6,
+      "medianPct": -3.69,
+      "positivePct": 38.0,
+      "p10Pct": -22.73,
+      "p90Pct": 21.79
+    },
+    "confirmed_120d": {
+      "n": 3906,
+      "meanPct": -0.34,
+      "medianPct": -5.92,
+      "positivePct": 37.7,
+      "p10Pct": -32.32,
+      "p90Pct": 31.31
+    },
+    "illiquid_20d": {
+      "n": 37650,
+      "meanPct": 0.46,
+      "medianPct": -0.79,
+      "positivePct": 38.8,
+      "p10Pct": -10.84,
+      "p90Pct": 10.16
+    },
+    "illiquid_60d": {
+      "n": 37650,
+      "meanPct": 1.22,
+      "medianPct": -2.03,
+      "positivePct": 38.7,
+      "p10Pct": -20.45,
+      "p90Pct": 19.64
+    },
+    "illiquid_120d": {
+      "n": 37650,
+      "meanPct": 3.16,
+      "medianPct": -4.07,
+      "positivePct": 37.5,
+      "p10Pct": -29.65,
+      "p90Pct": 30.83
+    },
+    "invalidated_20d": {
+      "n": 1552,
+      "meanPct": -0.21,
+      "medianPct": -1.02,
+      "positivePct": 44.1,
+      "p10Pct": -15.38,
+      "p90Pct": 15.28
+    },
+    "invalidated_60d": {
+      "n": 1552,
+      "meanPct": -1.12,
+      "medianPct": -3.12,
+      "positivePct": 41.6,
+      "p10Pct": -26.67,
+      "p90Pct": 24.1
+    },
+    "invalidated_120d": {
+      "n": 1552,
+      "meanPct": -4.27,
+      "medianPct": -7.45,
+      "positivePct": 36.0,
+      "p10Pct": -35.69,
+      "p90Pct": 26.32
+    },
+    "neutral_20d": {
+      "n": 17872,
+      "meanPct": 0.7,
+      "medianPct": -0.55,
+      "positivePct": 44.2,
+      "p10Pct": -10.99,
+      "p90Pct": 12.0
+    },
+    "neutral_60d": {
+      "n": 17872,
+      "meanPct": 1.63,
+      "medianPct": -1.39,
+      "positivePct": 43.8,
+      "p10Pct": -18.81,
+      "p90Pct": 22.43
+    },
+    "neutral_120d": {
+      "n": 17872,
+      "meanPct": 2.54,
+      "medianPct": -2.56,
+      "positivePct": 42.9,
+      "p10Pct": -27.08,
+      "p90Pct": 33.7
+    },
+    "score50-59_20d": {
+      "n": 13578,
+      "meanPct": 0.42,
+      "medianPct": -0.87,
+      "positivePct": 40.9,
+      "p10Pct": -11.24,
+      "p90Pct": 12.24
+    },
+    "score50-59_60d": {
+      "n": 13578,
+      "meanPct": 0.63,
+      "medianPct": -2.15,
+      "positivePct": 40.3,
+      "p10Pct": -20.69,
+      "p90Pct": 21.55
+    },
+    "score50-59_120d": {
+      "n": 13578,
+      "meanPct": 1.7,
+      "medianPct": -4.11,
+      "positivePct": 39.4,
+      "p10Pct": -30.0,
+      "p90Pct": 33.55
+    },
+    "score60-69_20d": {
+      "n": 10768,
+      "meanPct": 0.54,
+      "medianPct": -0.98,
+      "positivePct": 41.9,
+      "p10Pct": -12.02,
+      "p90Pct": 13.71
+    },
+    "score60-69_60d": {
+      "n": 10768,
+      "meanPct": 0.78,
+      "medianPct": -2.8,
+      "positivePct": 40.1,
+      "p10Pct": -21.43,
+      "p90Pct": 24.21
+    },
+    "score60-69_120d": {
+      "n": 10768,
+      "meanPct": 2.57,
+      "medianPct": -4.17,
+      "positivePct": 40.6,
+      "p10Pct": -30.56,
+      "p90Pct": 38.46
+    },
+    "score70+_20d": {
+      "n": 5772,
+      "meanPct": 0.63,
+      "medianPct": -1.26,
+      "positivePct": 41.3,
+      "p10Pct": -12.35,
+      "p90Pct": 14.29
+    },
+    "score70+_60d": {
+      "n": 5772,
+      "meanPct": 0.11,
+      "medianPct": -4.03,
+      "positivePct": 37.2,
+      "p10Pct": -23.08,
+      "p90Pct": 23.73
+    },
+    "score70+_120d": {
+      "n": 5772,
+      "meanPct": 0.36,
+      "medianPct": -6.14,
+      "positivePct": 36.6,
+      "p10Pct": -33.05,
+      "p90Pct": 36.41
+    },
+    "score<50_20d": {
+      "n": 56597,
+      "meanPct": 0.02,
+      "medianPct": -0.81,
+      "positivePct": 40.2,
+      "p10Pct": -11.59,
+      "p90Pct": 10.29
+    },
+    "score<50_60d": {
+      "n": 56597,
+      "meanPct": 0.29,
+      "medianPct": -2.09,
+      "positivePct": 39.8,
+      "p10Pct": -20.87,
+      "p90Pct": 19.35
+    },
+    "score<50_120d": {
+      "n": 56597,
+      "meanPct": 0.62,
+      "medianPct": -4.55,
+      "positivePct": 37.5,
+      "p10Pct": -30.2,
+      "p90Pct": 28.03
+    },
+    "watch_20d": {
+      "n": 18117,
+      "meanPct": -0.77,
+      "medianPct": -1.38,
+      "positivePct": 39.9,
+      "p10Pct": -13.19,
+      "p90Pct": 11.7
+    },
+    "watch_60d": {
+      "n": 18117,
+      "meanPct": -1.55,
+      "medianPct": -3.4,
+      "positivePct": 38.6,
+      "p10Pct": -23.48,
+      "p90Pct": 20.37
+    },
+    "watch_120d": {
+      "n": 18117,
+      "meanPct": -3.03,
+      "medianPct": -7.07,
+      "positivePct": 35.2,
+      "p10Pct": -33.51,
+      "p90Pct": 28.05
+    }
+  }
+}

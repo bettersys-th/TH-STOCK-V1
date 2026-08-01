@@ -22,14 +22,22 @@ import gzip
 import json
 import os
 import sys
+import tempfile
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from accumulation import build_signals
+from market_validation import cross_check
 
 try:
     import yfinance as yf
 except ImportError:
     print("ต้องติดตั้ง yfinance ก่อน: pip install yfinance --upgrade")
     sys.exit(1)
+
+if hasattr(yf, "set_tz_cache_location"):
+    yf_cache = os.environ.get("YFINANCE_CACHE_DIR") or os.path.join(tempfile.gettempdir(), "th-stock-yfinance")
+    os.makedirs(yf_cache, exist_ok=True)
+    yf.set_tz_cache_location(yf_cache)
 
 # -----------------------------------------------------------------------
 # ค่าคงที่ / path
@@ -42,7 +50,10 @@ OUTPUT_HTML = os.path.join(os.path.dirname(__file__), "..", "index.html")
 ZIGZAG_PCT = 0.20            # นิยาม cycle: ขึ้น/ลงอย่างน้อย 20%
 ACTIVE_WINDOW_DAYS = 60      # ถือว่า "ยังเทรดอยู่" ถ้ามีข้อมูลใน 60 วันล่าสุด
 SLEEP_SECONDS = 1.0          # หน่วงระหว่าง ticker กัน Yahoo rate-limit
-DAILY_FETCH_LOOKBACK = "10d" # ดึงย้อนหลังกี่วันทุกครั้ง (กันวันหยุด/ข้อมูลตกหล่น)
+REPAIR_OVERLAP_DAYS = 30     # ดึงทับช่วงเดิมเพื่อรับ correction จากผู้ให้บริการ
+STALE_REPAIR_PERIOD = "1y"   # พยายามซ่อมหุ้นที่ข้อมูลเก่ากว่าช่วง active
+CROSS_CHECK_LIMIT = int(os.environ.get("CROSS_CHECK_LIMIT", "8"))  # จำกัด API credits
+MIN_ACTIVE_FETCH_SUCCESS = 0.80
 
 # --- นิยาม "ช่วงสะสม/ทยอยขาย" (ราคานิ่ง + volume เพิ่มขึ้นเรื่อยๆ ก่อนจุดกลับตัว) ---
 # ทดลองสแกนหน้าต่างเวลาหลายขนาดก่อนถึงจุด peak/trough แต่ละจุด เลือกขนาดที่ใหญ่ที่สุด
@@ -66,8 +77,10 @@ def load_prices():
 
 def save_prices(prices):
     raw = json.dumps(prices, separators=(",", ":"))
-    with gzip.open(PRICES_GZ, "wt", encoding="utf-8", compresslevel=9) as f:
+    tmp_path = PRICES_GZ + ".tmp"
+    with gzip.open(tmp_path, "wt", encoding="utf-8", compresslevel=9) as f:
         f.write(raw)
+    os.replace(tmp_path, PRICES_GZ)
     print(f"saved {PRICES_GZ} ({os.path.getsize(PRICES_GZ)/1e6:.1f} MB gzipped)")
 
 
@@ -76,49 +89,93 @@ def load_tickers():
         return [line.strip() for line in f if line.strip()]
 
 
+def read_json_file(name, default):
+    path = os.path.join(DATA_DIR, name)
+    if not os.path.exists(path):
+        return default
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_json_atomic(name, value, pretty=False):
+    path = os.path.join(DATA_DIR, name)
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(value, f, ensure_ascii=False, indent=2 if pretty else None,
+                  separators=None if pretty else (",", ":"))
+    os.replace(tmp_path, path)
+
+
 # -----------------------------------------------------------------------
 # 2) ดึงข้อมูลใหม่จาก Yahoo Finance แล้ว "ต่อ" ของเดิม
 # -----------------------------------------------------------------------
 def update_prices(prices, tickers):
     n_updated = 0
+    n_corrected = 0
+    successful, empty, errors = [], [], []
+    max_saved_date = max((x["d"][-1] for x in prices.values() if x.get("d")), default=None)
+    max_saved_dt = datetime.strptime(str(max_saved_date), "%Y%m%d").date() if max_saved_date else None
     for i, t in enumerate(tickers, 1):
         try:
-            hist = yf.Ticker(f"{t}.BK").history(period=DAILY_FETCH_LOOKBACK, interval="1d")
+            entry = prices.get(t)
+            kwargs = {"interval": "1d", "auto_adjust": False, "actions": False,
+                      "repair": True, "keepna": False, "timeout": 20}
+            if entry and entry.get("d") and max_saved_dt:
+                last_dt = datetime.strptime(str(entry["d"][-1]), "%Y%m%d").date()
+                if (max_saved_dt - last_dt).days <= ACTIVE_WINDOW_DAYS:
+                    kwargs["start"] = (last_dt - timedelta(days=REPAIR_OVERLAP_DAYS)).isoformat()
+                    kwargs["end"] = (date.today() + timedelta(days=1)).isoformat()
+                else:
+                    kwargs["period"] = STALE_REPAIR_PERIOD
+            else:
+                kwargs["period"] = STALE_REPAIR_PERIOD
+            hist = yf.Ticker(f"{t}.BK").history(**kwargs)
             if hist.empty:
+                empty.append(t)
                 continue
             entry = prices.setdefault(t, {"d": [], "c": [], "v": []})
             entry.setdefault("v", [0] * len(entry["d"]))  # migrate เก่าไม่มี volume
-            existing = set(entry["d"])
-            new_d, new_c, new_v = [], [], []
+            combined_c = dict(zip(entry["d"], entry["c"]))
+            combined_v = dict(zip(entry["d"], entry["v"]))
+            before_dates = set(entry["d"])
+            changed_existing = False
             for idx, row in hist.iterrows():
                 d_int = int(idx.strftime("%Y%m%d"))
-                if d_int in existing:
+                close = float(row["Close"])
+                volume = int(row["Volume"]) if row["Volume"] == row["Volume"] else 0
+                if not (close > 0) or volume <= 0:
                     continue
-                new_d.append(d_int)
-                new_c.append(round(float(row["Close"]), 4))
-                new_v.append(int(row["Volume"]) if row["Volume"] == row["Volume"] else 0)  # NaN check
-            if new_d:
-                combined_c = dict(zip(entry["d"], entry["c"]))
-                combined_v = dict(zip(entry["d"], entry["v"]))
-                combined_c.update(dict(zip(new_d, new_c)))
-                combined_v.update(dict(zip(new_d, new_v)))
+                rounded = round(close, 4)
+                if d_int in combined_c and (combined_c[d_int] != rounded or combined_v.get(d_int) != volume):
+                    changed_existing = True
+                combined_c[d_int] = rounded
+                combined_v[d_int] = volume
+            if combined_c:
                 all_dates = sorted(combined_c.keys())
                 entry["d"] = all_dates
                 entry["c"] = [combined_c[d] for d in all_dates]
                 entry["v"] = [combined_v.get(d, 0) for d in all_dates]
+            if set(entry["d"]) - before_dates:
                 n_updated += 1
+            if changed_existing:
+                n_corrected += 1
+            successful.append(t)
         except Exception as e:
             print(f"  [{i}/{len(tickers)}] {t}: fetch error ({e})")
+            errors.append({"ticker": t, "error": str(e)[:180]})
         if i % 50 == 0:
             print(f"  ...{i}/{len(tickers)} tickers checked")
         time.sleep(SLEEP_SECONDS)
-    print(f"prices: {n_updated} tickers got new daily bars")
-    return prices
+    print(f"prices: {n_updated} new bars | {n_corrected} corrected | {len(errors)} errors")
+    report = {"success": successful, "empty": empty, "errors": errors,
+              "newBarTickers": n_updated, "correctedTickers": n_corrected}
+    return prices, report
 
 
 def fetch_splits_dividends(tickers):
     """ดึง split + ปันผล ใหม่ทั้งหมดจาก Yahoo (ข้อมูลพวกนี้เบา ดึงใหม่ทุกครั้งง่ายกว่า diff)"""
     splits, dividends = {}, {}
+    successful, errors = [], []
     for i, t in enumerate(tickers, 1):
         try:
             yft = yf.Ticker(f"{t}.BK")
@@ -128,12 +185,14 @@ def fetch_splits_dividends(tickers):
                 splits[t] = [{"date": idx.strftime("%Y-%m-%d"), "ratio": float(v)} for idx, v in sp.items() if v and v != 1.0]
             if len(dv):
                 dividends[t] = [{"date": idx.strftime("%Y-%m-%d"), "amount": float(v)} for idx, v in dv.items()]
+            successful.append(t)
         except Exception as e:
             print(f"  [{i}/{len(tickers)}] {t}: splits/div fetch error ({e})")
+            errors.append({"ticker": t, "error": str(e)[:180]})
         if i % 50 == 0:
             print(f"  ...{i}/{len(tickers)} tickers checked (splits/div)")
         time.sleep(SLEEP_SECONDS)
-    return splits, dividends
+    return splits, dividends, {"success": successful, "errors": errors}
 
 
 # -----------------------------------------------------------------------
@@ -160,6 +219,63 @@ def sort_dividends(div_raw):
         if clean:
             out[t] = clean
     return out
+
+
+def merge_actions(existing, fetched, value_field):
+    """Merge by ticker/date so a temporary provider failure never erases history."""
+    merged = {}
+    for ticker in set(existing) | set(fetched):
+        by_date = {str(e["date"]): dict(e) for e in existing.get(ticker, []) if e.get("date")}
+        for event in fetched.get(ticker, []):
+            if event.get("date") and event.get(value_field) is not None:
+                by_date[str(event["date"])] = dict(event)
+        if by_date:
+            merged[ticker] = [by_date[d] for d in sorted(by_date)]
+    return merged
+
+
+def validate_store(prices, tickers, price_report, action_report):
+    """Return quality metrics and raise only when the active universe fetch collapses."""
+    configured = set(tickers)
+    present = configured & set(prices)
+    max_date = max((x["d"][-1] for x in prices.values() if x.get("d")), default=None)
+    active = set()
+    if max_date:
+        max_dt = datetime.strptime(str(max_date), "%Y%m%d")
+        for ticker in present:
+            raw = prices[ticker]
+            if not raw.get("d"):
+                continue
+            last_dt = datetime.strptime(str(raw["d"][-1]), "%Y%m%d")
+            if (max_dt - last_dt).days <= ACTIVE_WINDOW_DAYS:
+                active.add(ticker)
+    succeeded = set(price_report["success"])
+    action_succeeded = set(action_report["success"])
+    active_success_rate = len(active & succeeded) / len(active) if active else 0
+    active_action_rate = len(active & action_succeeded) / len(active) if active else 0
+    metrics = {
+        "configuredTickers": len(configured), "priceTickers": len(present),
+        "activeTickers": len(active), "latestDate": ymd_to_iso(max_date) if max_date else None,
+        "activeFetchSuccessPct": round(active_success_rate * 100, 1),
+        "activeActionFetchSuccessPct": round(active_action_rate * 100, 1),
+        "priceFetchErrors": len(price_report["errors"]),
+        "priceEmptyResponses": len(price_report["empty"]),
+        "actionFetchErrors": len(action_report["errors"]),
+    }
+    if active and active_success_rate < MIN_ACTIVE_FETCH_SUCCESS:
+        raise RuntimeError(f"quality gate: active Yahoo fetch success {active_success_rate:.1%} < {MIN_ACTIVE_FETCH_SUCCESS:.0%}")
+    if active and active_action_rate < MIN_ACTIVE_FETCH_SUCCESS:
+        raise RuntimeError(f"quality gate: active corporate-action fetch success {active_action_rate:.1%} < {MIN_ACTIVE_FETCH_SUCCESS:.0%}")
+    return metrics
+
+
+def select_cross_check_tickers(prices, tickers, limit=CROSS_CHECK_LIMIT):
+    ranked = []
+    for ticker in tickers:
+        raw = prices.get(ticker)
+        if raw and raw.get("c") and raw.get("v"):
+            ranked.append((float(raw["c"][-1]) * float(raw["v"][-1]), ticker))
+    return [ticker for _, ticker in sorted(ranked, reverse=True)[:limit]]
 
 
 def split_adjust(dates, closes, split_events):
@@ -320,24 +436,38 @@ def main():
 
     print("\n== STEP 1: update daily prices from Yahoo Finance ==")
     prices = load_prices()
-    prices = update_prices(prices, tickers)
-    save_prices(prices)
+    prices, price_report = update_prices(prices, tickers)
 
     print("\n== STEP 2: refresh splits & dividends ==")
-    splits_raw, div_raw = fetch_splits_dividends(tickers)
-    splits_sorted = sort_splits(splits_raw)
-    dividends_sorted = sort_dividends(div_raw)
-    json.dump(splits_sorted, open(os.path.join(DATA_DIR, "splits.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    json.dump(dividends_sorted, open(os.path.join(DATA_DIR, "dividends.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    existing_splits = read_json_file("splits.json", {})
+    existing_dividends = read_json_file("dividends.json", {})
+    splits_raw, div_raw, action_report = fetch_splits_dividends(tickers)
+    splits_sorted = merge_actions(existing_splits, sort_splits(splits_raw), "ratio")
+    dividends_sorted = merge_actions(existing_dividends, sort_dividends(div_raw), "amount")
+    quality = validate_store(prices, tickers, price_report, action_report)
+
+    print("\n== STEP 2B: independent source cross-check (optional) ==")
+    validation = cross_check(prices, select_cross_check_tickers(prices, tickers))
+    quality["crossCheck"] = validation
+    quality["generatedAt"] = datetime.now().isoformat(timespec="seconds")
+    quality["status"] = ("warning" if validation["mismatchCount"] or validation["errorCount"] else
+                         "ok" if validation["comparisonCount"] else "unverified")
+
+    # Persist only after the quality gate passes; all writes are atomic.
+    save_prices(prices)
+    write_json_atomic("splits.json", splits_sorted)
+    write_json_atomic("dividends.json", dividends_sorted)
+    write_json_atomic("data_quality.json", quality, pretty=True)
     print(f"splits: {len(splits_sorted)} tickers, dividends: {len(dividends_sorted)} tickers")
 
-    print("\n== STEP 3: recompute year-end / cycles / downlist ==")
+    print("\n== STEP 3: recompute year-end / cycles / scanner signals ==")
     yearend, cycles_compact, downlist = build_derived(prices, splits_sorted, tickers)
-    json.dump({"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend},
-              open(os.path.join(DATA_DIR, "stock_yearend.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    json.dump(cycles_compact, open(os.path.join(DATA_DIR, "cycles_compact.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    json.dump(downlist, open(os.path.join(DATA_DIR, "downlist.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"yearend: {len(yearend)} tickers | cycles: {len(cycles_compact)} tickers | downlist: {len(downlist)} tickers")
+    accumulation_signals = build_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
+    write_json_atomic("stock_yearend.json", {"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend})
+    write_json_atomic("cycles_compact.json", cycles_compact)
+    write_json_atomic("downlist.json", downlist)
+    write_json_atomic("accumulation_signals.json", accumulation_signals)
+    print(f"yearend: {len(yearend)} | cycles: {len(cycles_compact)} | signals: {len(accumulation_signals)}")
 
     print("\n== STEP 4: rebuild stock_toolkit.html ==")
     import build_toolkit_html  # ไฟล์ข้างๆ กัน — ประกอบ HTML จากไฟล์ data/*.json

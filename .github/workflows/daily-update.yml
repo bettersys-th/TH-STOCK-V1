@@ -24,8 +24,15 @@ jobs:
       - name: Install dependencies
         run: pip install yfinance --upgrade
 
+      - name: Test accumulation scoring
+        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py
+
       - name: Run update + build pipeline
         run: python scripts/update_and_build.py
+        env:
+          # Optional independent checks. Add either key in Settings > Secrets > Actions.
+          SET_API_KEY: ${{ secrets.SET_API_KEY }}
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
 
       - name: Commit & push updated data
         run: |

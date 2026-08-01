@@ -42,6 +42,7 @@ def build(data_dir, output_path):
     dividends = _read_json(data_dir, "dividends.json", {})
     cycles = _read_json(data_dir, "cycles_compact.json", {})
     downlist = _read_json(data_dir, "downlist.json", [])
+    accumulation_signals = _read_json(data_dir, "accumulation_signals.json", [])
 
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -52,6 +53,7 @@ def build(data_dir, output_path):
     cyc_script = cyc_script.replace("__CYCLES_JSON__", json.dumps(cycles, ensure_ascii=False, separators=(",", ":")))
     scan_script = (scan_script
                    .replace("__DOWNLIST_JSON__", json.dumps(downlist, ensure_ascii=False, separators=(",", ":")))
+                   .replace("__ACCUMULATION_JSON__", json.dumps(accumulation_signals, ensure_ascii=False, separators=(",", ":")))
                    .replace("__UPDATED_AT_JSON__", json.dumps(updated_at, ensure_ascii=False)))
 
     html = f"""<!DOCTYPE html>
@@ -72,7 +74,7 @@ def build(data_dir, output_path):
   <div class="nav-tabs">
     <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
-    <button class="nav-tab" id="navScan">📉 หุ้นขาลงตอนนี้</button>
+    <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
   </div>
 
   <div class="page active" id="pageCalc">

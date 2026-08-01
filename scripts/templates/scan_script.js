@@ -1,46 +1,101 @@
 (function(){
-const DOWNLIST = __DOWNLIST_JSON__;
+const SIGNALS = __ACCUMULATION_JSON__;
 const UPDATED_AT = __UPDATED_AT_JSON__;
+const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
 document.getElementById('scanUpdated').textContent = 'ข้อมูลล่าสุดอัปเดตเมื่อ: ' + UPDATED_AT;
-
-function fmtNum(n, dec=2){
-  return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
-}
-
 const filterInput = document.getElementById('scanFilter');
-const thresholdSel = document.getElementById('scanThreshold');
+const statusSelect = document.getElementById('scanStatus');
+const minScoreSelect = document.getElementById('scanMinScore');
+const sortSelect = document.getElementById('scanSort');
 const tbody = document.getElementById('scanTable');
 const countEl = document.getElementById('scanCount');
+const errorEl = document.getElementById('scanFilterError');
+const numericFilters = {
+  setupMin:'scanSetupMin', demandMin:'scanDemandMin', confirmationMin:'scanConfirmationMin',
+  drawdownMin:'scanDrawdownMin', drawdownMax:'scanDrawdownMax', rangeMax:'scanRangeMax',
+  demandRatioMin:'scanDemandRatioMin', liquidityMin:'scanLiquidityMin'
+};
+const numericEls = Object.fromEntries(Object.entries(numericFilters).map(([key,id]) => [key,document.getElementById(id)]));
 
+function statusMatches(status, selected){
+  if(selected === 'all') return true;
+  if(selected === 'actionable') return ['confirmed','building','watch'].includes(status);
+  return status === selected;
+}
+function scoreBar(value, max){
+  const pct = Math.min(100, value / max * 100);
+  return `<span class="mini-score"><b>${value}</b><i><em style="width:${pct}%"></em></i></span>`;
+}
+function optionalNumber(el){
+  return el.value.trim() === '' ? null : Number(el.value);
+}
+function readAdvancedFilters(){
+  return Object.fromEntries(Object.entries(numericEls).map(([key,el]) => [key,optionalNumber(el)]));
+}
+function advancedMatches(s, f){
+  const depth = Math.max(0, -s.drawdown52);
+  return (f.setupMin === null || s.setup >= f.setupMin) &&
+    (f.demandMin === null || s.demand >= f.demandMin) &&
+    (f.confirmationMin === null || s.confirmation >= f.confirmationMin) &&
+    (f.drawdownMin === null || depth >= f.drawdownMin) &&
+    (f.drawdownMax === null || depth <= f.drawdownMax) &&
+    (f.rangeMax === null || s.range20 <= f.rangeMax) &&
+    (f.demandRatioMin === null || s.demandRatio >= f.demandRatioMin) &&
+    (f.liquidityMin === null || s.medianValue20 >= f.liquidityMin * 1000000);
+}
+function sortRows(rows, mode){
+  const sorted = rows.slice();
+  const rules = {
+    scoreDesc:(a,b)=>b.score-a.score || b.confirmation-a.confirmation,
+    confirmationDesc:(a,b)=>b.confirmation-a.confirmation || b.score-a.score,
+    demandDesc:(a,b)=>b.demand-a.demand || b.score-a.score,
+    drawdownDesc:(a,b)=>a.drawdown52-b.drawdown52,
+    liquidityDesc:(a,b)=>b.medianValue20-a.medianValue20,
+    tickerAsc:(a,b)=>a.t.localeCompare(b.t)
+  };
+  return sorted.sort(rules[mode] || rules.scoreDesc);
+}
 function render(){
   const q = filterInput.value.trim().toUpperCase();
-  const thresh = parseFloat(thresholdSel.value);
-  const rows = DOWNLIST.filter(d => d.pct <= thresh && (!q || d.t.includes(q)));
-  countEl.textContent = `พบ ${rows.length} หุ้น`;
-  tbody.innerHTML = rows.map(d => `
-    <tr class="scan-row" data-ticker="${d.t}">
-      <td>${d.t}</td>
-      <td>${d.pd}</td>
-      <td>${fmtNum(d.pp,2)}</td>
-      <td>${fmtNum(d.cp,2)}</td>
-      <td class="dir-down">${fmtNum(d.pct,2)}%</td>
-      <td>${d.days}</td>
-    </tr>
-  `).join('');
-  tbody.querySelectorAll('.scan-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const t = row.getAttribute('data-ticker');
-      document.getElementById('navCycle').click();
-      const cycInput = document.getElementById('cycTicker');
-      cycInput.value = t;
-      cycInput.dispatchEvent(new Event('change'));
-      document.getElementById('analyzeBtn').click();
-    });
-  });
+  const selected = statusSelect.value;
+  const minScore = Number(minScoreSelect.value);
+  const advanced = readAdvancedFilters();
+  const invalidRange = advanced.drawdownMin !== null && advanced.drawdownMax !== null && advanced.drawdownMin > advanced.drawdownMax;
+  errorEl.textContent = invalidRange ? 'ระยะลงขั้นต่ำต้องไม่มากกว่าระยะลงสูงสุด' : '';
+  const filtered = invalidRange ? [] : SIGNALS.filter(s => statusMatches(s.status, selected) && s.score >= minScore && (!q || s.t.includes(q)) && advancedMatches(s, advanced));
+  const rows = sortRows(filtered, sortSelect.value);
+  const summary = rows.reduce((a,s) => (a[s.status]=(a[s.status]||0)+1,a), {});
+  countEl.textContent = `พบ ${rows.length} หุ้น · Confirmed ${summary.confirmed||0} · Building ${summary.building||0} · Watch ${summary.watch||0}`;
+  tbody.innerHTML = rows.map(s => `
+    <tr class="scan-row" data-ticker="${s.t}">
+      <td>${s.t}<small>${s.date}</small></td>
+      <td><span class="status-pill ${s.status}">${LABELS[s.status]}</span></td>
+      <td><strong class="total-score">${s.score}</strong></td>
+      <td>${scoreBar(s.setup,40)}</td><td>${scoreBar(s.demand,30)}</td><td>${scoreBar(s.confirmation,30)}</td>
+      <td class="${s.drawdown52 < 0 ? 'dir-down' : ''}">${s.drawdown52.toFixed(2)}%</td>
+      <td class="reason-cell">${s.reasons.length ? s.reasons.join(' · ') : 'ยังไม่มีเงื่อนไขเด่น'}</td>
+    </tr>`).join('');
+  tbody.querySelectorAll('.scan-row').forEach(row => row.addEventListener('click', () => {
+    document.getElementById('navCycle').click();
+    const input = document.getElementById('cycTicker');
+    input.value = row.dataset.ticker;
+    input.dispatchEvent(new Event('change'));
+    document.getElementById('analyzeBtn').click();
+  }));
 }
-
-filterInput.addEventListener('input', render);
-thresholdSel.addEventListener('change', render);
+[filterInput,statusSelect,minScoreSelect,sortSelect,...Object.values(numericEls)].forEach(el => el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', render));
+document.querySelectorAll('.filter-preset').forEach(button => button.addEventListener('click', () => {
+  Object.values(numericEls).forEach(el => el.value = '');
+  statusSelect.value = 'actionable'; minScoreSelect.value = '40';
+  if(button.dataset.preset === 'nearConfirm'){ numericEls.confirmationMin.value='18'; numericEls.setupMin.value='18'; }
+  if(button.dataset.preset === 'tightBase'){ numericEls.setupMin.value='20'; numericEls.rangeMax.value='12'; }
+  if(button.dataset.preset === 'strongDemand'){ numericEls.demandMin.value='18'; numericEls.demandRatioMin.value='1.2'; }
+  render();
+}));
+document.getElementById('scanReset').addEventListener('click', () => {
+  filterInput.value=''; statusSelect.value='actionable'; minScoreSelect.value='40'; sortSelect.value='scoreDesc';
+  Object.values(numericEls).forEach(el => el.value=''); render();
+});
 render();
 })();

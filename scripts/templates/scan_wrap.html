@@ -1,32 +1,74 @@
-
-  <div class="eyebrow">SET Downtrend Scanner</div>
-  <h1>หุ้นที่กำลังอยู่ในขาลงตอนนี้</h1>
-  <p class="scan-info">วัดจาก<b> ราคาสูงสุดนับตั้งแต่จุด peak/trough ที่ยืนยันล่าสุดของแต่ละหุ้น เทียบกับราคาล่าสุด</b> (ครอบคลุมทั้งกรณีที่จุดยืนยันล่าสุดเป็น peak หรือ trough) เฉพาะหุ้นที่มีการซื้อขายล่าสุดในช่วง 60 วันที่ผ่านมา เรียงจากลดลงมากสุดไปน้อยสุด — <b>คลิกแถวเพื่อดูรายละเอียด cycle ของหุ้นนั้น</b></p>
+  <div class="eyebrow">Point-in-time Accumulation Scanner</div>
+  <h1>ช่วงเวลาที่น่าจับตาเพื่อทยอยสะสม</h1>
+  <p class="scan-info">คะแนนใช้เฉพาะราคาและปริมาณซื้อขายที่ทราบถึงวันล่าสุด แยกเป็น <b>รูปแบบฐานราคา แรงรับซื้อ และการยืนยันแนวโน้ม</b> โดยไม่ใช้จุดต่ำสุดในอนาคต คลิกแถวเพื่อดู Cycle ย้อนหลังประกอบ</p>
   <div class="scan-updated" id="scanUpdated"></div>
+
+  <div class="signal-legend">
+    <span><i class="dot confirmed"></i>Confirmed: เริ่มมีการยืนยัน</span>
+    <span><i class="dot building"></i>Building Base: กำลังสร้างฐาน</span>
+    <span><i class="dot watch"></i>Watch: เฝ้ารอ</span>
+    <span><i class="dot invalidated"></i>Invalidated: หลุดฐาน</span>
+  </div>
 
   <div class="panel">
     <div class="scan-controls">
       <input type="text" id="scanFilter" placeholder="ค้นหา ticker...">
-      <select id="scanThreshold">
-        <option value="0" selected>แสดงทั้งหมด (ลงทุกระดับ)</option>
-        <option value="-15">ลดลงอย่างน้อย 15%</option>
-        <option value="-20">ลดลงอย่างน้อย 20%</option>
-        <option value="-30">ลดลงอย่างน้อย 30%</option>
+      <select id="scanStatus">
+        <option value="actionable" selected>เฉพาะสถานะน่าติดตาม</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="building">Building Base</option>
+        <option value="watch">Watch</option>
+        <option value="invalidated">Invalidated</option>
+        <option value="all">ทั้งหมด</option>
+      </select>
+      <select id="scanMinScore">
+        <option value="0">ทุกคะแนน</option>
+        <option value="40" selected>คะแนน ≥ 40</option>
+        <option value="50">คะแนน ≥ 50</option>
+        <option value="60">คะแนน ≥ 60</option>
+        <option value="70">คะแนน ≥ 70</option>
+      </select>
+      <select id="scanSort">
+        <option value="scoreDesc">เรียงคะแนนสูงสุด</option>
+        <option value="confirmationDesc">เรียงการยืนยันสูงสุด</option>
+        <option value="demandDesc">เรียงแรงรับสูงสุด</option>
+        <option value="drawdownDesc">เรียงลงจากยอดมากสุด</option>
+        <option value="liquidityDesc">เรียงสภาพคล่องสูงสุด</option>
+        <option value="tickerAsc">เรียงตาม Ticker</option>
       </select>
     </div>
+    <details class="advanced-filter" id="advancedFilter">
+      <summary>ตัวกรองขั้นสูง <span>คะแนนรายหมวด · ระยะลง · ฐานราคา · แรงซื้อ · สภาพคล่อง</span></summary>
+      <div class="preset-row">
+        <button type="button" class="filter-preset" data-preset="nearConfirm">ใกล้ยืนยัน</button>
+        <button type="button" class="filter-preset" data-preset="tightBase">ฐานราคาแน่น</button>
+        <button type="button" class="filter-preset" data-preset="strongDemand">แรงรับสูง</button>
+        <button type="button" class="filter-reset" id="scanReset">ล้างเงื่อนไข</button>
+      </div>
+      <div class="advanced-grid">
+        <label>Setup ขั้นต่ำ<input type="number" id="scanSetupMin" min="0" max="40" placeholder="0"></label>
+        <label>แรงรับขั้นต่ำ<input type="number" id="scanDemandMin" min="0" max="30" placeholder="0"></label>
+        <label>Confirmation ขั้นต่ำ<input type="number" id="scanConfirmationMin" min="0" max="30" placeholder="0"></label>
+        <label>ลงจากยอดอย่างน้อย (%)<input type="number" id="scanDrawdownMin" min="0" max="100" placeholder="เช่น 15"></label>
+        <label>ลงจากยอดไม่เกิน (%)<input type="number" id="scanDrawdownMax" min="0" max="100" placeholder="เช่น 50"></label>
+        <label>กรอบราคา 20 วันไม่เกิน (%)<input type="number" id="scanRangeMax" min="0" step="0.1" placeholder="เช่น 12"></label>
+        <label>Up/Down volume ขั้นต่ำ<input type="number" id="scanDemandRatioMin" min="0" step="0.1" placeholder="เช่น 1.2"></label>
+        <label>มูลค่าซื้อขายขั้นต่ำ (ล้านบาท/วัน)<input type="number" id="scanLiquidityMin" min="0" step="0.1" placeholder="เช่น 5"></label>
+      </div>
+      <div class="filter-error" id="scanFilterError"></div>
+    </details>
     <div class="scan-count" id="scanCount"></div>
     <div class="table-wrap" style="padding:0;">
-      <table>
-        <thead>
-          <tr><th>Ticker</th><th>วันที่ล่าสุดที่เป็นจุดสูงสุด</th><th>ราคาสูงสุดนั้น</th><th>ราคาล่าสุด</th><th>% จากจุดสูงสุด</th><th>จำนวนวัน</th></tr>
-        </thead>
+      <table class="signal-table">
+        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>เหตุผลสำคัญ</th></tr></thead>
         <tbody id="scanTable"></tbody>
       </table>
     </div>
   </div>
 
-  <div class="panel">
-    <div class="disclaimer" style="border-top:none;padding:0;">
-      <b>ข้อควรระวัง:</b> นี่คือการ<b>ระบุ pattern ราคาที่ผ่านมาแล้ว</b> ไม่ใช่การพยากรณ์ทิศทางในอนาคต หุ้นที่ "ลง" ต่อไปอาจจะลงต่อ หรือกลับตัวขึ้นก็ได้ ไม่ใช่คำแนะนำให้ซื้อ/ขาย ใช้เพื่อการศึกษาเบื้องต้นเท่านั้น
-    </div>
+  <div class="panel methodology">
+    <h3>อ่านสัญญาณอย่างไร</h3>
+    <p><b>Watch</b> คือราคาอยู่ในบริเวณสนใจแต่ยังไม่กลับตัว, <b>Building Base</b> คือความผันผวนลดและเริ่มมีแรงรับ, <b>Confirmed</b> คือราคา/MA20 เริ่มยืนยัน ส่วน <b>Invalidated</b> คือราคาหลุดฐาน 20 วัน คะแนนเป็นตัวจัดลำดับงานวิจัย ไม่ใช่คำสั่งซื้อ และควรแบ่งไม้พร้อมกำหนดระดับยกเลิกแผนเสมอ</p>
   </div>
+
+  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0;"><b>ข้อควรระวัง:</b> โมเดลใช้เฉพาะราคาปิดและ volume ไม่ครอบคลุมปัจจัยพื้นฐาน ข่าว สภาพคล่องระหว่างวัน หรือความเสี่ยงเฉพาะบริษัท ผลในอดีตไม่รับประกันผลในอนาคต และไม่ใช่คำแนะนำการลงทุน</div></div>

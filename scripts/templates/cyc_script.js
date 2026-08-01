@@ -1,7 +1,7 @@
 
 const CYCLES = __CYCLES_JSON__;
 
-const tickerListEl = document.getElementById('tickerList');
+const tickerListEl = document.getElementById('cycTickerList');
 const tickerNames = Object.keys(CYCLES).sort();
 for(const t of tickerNames){
   const opt = document.createElement('option');
@@ -9,11 +9,11 @@ for(const t of tickerNames){
   tickerListEl.appendChild(opt);
 }
 
-const tickerInput = document.getElementById('ticker');
-const tickerInfo = document.getElementById('tickerInfo');
+const tickerInput = document.getElementById('cycTicker');
+const tickerInfo = document.getElementById('cycTickerInfo');
 const adjBadge = document.getElementById('adjBadge');
 const analyzeBtn = document.getElementById('analyzeBtn');
-const resultPanel = document.getElementById('resultPanel');
+const resultPanel = document.getElementById('cycResultPanel');
 
 function fmtNum(n, dec=2){
   return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});

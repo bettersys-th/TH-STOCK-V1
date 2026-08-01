@@ -5,16 +5,16 @@
 
   <div class="panel">
     <div class="field">
-      <label for="ticker">สัญลักษณ์หุ้น (Ticker)</label>
-      <input list="tickerList" id="ticker" placeholder="เช่น PTT, CPALL, AOT" autocomplete="off">
-      <datalist id="tickerList"></datalist>
-      <div class="ticker-info" id="tickerInfo"></div>
+      <label for="cycTicker">สัญลักษณ์หุ้น (Ticker)</label>
+      <input list="cycTickerList" id="cycTicker" placeholder="เช่น PTT, CPALL, AOT" autocomplete="off">
+      <datalist id="cycTickerList"></datalist>
+      <div class="ticker-info" id="cycTickerInfo"></div>
       <div class="badge" id="adjBadge"></div>
     </div>
     <button class="btn" id="analyzeBtn">วิเคราะห์</button>
   </div>
 
-  <div class="panel result" id="resultPanel">
+  <div class="panel result" id="cycResultPanel">
     <div class="summary-grid" id="summaryGrid"></div>
     <div class="chart-wrap">
       <svg id="waveChart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet"></svg>

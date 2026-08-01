@@ -4,7 +4,8 @@
   <div class="panel risk-form">
     <label>Ticker<input list="dcaTickerList" id="riskTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
     <label>เงินก้อนแรก (บาท)<input type="number" id="riskInitial" min="0" step="1000" value="10000"></label>
-    <label>DCA ต่อเดือน (บาท)<input type="number" id="riskMonthly" min="0" step="1000" value="5000"></label>
+    <label id="riskContributionLabel">DCA ต่องวด (บาท)<input type="number" id="riskMonthly" min="0" step="1000" value="5000"></label>
+    <label>ความถี่ DCA<select id="riskFrequency"><option value="daily">ทุกวันทำการ</option><option value="weekly">ทุกสัปดาห์</option><option value="monthly" selected>ทุกเดือน</option></select></label>
     <label>ระยะเวลาแผน (เดือน)<input type="number" id="riskMonths" min="1" max="120" value="24"></label>
     <label>ราคาลงจากวันนี้ (%)<input type="number" id="riskDecline" min="0" max="95" value="30"></label>
     <label>ใช้เวลาลง (เดือน)<input type="number" id="riskDeclineMonths" min="1" max="120" value="12"></label>
@@ -32,4 +33,4 @@
     </div>
     <div class="dca-result history-result" id="dcaResult"><div class="dca-grid" id="dcaGrid"></div><div class="dca-detail" id="dcaDetail"></div></div>
   </details>
-  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> Scenario เป็นเส้นทางสมมติ ไม่ได้ทำนายราคา ปันผลอาจลดหรือหยุดจ่าย และ DCA ไม่สามารถป้องกันความเสียหายจากพื้นฐานกิจการเสื่อม การเพิ่มเงินในหุ้นขาลงต้องมีเกณฑ์ยกเลิกแผนเสมอ</div></div>
+  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> Scenario เป็นเส้นทางสมมติ ไม่ได้ทำนายราคา โดยรายวันใช้ 21 วันทำการ/เดือนและรายสัปดาห์ใช้ 4 งวด/เดือน ปันผลอาจลดหรือหยุดจ่าย และ DCA ไม่สามารถป้องกันความเสียหายจากพื้นฐานกิจการเสื่อม การเพิ่มเงินในหุ้นขาลงต้องมีเกณฑ์ยกเลิกแผนเสมอ</div></div>

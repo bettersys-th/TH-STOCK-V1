@@ -25,7 +25,7 @@ jobs:
         run: pip install yfinance --upgrade
 
       - name: Test accumulation scoring
-        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py
+        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py
 
       - name: Run update + build pipeline
         run: python scripts/update_and_build.py

@@ -27,6 +27,7 @@ import time
 from datetime import datetime, date, timedelta
 from accumulation import build_signals
 from market_validation import cross_check
+from strategy_data import build_swing_signals, build_dca_compact
 
 try:
     import yfinance as yf
@@ -465,11 +466,15 @@ def main():
     print("\n== STEP 3: recompute year-end / cycles / scanner signals ==")
     yearend, cycles_compact, downlist = build_derived(prices, splits_sorted, tickers)
     accumulation_signals = build_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
+    swing_signals = build_swing_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
+    dca_compact = build_dca_compact(prices, splits_sorted, dividends_sorted, tickers)
     write_json_atomic("stock_yearend.json", {"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend})
     write_json_atomic("cycles_compact.json", cycles_compact)
     write_json_atomic("downlist.json", downlist)
     write_json_atomic("accumulation_signals.json", accumulation_signals)
-    print(f"yearend: {len(yearend)} | cycles: {len(cycles_compact)} | signals: {len(accumulation_signals)}")
+    write_json_atomic("swing_signals.json", swing_signals)
+    write_json_atomic("dca_compact.json", dca_compact)
+    print(f"yearend: {len(yearend)} | cycles: {len(cycles_compact)} | accumulation: {len(accumulation_signals)} | swing: {len(swing_signals)} | dca: {len(dca_compact)}")
 
     print("\n== STEP 4: rebuild stock_toolkit.html ==")
     import build_toolkit_html  # ไฟล์ข้างๆ กัน — ประกอบ HTML จากไฟล์ data/*.json

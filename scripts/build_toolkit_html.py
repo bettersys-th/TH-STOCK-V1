@@ -36,6 +36,12 @@ def build(data_dir, output_path):
     scan_style = _read("scan_style.css")
     scan_wrap = _read("scan_wrap.html")
     scan_script = _read("scan_script.js")
+    swing_style = _read("swing_style.css")
+    swing_wrap = _read("swing_wrap.html")
+    swing_script = _read("swing_script.js")
+    dca_style = _read("dca_style.css")
+    dca_wrap = _read("dca_wrap.html")
+    dca_script = _read("dca_script.js")
 
     stock_yearend = _read_json(data_dir, "stock_yearend.json", {"years": [], "tickers": {}})
     splits = _read_json(data_dir, "splits.json", {})
@@ -43,6 +49,8 @@ def build(data_dir, output_path):
     cycles = _read_json(data_dir, "cycles_compact.json", {})
     downlist = _read_json(data_dir, "downlist.json", [])
     accumulation_signals = _read_json(data_dir, "accumulation_signals.json", [])
+    swing_signals = _read_json(data_dir, "swing_signals.json", [])
+    dca_compact = _read_json(data_dir, "dca_compact.json", {})
 
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -55,6 +63,8 @@ def build(data_dir, output_path):
                    .replace("__DOWNLIST_JSON__", json.dumps(downlist, ensure_ascii=False, separators=(",", ":")))
                    .replace("__ACCUMULATION_JSON__", json.dumps(accumulation_signals, ensure_ascii=False, separators=(",", ":")))
                    .replace("__UPDATED_AT_JSON__", json.dumps(updated_at, ensure_ascii=False)))
+    swing_script = swing_script.replace("__SWING_JSON__", json.dumps(swing_signals, ensure_ascii=False, separators=(",", ":")))
+    dca_script = dca_script.replace("__DCA_JSON__", json.dumps(dca_compact, ensure_ascii=False, separators=(",", ":")))
 
     html = f"""<!DOCTYPE html>
 <html lang="th">
@@ -67,6 +77,8 @@ def build(data_dir, output_path):
 {nav_css}
 {cyc_style}
 {scan_style}
+{swing_style}
+{dca_style}
 </style>
 </head>
 <body>
@@ -75,6 +87,8 @@ def build(data_dir, output_path):
     <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
     <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
+    <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
+    <button class="nav-tab" id="navDca">🗓️ DCA</button>
   </div>
 
   <div class="page active" id="pageCalc">
@@ -88,10 +102,18 @@ def build(data_dir, output_path):
   <div class="page" id="pageScan">
 {scan_wrap}
   </div>
+
+  <div class="page" id="pageSwing">
+{swing_wrap}
+  </div>
+
+  <div class="page" id="pageDca">
+{dca_wrap}
+  </div>
 </div>
 
 <script>
-const navButtons = {{navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan'}};
+const navButtons = {{navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'}};
 Object.keys(navButtons).forEach(navId => {{
   document.getElementById(navId).addEventListener('click', () => {{
     Object.entries(navButtons).forEach(([nId, pId]) => {{
@@ -110,6 +132,8 @@ Object.keys(navButtons).forEach(navId => {{
 }})();
 
 {scan_script}
+{swing_script}
+{dca_script}
 </script>
 </body>
 </html>

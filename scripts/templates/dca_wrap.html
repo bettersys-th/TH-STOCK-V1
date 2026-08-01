@@ -1,0 +1,12 @@
+  <div class="eyebrow">DCA Simulator</div><h1>จำลองการลงทุนแบบ DCA</h1>
+  <p class="sub">ใช้ราคาปิดวันซื้อขายสุดท้ายของแต่ละเดือนที่ปรับ Split แล้ว และปันผลต่อหุ้นตามประวัติจริงแบบประมาณรายเดือน</p>
+  <div class="panel dca-form">
+    <label>Ticker<input list="dcaTickerList" id="dcaTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
+    <label>เริ่มเดือน<select id="dcaStart"></select></label><label>ถึงเดือน<select id="dcaEnd"></select></label>
+    <label>เงินลงทุนต่องวด<input type="number" id="dcaAmount" min="1" step="1000" value="5000"></label>
+    <label>ความถี่<select id="dcaFrequency"><option value="1">ทุกเดือน</option><option value="3">ทุก 3 เดือน</option><option value="6">ทุก 6 เดือน</option><option value="12">ทุก 12 เดือน</option></select></label>
+    <label class="dca-check"><input type="checkbox" id="dcaReinvest" checked> นำปันผลกลับลงทุน</label>
+    <button class="btn" id="dcaCalculate">คำนวณ DCA</button>
+  </div>
+  <div class="panel dca-result" id="dcaResult"><div class="dca-grid" id="dcaGrid"></div><div class="dca-detail" id="dcaDetail"></div></div>
+  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> ซื้อด้วยราคาปิดสิ้นเดือนและรองรับเศษหุ้นเพื่อการจำลอง ปันผลใช้เดือน ex-date และไม่รวมภาษี ค่าธรรมเนียม slippage หรือสิทธิอื่น ผลลัพธ์ไม่ใช่การรับประกันผลตอบแทน</div></div>

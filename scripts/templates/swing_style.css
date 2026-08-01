@@ -1,0 +1,8 @@
+  .swing-controls{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px;padding:18px;}
+  .swing-controls select{background:#0b1017;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:11px;font-size:12px;}
+  .swing-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin:0 0 10px;}
+  .swing-table-wrap{padding:0;overflow-x:auto}.swing-table{min-width:1450px}.swing-row{cursor:pointer}.swing-row:hover{background:rgba(217,164,65,.05)}
+  .swing-symbol{color:var(--amber);font-weight:700}.swing-symbol small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+  .swing-pill{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap}.swing-pill.triggered{background:#173f35;color:#72dfb4}.swing-pill.setup{background:#183650;color:#80c7ff}.swing-pill.extended{background:#443817;color:#f1c75b}.swing-pill.failed{background:#4b2027;color:#ff8d9a}.swing-pill.neutral,.swing-pill.illiquid{background:#252c35;color:var(--muted)}
+  .swing-reason{min-width:260px;color:var(--muted);font-size:10px;line-height:1.5}.swing-score{font-size:17px;font-weight:700}
+  @media(max-width:760px){.swing-controls{grid-template-columns:1fr 1fr}}@media(max-width:480px){.swing-controls{grid-template-columns:1fr}}

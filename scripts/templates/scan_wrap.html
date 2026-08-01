@@ -54,13 +54,14 @@
         <label>กรอบราคา 20 วันไม่เกิน (%)<input type="number" id="scanRangeMax" min="0" step="0.1" placeholder="เช่น 12"></label>
         <label>Up/Down volume ขั้นต่ำ<input type="number" id="scanDemandRatioMin" min="0" step="0.1" placeholder="เช่น 1.2"></label>
         <label>มูลค่าซื้อขายขั้นต่ำ (ล้านบาท/วัน)<input type="number" id="scanLiquidityMin" min="0" step="0.1" placeholder="เช่น 5"></label>
+        <label>คำเตือนสภาพคล่อง<select id="scanLiquidityWarning"><option value="all">ทั้งหมด</option><option value="exclude">ไม่รวมหุ้นเตือน 30 วัน</option><option value="only">เฉพาะหุ้นที่ถูกเตือน</option></select></label>
       </div>
       <div class="filter-error" id="scanFilterError"></div>
     </details>
     <div class="scan-count" id="scanCount"></div>
     <div class="table-wrap" style="padding:0;">
       <table class="signal-table">
-        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>เหตุผลสำคัญ</th></tr></thead>
+        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>สภาพคล่อง 30 วัน</th><th>เหตุผลสำคัญ</th></tr></thead>
         <tbody id="scanTable"></tbody>
       </table>
     </div>

@@ -19,6 +19,14 @@ class AccumulationTests(unittest.TestCase):
         after = score_at(dates, close, volume, 280)
         self.assertEqual(before, after)
 
+    def test_warns_when_traded_value_is_very_low_for_30_sessions(self):
+        dates = list(range(20200000, 20200320))
+        close = [1.0] * 320
+        volume = [100_000] * 320
+        signal = score_at(dates, close, volume)
+        self.assertTrue(signal["lowLiquidity30"])
+        self.assertEqual(signal["avgVolume30"], 100_000)
+
 
 if __name__ == "__main__":
     unittest.main()

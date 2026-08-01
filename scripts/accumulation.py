@@ -10,6 +10,7 @@ from statistics import median
 
 MIN_HISTORY = 260
 MIN_MEDIAN_VALUE = 1_000_000  # THB/day, avoids obviously untradeable names
+VERY_LOW_VALUE = 1_000_000    # warning when every one of 30 sessions is below this
 
 
 def split_adjust(dates, closes, volumes, split_events):
@@ -62,10 +63,15 @@ def score_at(dates, closes, volumes, idx=None):
     if current <= 0:
         return None
 
-    p20, p60, p252 = p[-20:], p[-60:], p[-252:]
+    p20, p30, p60, p252 = p[-20:], p[-30:], p[-60:], p[-252:]
     v20, v40 = v[-20:], v[-40:]
+    v30 = v[-30:]
     value20 = [price * volume for price, volume in zip(p20, v20)]
+    value30 = [price * volume for price, volume in zip(p30, v30)]
     median_value = median(value20)
+    median_value30 = median(value30)
+    average_volume30 = _mean(v30)
+    low_value_30_straight = len(value30) == 30 and all(value < VERY_LOW_VALUE for value in value30)
 
     high252 = max(p252)
     low20 = min(p20)
@@ -140,13 +146,17 @@ def score_at(dates, closes, volumes, idx=None):
         reasons.append("ราคาหลุดฐาน 20 วัน")
     if not liquid:
         reasons.append("มูลค่าซื้อขายต่ำกว่าเกณฑ์")
+    if low_value_30_straight:
+        reasons.append("มูลค่าซื้อขายต่ำมากต่อเนื่อง 30 วัน")
 
     return {
         "date": str(dates[idx]), "price": round(current, 3), "score": total,
         "status": status, "setup": setup, "demand": demand,
         "confirmation": confirmation, "drawdown52": round(drawdown * 100, 2),
         "range20": round(range20 * 100, 2), "demandRatio": round(demand_ratio, 2),
-        "medianValue20": round(median_value), "reasons": reasons[:4]
+        "medianValue20": round(median_value), "medianValue30": round(median_value30),
+        "avgVolume30": round(average_volume30), "lowLiquidity30": low_value_30_straight,
+        "reasons": reasons[:5]
     }
 
 

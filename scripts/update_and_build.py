@@ -399,7 +399,9 @@ def build_derived(prices, splits_raw, tickers):
                    accum_window(idx, adj_closes, vols)]
                   for idx, typ in pivots]
         has_split = t in splits_raw
-        cycles_compact[t] = {"sa": 1 if has_split else 0, "e": events}
+        # l = latest actual bar; the final ZigZag extreme can be earlier than today.
+        cycles_compact[t] = {"sa": 1 if has_split else 0, "e": events,
+                             "l": [ymd_to_iso(latest_d), round(latest_p, 3)]}
 
         # --- downlist: ราคาสูงสุดตั้งแต่จุดยืนยันล่าสุด เทียบราคาล่าสุด ---
         last_pivot_date_int = int(events[-1][0].replace("-", ""))

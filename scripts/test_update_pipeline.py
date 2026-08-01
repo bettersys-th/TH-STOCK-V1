@@ -3,6 +3,7 @@ import sys
 import unittest
 from unittest.mock import patch
 import pandas as pd
+from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(__file__))
 import update_and_build as pipeline
@@ -10,6 +11,13 @@ from market_validation import cross_check
 
 
 class UpdatePipelineTests(unittest.TestCase):
+    def test_cycle_payload_contains_latest_actual_bar(self):
+        start = date(2026, 1, 1)
+        dates = [int((start + timedelta(days=i)).strftime("%Y%m%d")) for i in range(40)]
+        prices = {"AAA": {"d": dates, "c": [10 + i * .1 for i in range(40)], "v": [1000] * 40}}
+        _, cycles, _ = pipeline.build_derived(prices, {}, ["AAA"])
+        self.assertEqual(cycles["AAA"]["l"], ["2026-02-09", 13.9])
+
     def test_price_update_corrects_existing_and_skips_zero_volume_rows(self):
         frame = pd.DataFrame({"Close": [10.5, 11.0], "Volume": [150, 0]},
                              index=pd.to_datetime(["2026-07-31", "2026-08-01"]))

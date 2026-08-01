@@ -19,7 +19,7 @@
   .dot.invalidated,.status-pill.invalidated{background:#4b2027;color:#ff8d9a;}
   .status-pill.neutral,.status-pill.illiquid{background:#252c35;color:var(--muted);}
   .status-pill{white-space:nowrap;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700;}
-  .signal-table{min-width:1080px;}
+  .signal-table{min-width:1280px;}
   .scan-row td:first-child small{display:block;color:var(--muted);font-size:9px;font-weight:400;margin-top:4px;}
   .total-score{font-size:18px;color:var(--text);}
   .mini-score{display:flex;align-items:center;gap:6px;min-width:72px;}
@@ -27,6 +27,10 @@
   .mini-score i{display:block;width:42px;height:4px;background:#26303b;border-radius:3px;overflow:hidden;}
   .mini-score em{display:block;height:100%;background:var(--amber);}
   .reason-cell{min-width:280px;max-width:390px;font-size:11px;line-height:1.5;color:var(--muted);}
+  .liquidity-cell{min-width:150px;font-size:11px;line-height:1.45;}
+  .liquidity-cell b,.liquidity-cell small{display:block;white-space:nowrap;}
+  .liquidity-cell small{color:var(--muted);margin-top:2px;}
+  .liquidity-warning{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:5px;background:#4b2027;color:#ff9ca7;font-size:9px;font-weight:700;white-space:nowrap;}
   .methodology h3{margin:0 0 8px;}
   .methodology p{margin:0;color:var(--muted);line-height:1.7;font-size:13px;}
   .advanced-filter{border:1px solid var(--line);border-radius:10px;margin:-4px 0 18px;background:rgba(11,16,23,.45);}
@@ -40,6 +44,7 @@
   .advanced-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;padding:14px 15px;}
   .advanced-grid label{font-size:11px;color:var(--muted);}
   .advanced-grid input{width:100%;margin-top:6px;padding:9px 10px;font-size:12px;box-sizing:border-box;}
+  .advanced-grid select{width:100%;margin-top:6px;background:#0b1017;border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:8px;font-size:12px;}
   .filter-error{min-height:16px;color:#ff8d9a;font-size:11px;padding:0 15px 10px;}
   @media(max-width:850px){.advanced-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}}
   @media(max-width:480px){.advanced-grid{grid-template-columns:1fr}.filter-reset{margin-left:0}.advanced-filter summary span{display:block;margin:4px 0 0;}}

@@ -18,12 +18,12 @@
     <div class="summary-grid" id="summaryGrid"></div>
     <div class="scenario-box">
       <div class="scenario-head">
-        <div><div class="eyebrow">Previous Extremes Scenario</div><h2>ถ้าซื้อวันนี้ แล้วราคากลับไปจุดสูงสุด/ต่ำสุดก่อนหน้า</h2></div>
+        <div><div class="eyebrow">Next Price-Level Scenario</div><h2>ถ้าซื้อวันนี้ แนวต้านถัดไป / แนวรับถัดไปอยู่ที่ใด</h2></div>
         <label class="investment-field">เงินลงทุน (บาท)<input type="number" id="scenarioInvestment" min="1" step="1000" value="100000"></label>
       </div>
       <div class="scenario-current" id="scenarioCurrent"></div>
       <div class="scenario-grid" id="scenarioGrid"></div>
-      <div class="scenario-note">คำนวณแบบซื้อเศษหุ้นได้ ไม่รวมค่าธรรมเนียม ภาษี ปันผล และ slippage จุดสูงสุด/ต่ำสุดเป็นเพียงราคาอ้างอิงในอดีต ไม่ใช่ราคาเป้าหมายหรือการคาดการณ์</div>
+      <div class="scenario-note">ระบบเลือก peak ที่อยู่เหนือราคาปัจจุบันและใกล้ที่สุดเป็นแนวต้าน เลือก trough ที่อยู่ต่ำกว่าและใกล้ที่สุดเป็นแนวรับ หากไม่มีระดับดังกล่าวจึงประมาณจากค่ามัธยฐานของรอบในอดีต ไม่รวมค่าธรรมเนียม ภาษี ปันผล และ slippage</div>
     </div>
     <div class="chart-wrap">
       <svg id="waveChart" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet"></svg>

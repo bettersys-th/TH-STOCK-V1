@@ -13,6 +13,9 @@ class StrategyDataTests(unittest.TestCase):
         splits = {"AAA": [{"date": "2020-02-01", "ratio": 2}]}
         result = build_dca_compact(prices, splits, {}, ["AAA"])
         self.assertEqual(result["AAA"]["m"][:2], [["2020-01", 55.0], ["2020-02", 60.0]])
+        latest = result["AAA"]["m"][-1][1]
+        self.assertGreater(result["AAA"]["r"]["peak"], latest)
+        self.assertLess(result["AAA"]["r"]["trough"], latest)
 
     def test_swing_signal_is_point_in_time_latest(self):
         dates = [int((date(2025, 1, 1) + timedelta(days=i)).strftime("%Y%m%d")) for i in range(300)]

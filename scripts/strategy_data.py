@@ -86,7 +86,8 @@ def build_swing_signals(prices, splits, tickers, active_window_days=60):
     return rows
 
 
-def build_dca_compact(prices, splits, dividends, tickers):
+def build_dca_compact(prices, splits, dividends, tickers, cycles=None):
+    cycles = cycles or {}
     out = {}
     for ticker in tickers:
         raw = prices.get(ticker)
@@ -110,8 +111,41 @@ def build_dca_compact(prices, splits, dividends, tickers):
             div_by_month[str(event_date)[:6]] += float(event["amount"]) / factor
         monthly_items = sorted(monthly.items())[-240:]  # 20 years keeps the static page practical
         first_month = monthly_items[0][0]
+        cycle = cycles.get(ticker, {})
+        latest_date = f"{str(dates[-1])[:4]}-{str(dates[-1])[4:6]}-{str(dates[-1])[6:8]}"
+        past_events = [e for e in cycle.get("e", []) if e[0] < latest_date]
+        current_price = monthly_items[-1][1]
+        higher_peaks = sorted(e[1] for e in past_events if e[2] == 1 and e[1] > current_price)
+        lower_troughs = sorted((e[1] for e in past_events if e[2] == 0 and e[1] < current_price), reverse=True)
+        up_days, down_days, up_pcts, down_pcts = [], [], [], []
+        for a, b in zip(cycle.get("e", []), cycle.get("e", [])[1:]):
+            days = (datetime.strptime(b[0], "%Y-%m-%d") - datetime.strptime(a[0], "%Y-%m-%d")).days
+            pct = (b[1] / a[1] - 1) * 100 if a[1] else 0
+            if b[1] > a[1]:
+                up_days.append(days); up_pcts.append(pct)
+            else:
+                down_days.append(days); down_pcts.append(abs(pct))
+        median_up = median(up_pcts) if up_pcts else 20
+        median_down = median(down_pcts) if down_pcts else 20
+        next_peak = higher_peaks[0] if higher_peaks else current_price * (1 + max(.05, median_up / 100))
+        next_trough = lower_troughs[0] if lower_troughs else current_price * (1 - min(.80, max(.05, median_down / 100)))
+        peak, max_drawdown = 0, 0
+        for _, price in monthly_items:
+            peak = max(peak, price)
+            if peak:
+                max_drawdown = min(max_drawdown, price / peak - 1)
+        recent_value = median([p * v for p, v in zip(close[-30:], (raw.get("v") or [0] * len(dates))[-30:])])
+        last_month = monthly_items[-1][0]
+        cutoff_month = str(int(last_month[:4]) - 1) + last_month[4:]
+        trailing_dividend = sum(amount for month, amount in div_by_month.items() if month > cutoff_month)
         out[ticker] = {
             "m": [[f"{month[:4]}-{month[4:]}", price] for month, price in monthly_items],
             "dv": [[f"{month[:4]}-{month[4:]}", round(amount, 5)] for month, amount in sorted(div_by_month.items()) if amount and month >= first_month],
+            "r": {"peak": round(next_peak, 3), "trough": round(next_trough, 3),
+                  "peakProjected": not bool(higher_peaks), "troughProjected": not bool(lower_troughs),
+                  "upDays": round(_mean(up_days)) if up_days else None,
+                  "downDays": round(_mean(down_days)) if down_days else None,
+                  "maxDrawdown": round(max_drawdown * 100, 2),
+                  "medianValue30": round(recent_value), "div12": round(trailing_dividend, 5)},
         }
     return out

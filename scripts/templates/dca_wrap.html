@@ -1,12 +1,35 @@
-  <div class="eyebrow">DCA Simulator</div><h1>จำลองการลงทุนแบบ DCA</h1>
-  <p class="sub">ใช้ราคาปิดวันซื้อขายสุดท้ายของแต่ละเดือนที่ปรับ Split แล้ว และปันผลต่อหุ้นตามประวัติจริงแบบประมาณรายเดือน</p>
-  <div class="panel dca-form">
-    <label>Ticker<input list="dcaTickerList" id="dcaTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
-    <label>เริ่มเดือน<select id="dcaStart"></select></label><label>ถึงเดือน<select id="dcaEnd"></select></label>
-    <label>เงินลงทุนต่องวด<input type="number" id="dcaAmount" min="1" step="1000" value="5000"></label>
-    <label>ความถี่<select id="dcaFrequency"><option value="1">ทุกเดือน</option><option value="3">ทุก 3 เดือน</option><option value="6">ทุก 6 เดือน</option><option value="12">ทุก 12 เดือน</option></select></label>
-    <label class="dca-check"><input type="checkbox" id="dcaReinvest" checked> นำปันผลกลับลงทุน</label>
-    <button class="btn" id="dcaCalculate">คำนวณ DCA</button>
+  <div class="eyebrow">Forward-looking DCA Risk Planner</div><h1>วางแผน DCA ก่อนลงทุน</h1>
+  <p class="sub">จำลองว่าหากราคาค่อย ๆ ลงแล้วฟื้น แผนต้องใช้เงินเท่าไร ต้นทุนเฉลี่ยอยู่ที่ใด และขาดทุนระหว่างทางเกินระดับที่รับได้หรือไม่</p>
+
+  <div class="panel risk-form">
+    <label>Ticker<input list="dcaTickerList" id="riskTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
+    <label>เงินก้อนแรก (บาท)<input type="number" id="riskInitial" min="0" step="1000" value="10000"></label>
+    <label>DCA ต่อเดือน (บาท)<input type="number" id="riskMonthly" min="0" step="1000" value="5000"></label>
+    <label>ระยะเวลาแผน (เดือน)<input type="number" id="riskMonths" min="1" max="120" value="24"></label>
+    <label>ราคาลงจากวันนี้ (%)<input type="number" id="riskDecline" min="0" max="95" value="30"></label>
+    <label>ใช้เวลาลง (เดือน)<input type="number" id="riskDeclineMonths" min="1" max="120" value="12"></label>
+    <label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label>
+    <label>งบลงทุนสูงสุด (บาท)<input type="number" id="riskBudget" min="0" step="1000" value="130000"></label>
+    <label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label>
+    <label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label>
+    <button class="btn" id="riskCalculate">ประเมินความเสี่ยง</button>
   </div>
-  <div class="panel dca-result" id="dcaResult"><div class="dca-grid" id="dcaGrid"></div><div class="dca-detail" id="dcaDetail"></div></div>
-  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> ซื้อด้วยราคาปิดสิ้นเดือนและรองรับเศษหุ้นเพื่อการจำลอง ปันผลใช้เดือน ex-date และไม่รวมภาษี ค่าธรรมเนียม slippage หรือสิทธิอื่น ผลลัพธ์ไม่ใช่การรับประกันผลตอบแทน</div></div>
+  <div class="stress-presets"><span>Stress Test:</span><button data-drop="10">ลง 10%</button><button data-drop="20">ลง 20%</button><button data-drop="30">ลง 30%</button><button data-drop="40">ลง 40%</button><button data-drop="50">ลง 50%</button></div>
+
+  <div class="panel dca-result" id="riskResult">
+    <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>
+    <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
+    <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>
+  </div>
+
+  <details class="history-panel panel">
+    <summary>Historical Backtest — ใช้ตรวจสอบประกอบ ไม่ใช่ผลลัพธ์หลัก</summary>
+    <div class="history-form">
+      <label>เริ่มเดือน<select id="dcaStart"></select></label><label>ถึงเดือน<select id="dcaEnd"></select></label>
+      <label>เงินต่องวด<input type="number" id="dcaAmount" min="1" step="1000" value="5000"></label>
+      <label>ความถี่<select id="dcaFrequency"><option value="1">ทุกเดือน</option><option value="3">ทุก 3 เดือน</option><option value="6">ทุก 6 เดือน</option><option value="12">ทุก 12 เดือน</option></select></label>
+      <label class="dca-check"><input type="checkbox" id="dcaReinvest" checked> นำปันผลกลับลงทุน</label><button class="btn" id="dcaCalculate">คำนวณย้อนหลัง</button>
+    </div>
+    <div class="dca-result history-result" id="dcaResult"><div class="dca-grid" id="dcaGrid"></div><div class="dca-detail" id="dcaDetail"></div></div>
+  </details>
+  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> Scenario เป็นเส้นทางสมมติ ไม่ได้ทำนายราคา ปันผลอาจลดหรือหยุดจ่าย และ DCA ไม่สามารถป้องกันความเสียหายจากพื้นฐานกิจการเสื่อม การเพิ่มเงินในหุ้นขาลงต้องมีเกณฑ์ยกเลิกแผนเสมอ</div></div>

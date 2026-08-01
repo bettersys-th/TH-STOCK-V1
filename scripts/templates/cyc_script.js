@@ -141,28 +141,37 @@ function renderScenario(stock, events, cycles){
   const amountInput = document.getElementById('scenarioInvestment');
   const amount = Math.max(0, Number(amountInput.value) || 0);
   const past = events.filter(e => e[0] < latestDate);
-  const previousPeak = past.slice().reverse().find(e => e[2] === 1);
-  const previousTrough = past.slice().reverse().find(e => e[2] === 0);
   const ups = cycles.filter(c => c.direction === 'up');
   const downs = cycles.filter(c => c.direction === 'down');
   const avgDays = arr => arr.length ? arr.reduce((sum,c)=>sum+c.days,0)/arr.length : 0;
   const avgUpDays = avgDays(ups), avgDownDays = avgDays(downs);
+  const median = values => { if(!values.length) return 0; const a=values.slice().sort((x,y)=>x-y),m=Math.floor(a.length/2); return a.length%2?a[m]:(a[m-1]+a[m])/2; };
+  const medianUpPct = median(ups.map(c=>c.pct));
+  const medianDownPct = Math.abs(median(downs.map(c=>c.pct)));
+  const higherPeaks = past.filter(e=>e[2]===1 && e[1]>currentPrice).sort((a,b)=>a[1]-b[1]);
+  const lowerTroughs = past.filter(e=>e[2]===0 && e[1]<currentPrice).sort((a,b)=>b[1]-a[1]);
+  const upsidePoint = higherPeaks.length
+    ? {price:higherPeaks[0][1],date:higherPeaks[0][0],method:'แนวต้านจาก peak ในอดีตที่อยู่เหนือราคาปัจจุบันใกล้ที่สุด'}
+    : {price:currentPrice*(1+Math.max(.05,medianUpPct/100)),date:null,method:`ประมาณจากค่ามัธยฐานรอบขาขึ้น +${fmtNum(medianUpPct,2)}% (ไม่มี peak เดิมอยู่เหนือราคา)`};
+  const downsidePoint = lowerTroughs.length
+    ? {price:lowerTroughs[0][1],date:lowerTroughs[0][0],method:'แนวรับจาก trough ในอดีตที่อยู่ต่ำกว่าราคาปัจจุบันใกล้ที่สุด'}
+    : {price:currentPrice*(1-Math.min(.80,Math.max(.05,medianDownPct/100))),date:null,method:`ประมาณจากค่ามัธยฐานรอบขาลง -${fmtNum(medianDownPct,2)}% (ไม่มี trough เดิมอยู่ต่ำกว่าราคา)`};
   const shares = currentPrice > 0 ? amount/currentPrice : 0;
   document.getElementById('scenarioCurrent').innerHTML = `ราคาซื้อล่าสุด <b>${fmtNum(currentPrice,2)} บาท</b> ณ ${latestDate} · เงินลงทุน ${fmtNum(amount,0)} บาท · ประมาณ ${fmtNum(shares,2)} หุ้น`;
   function card(point, kind){
     if(!point) return `<div class="scenario-card"><div class="scenario-title">ไม่มีข้อมูลอ้างอิงเพียงพอ</div></div>`;
-    const target = point[1], pct = (target/currentPrice-1)*100, pnl = shares*(target-currentPrice);
+    const target = point.price, pct = (target/currentPrice-1)*100, pnl = shares*(target-currentPrice);
     const positive = pnl >= 0;
     const isPeak = kind === 'peak';
     const travelDays = isPeak ? avgUpDays : avgDownDays;
     return `<div class="scenario-card ${isPeak?'up':'down'}">
-      <div class="scenario-title">${isPeak?'กลับไปจุดสูงสุดก่อนหน้า':'ลงไปจุดต่ำสุดก่อนหน้า'}</div>
+      <div class="scenario-title">${isPeak?'แนวต้าน / เป้าหมายขาขึ้นถัดไป':'แนวรับ / ความเสี่ยงขาลงถัดไป'}</div>
       <div class="scenario-target">${fmtNum(target,2)} บาท</div>
       <div class="scenario-result ${positive?'positive':'negative'}">${pnl>=0?'+':''}${fmtNum(pnl,2)} บาท (${pct>=0?'+':''}${fmtNum(pct,2)}%)</div>
-      <div class="scenario-meta">จุดอ้างอิงวันที่ ${point[0]}<br>${isPeak?'Upside/Downside ถึงยอดเดิม':'Upside/Downside ถึงฐานเดิม'} ${pct>=0?'+':''}${fmtNum(pct,2)}%<br>เวลาเฉลี่ยในอดีต ${isPeak?'trough → peak':'peak → trough'}: ${fmtNum(travelDays,0)} วัน (${isPeak?ups.length:downs.length} รอบ)</div>
+      <div class="scenario-meta">${point.date?'จุดอ้างอิงวันที่ '+point.date:'ระดับประมาณการ ไม่มีวันที่ในอดีต'}<br>${point.method}<br>${isPeak?'Upside':'Downside'} ${pct>=0?'+':''}${fmtNum(pct,2)}%<br>เวลาเฉลี่ยในอดีต ${isPeak?'trough → peak':'peak → trough'}: ${fmtNum(travelDays,0)} วัน (${isPeak?ups.length:downs.length} รอบ)</div>
     </div>`;
   }
-  document.getElementById('scenarioGrid').innerHTML = card(previousPeak,'peak') + card(previousTrough,'trough');
+  document.getElementById('scenarioGrid').innerHTML = card(upsidePoint,'peak') + card(downsidePoint,'trough');
 }
 
 function renderTable(cycles){

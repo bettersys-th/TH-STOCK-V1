@@ -467,7 +467,7 @@ def main():
     yearend, cycles_compact, downlist = build_derived(prices, splits_sorted, tickers)
     accumulation_signals = build_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
     swing_signals = build_swing_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
-    dca_compact = build_dca_compact(prices, splits_sorted, dividends_sorted, tickers)
+    dca_compact = build_dca_compact(prices, splits_sorted, dividends_sorted, tickers, cycles_compact)
     write_json_atomic("stock_yearend.json", {"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend})
     write_json_atomic("cycles_compact.json", cycles_compact)
     write_json_atomic("downlist.json", downlist)

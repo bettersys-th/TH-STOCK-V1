@@ -45,6 +45,11 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("function trendInfo(s)", html)
         self.assertIn("🔎 คัดกรองหุ้น", html)
         self.assertIn("Cloud screener schema is older than this page", html)
+        self.assertIn('class="table-wrap scan-table-viewport"', html)
+        self.assertGreaterEqual(html.count('class="metric-help"'), 6)
+        self.assertIn("function boardLotPurchase(cash,price)", html)
+        self.assertIn("ซื้อขั้นต่ำ 100 หุ้นและเพิ่มทีละ 100 หุ้น", html)
+        self.assertNotIn("bought=buy/price", html)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@
     <label>Ticker<input list="dcaTickerList" id="riskTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
     <label>ซื้อครั้งแรกวันนี้ (บาท)<input type="number" id="riskInitial" min="0" step="1000" value="10000"><small class="cycle-time-note">ซื้อทันทีที่ราคาปัจจุบัน และรวมในต้นทุนเฉลี่ย</small></label>
     <label>งบลงทุนรวมสูงสุด (บาท)<input type="number" id="riskBudget" min="1" step="1000" value="130000"></label>
-    <label id="riskContributionLabel">DCA ต่องวด — คำนวณอัตโนมัติ (บาท)<input type="number" id="riskMonthly" readonly value="5000"><small class="cycle-time-note">(งบรวม − ซื้อครั้งแรก) ÷ จำนวนงวด</small></label>
+    <label id="riskContributionLabel">DCA ต่องวด — คำนวณอัตโนมัติ (บาท)<input type="number" id="riskMonthly" readonly value="5000"><small class="cycle-time-note">(งบรวม − ซื้อครั้งแรก) ÷ จำนวนงวด · ซื้อขั้นต่ำ 100 หุ้นและเพิ่มทีละ 100 หุ้น · เงินไม่ครบ lot สะสมรองวดถัดไป</small></label>
     <label>ความถี่ DCA<select id="riskFrequency"><option value="daily">ทุกวันทำการ</option><option value="weekly">ทุกสัปดาห์</option><option value="monthly" selected>ทุกเดือน</option></select></label>
     <label>ระยะเวลาแผน (เดือน)<input type="number" id="riskMonths" min="1" max="120" value="24"></label>
     <label>ราคาลงจากวันนี้ (%)<input type="number" id="riskDecline" min="0" max="95" value="30"></label>
@@ -34,7 +34,7 @@
     <summary>Historical Backtest — ใช้ตรวจสอบประกอบ ไม่ใช่ผลลัพธ์หลัก</summary>
     <div class="history-form">
       <label>เริ่มเดือน<select id="dcaStart"></select></label><label>ถึงเดือน<select id="dcaEnd"></select></label>
-      <label>เงินต่องวด<input type="number" id="dcaAmount" min="1" step="1000" value="5000"></label>
+      <label>เงินต่องวด<input type="number" id="dcaAmount" min="1" step="1000" value="5000"><small class="cycle-time-note">ซื้อเป็น Board Lot ครั้งละ 100 หุ้นเท่านั้น</small></label>
       <label>ความถี่<select id="dcaFrequency"><option value="1">ทุกเดือน</option><option value="3">ทุก 3 เดือน</option><option value="6">ทุก 6 เดือน</option><option value="12">ทุก 12 เดือน</option></select></label>
       <label class="dca-check"><input type="checkbox" id="dcaReinvest" checked> นำปันผลกลับลงทุน</label><button class="btn" id="dcaCalculate">คำนวณย้อนหลัง</button>
     </div>

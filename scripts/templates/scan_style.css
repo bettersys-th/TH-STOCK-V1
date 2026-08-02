@@ -20,6 +20,8 @@
   .status-pill.neutral,.status-pill.illiquid{background:#252c35;color:var(--muted);}
   .status-pill{white-space:nowrap;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700;}
   .signal-table{min-width:1280px;}
+  .scan-table-viewport{width:100%;max-width:100%;max-height:min(68vh,720px);overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:8px;scrollbar-gutter:stable both-edges}.scan-table-viewport .signal-table{min-width:1680px}.scan-table-viewport thead th{position:sticky;top:0;z-index:3;background:#10161d;box-shadow:0 1px 0 var(--line)}.table-scroll-hint{display:none;color:var(--amber);font-size:10px;margin:0 0 7px;text-align:right}.metric-help{position:relative;display:inline-grid;place-items:center;width:17px;height:17px;margin-left:3px;padding:0;border:1px solid #536276;border-radius:50%;background:#17212c;color:#9fb0c4;font:700 10px/1 'JetBrains Mono',monospace;cursor:help;vertical-align:middle;text-transform:none;letter-spacing:0}.metric-help::after{content:attr(data-tip);position:absolute;z-index:30;left:50%;bottom:calc(100% + 8px);width:280px;max-width:70vw;padding:9px 11px;border:1px solid var(--amber);border-radius:7px;background:#17140d;color:#f2d28b;font:11px/1.55 'Sarabun',sans-serif;text-align:left;white-space:normal;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translate(-50%,5px);transition:.15s;pointer-events:none}.metric-help:hover::after,.metric-help:focus::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+  .scan-table-viewport thead .metric-help::after{top:calc(100% + 8px);bottom:auto}
   .scan-row td:first-child small{display:block;color:var(--muted);font-size:9px;font-weight:400;margin-top:4px;}
   .total-score{font-size:18px;color:var(--text);}
   .mini-score{display:flex;align-items:center;gap:6px;min-width:72px;}
@@ -49,4 +51,5 @@
   .advanced-grid select{width:100%;margin-top:6px;background:#0b1017;border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:8px;font-size:12px;}
   .filter-error{min-height:16px;color:#ff8d9a;font-size:11px;padding:0 15px 10px;}
   @media(max-width:1100px){.scan-controls{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:850px){.advanced-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}}
+  @media(max-width:1700px){.table-scroll-hint{display:block}}
   @media(max-width:480px){.advanced-grid{grid-template-columns:1fr}.filter-reset{margin-left:0}.advanced-filter summary span{display:block;margin:4px 0 0;}}

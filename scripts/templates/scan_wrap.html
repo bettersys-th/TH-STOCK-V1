@@ -52,9 +52,9 @@
         <button type="button" class="filter-reset" id="scanReset">ล้างเงื่อนไข</button>
       </div>
       <div class="advanced-grid">
-        <label>Setup ขั้นต่ำ<input type="number" id="scanSetupMin" min="0" max="40" placeholder="0"></label>
-        <label>แรงรับขั้นต่ำ<input type="number" id="scanDemandMin" min="0" max="30" placeholder="0"></label>
-        <label>Confirmation ขั้นต่ำ<input type="number" id="scanConfirmationMin" min="0" max="30" placeholder="0"></label>
+        <label>Setup ขั้นต่ำ <button type="button" class="metric-help" aria-label="อธิบาย Setup" data-tip="Setup วัดว่าราคาลงจากยอดมากพอหรือไม่ ฐานราคาเริ่มแคบลง และความผันผวนลดลง คะแนนเต็ม 40">?</button><input type="number" id="scanSetupMin" min="0" max="40" placeholder="0"></label>
+        <label>แรงรับขั้นต่ำ <button type="button" class="metric-help" aria-label="อธิบายแรงรับ" data-tip="แรงรับวัด Volume ในวันราคาขึ้นเทียบวันราคาลง การยกจุดต่ำ และ Volume ล่าสุดที่เพิ่มขึ้น คะแนนเต็ม 30">?</button><input type="number" id="scanDemandMin" min="0" max="30" placeholder="0"></label>
+        <label>Confirmation ขั้นต่ำ <button type="button" class="metric-help" aria-label="อธิบาย Confirmation" data-tip="Confirmation วัดว่าราคาเริ่มยืนยันการฟื้นหรือยัง เช่น อยู่เหนือ MA20 เส้น MA20 เริ่มชันขึ้น และราคาเข้าใกล้หรือผ่านยอดฐาน 20 วัน คะแนนเต็ม 30">?</button><input type="number" id="scanConfirmationMin" min="0" max="30" placeholder="0"></label>
         <label>ลงจากยอดอย่างน้อย (%)<input type="number" id="scanDrawdownMin" min="0" max="100" placeholder="เช่น 15"></label>
         <label>ลงจากยอดไม่เกิน (%)<input type="number" id="scanDrawdownMax" min="0" max="100" placeholder="เช่น 50"></label>
         <label>กรอบราคา 20 วันไม่เกิน (%)<input type="number" id="scanRangeMax" min="0" step="0.1" placeholder="เช่น 12"></label>
@@ -70,9 +70,10 @@
       <div class="filter-error" id="scanFilterError"></div>
     </details>
     <div class="scan-count" id="scanCount"></div>
-    <div class="table-wrap" style="padding:0;">
+    <div class="table-scroll-hint">← เลื่อนแนวนอนเพื่อดูทุกคอลัมน์ →</div>
+    <div class="table-wrap scan-table-viewport" style="padding:0;">
       <table class="signal-table">
-        <thead><tr><th>Ticker</th><th>แนวโน้มที่พบ</th><th>สถานะสะสม</th><th>คะแนนสะสม</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>Volume 5 วัน</th><th>Momentum</th><th>สภาพคล่อง 30 วัน</th><th>สถานะปันผล</th><th>เหตุผลสำคัญ</th></tr></thead>
+        <thead><tr><th>Ticker</th><th>แนวโน้มที่พบ</th><th>สถานะสะสม</th><th>คะแนนสะสม</th><th>Setup <button type="button" class="metric-help" aria-label="อธิบาย Setup" data-tip="ฐานราคาและการลดความผันผวน คะแนนเต็ม 40">?</button></th><th>แรงรับ <button type="button" class="metric-help" aria-label="อธิบายแรงรับ" data-tip="หลักฐานจาก Volume และการยกจุดต่ำ คะแนนเต็ม 30">?</button></th><th>ยืนยัน <button type="button" class="metric-help" aria-label="อธิบาย Confirmation" data-tip="การฟื้นของราคา MA20 และการผ่านยอดฐาน คะแนนเต็ม 30">?</button></th><th>จากยอด 52 สัปดาห์</th><th>Volume 5 วัน</th><th>Momentum</th><th>สภาพคล่อง 30 วัน</th><th>สถานะปันผล</th><th>เหตุผลสำคัญ</th></tr></thead>
         <tbody id="scanTable"></tbody>
       </table>
     </div>

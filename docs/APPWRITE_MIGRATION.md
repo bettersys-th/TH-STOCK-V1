@@ -92,6 +92,7 @@ manually-created files are never deleted.
 - Cycle summary API is available at `/v1/summaries/cycles`; the Cycle tab lazy-loads it on first use and falls back to `data/cycles_compact.json` on GitHub Pages.
 - Cycle and DCA payloads are no longer embedded in `index.html`, reducing the generated landing page by about 4.5 MiB while preserving a separate static rollback path.
 - Accumulation and Swing summaries also lazy-load from Appwrite with their `data/*.json` files as fallback; scanner dividends use the Appwrite dividends summary with `data/dividends.json` fallback.
+- The historical return calculator is retained in source templates but omitted from the published build. Accumulation is the default landing tab, reducing `index.html` to roughly 124 KB.
 
 1. Completed: deploy `market-api-v2` from `appwrite/functions/market-api` with `rows.read` and `files.read` only.
 2. Completed: validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.

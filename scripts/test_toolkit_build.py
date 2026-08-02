@@ -27,6 +27,9 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn('class="nav-status-cluster"', html)
         for status_id in ("cycleSourceStatus", "scanSourceStatus", "swingSourceStatus", "dcaSourceStatus"):
             self.assertEqual(html.count(f'id="{status_id}"'), 1)
+        self.assertNotIn('id="navCalc"', html)
+        self.assertNotIn('id="pageCalc"', html)
+        self.assertIn('<button class="nav-tab active" id="navScan">', html)
 
 
 if __name__ == "__main__":

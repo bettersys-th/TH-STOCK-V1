@@ -26,9 +26,6 @@ def _read_json(data_dir, name, default):
 
 
 def build(data_dir, output_path):
-    calc_style = _read("calc_style.css")
-    calc_wrap = _read("calc_wrap.html")
-    calc_script = _read("calc_script.js")
     cyc_style = _read("cyc_style.css")
     cyc_wrap = _read("cyc_wrap.html")
     cyc_script = _read("cyc_script.js")
@@ -43,23 +40,14 @@ def build(data_dir, output_path):
     dca_wrap = _read("dca_wrap.html")
     dca_script = _read("dca_script.js")
 
-    stock_yearend = _read_json(data_dir, "stock_yearend.json", {"years": [], "tickers": {}})
-    splits = _read_json(data_dir, "splits.json", {})
-    dividends = _read_json(data_dir, "dividends.json", {})
-    downlist = _read_json(data_dir, "downlist.json", [])
     swing_backtest = _read_json(data_dir, "swing_backtest.json", {})
 
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    calc_script = (calc_script
-                   .replace("__DATA_JSON__", json.dumps(stock_yearend, ensure_ascii=False, separators=(",", ":")))
-                   .replace("__SPLITS_JSON__", json.dumps(splits, ensure_ascii=False, separators=(",", ":")))
-                   .replace("__DIVIDENDS_JSON__", json.dumps(dividends, ensure_ascii=False, separators=(",", ":"))))
     # Cycle and DCA are loaded lazily from Appwrite with public data files as fallback.
     # Keep only an empty bootstrap object in index.html so the landing page stays small.
     cyc_script = cyc_script.replace("__CYCLES_JSON__", "{}")
     scan_script = (scan_script
-                   .replace("__DOWNLIST_JSON__", json.dumps(downlist, ensure_ascii=False, separators=(",", ":")))
                    .replace("__ACCUMULATION_JSON__", "[]")
                    .replace("__UPDATED_AT_JSON__", json.dumps(updated_at, ensure_ascii=False))
                    .replace("__SCAN_DIVIDENDS_JSON__", "{}"))
@@ -75,7 +63,6 @@ def build(data_dir, output_path):
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>เครื่องมือวิเคราะห์หุ้น SET</title>
 <style>
-{calc_style}
 {nav_css}
 {cyc_style}
 {scan_style}
@@ -86,9 +73,8 @@ def build(data_dir, output_path):
 <body>
 <div class="wrap">
   <div class="nav-tabs">
-    <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
-    <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
+    <button class="nav-tab active" id="navScan">🎯 จังหวะสะสม</button>
     <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
     <button class="nav-tab" id="navDca">🗓️ DCA</button>
     <div class="nav-status-cluster">
@@ -100,15 +86,11 @@ def build(data_dir, output_path):
     </div>
   </div>
 
-  <div class="page active" id="pageCalc">
-{calc_wrap}
-  </div>
-
   <div class="page" id="pageCycle">
 {cyc_wrap}
   </div>
 
-  <div class="page" id="pageScan">
+  <div class="page active" id="pageScan">
 {scan_wrap}
   </div>
 
@@ -170,7 +152,7 @@ window.marketManifestReady = (async () => {{
   }}
 }})();
 
-const navButtons = {{navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'}};
+const navButtons = {{navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'}};
 const navFeatureStatuses = {{navCycle:'cycleSourceStatus', navScan:'scanSourceStatus', navSwing:'swingSourceStatus', navDca:'dcaSourceStatus'}};
 Object.keys(navButtons).forEach(navId => {{
   document.getElementById(navId).addEventListener('click', () => {{
@@ -183,16 +165,13 @@ Object.keys(navButtons).forEach(navId => {{
 }});
 
 (function(){{
-{calc_script}
-}})();
-
-(function(){{
 {cyc_script}
 }})();
 
 {scan_script}
 {swing_script}
 {dca_script}
+document.getElementById('navScan').click();
 </script>
 </body>
 </html>

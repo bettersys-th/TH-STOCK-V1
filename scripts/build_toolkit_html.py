@@ -86,12 +86,18 @@ def build(data_dir, output_path):
 <body>
 <div class="wrap">
   <div class="nav-tabs">
-    <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
     <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
     <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
     <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
     <button class="nav-tab" id="navDca">🗓️ DCA</button>
+    <div class="nav-status-cluster">
+      <span class="feature-source-status fallback" id="cycleSourceStatus" hidden>Cycle: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>สะสม: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="swingSourceStatus" hidden>Swing: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="dcaSourceStatus" hidden>DCA: รอโหลดข้อมูล</span>
+      <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
+    </div>
   </div>
 
   <div class="page active" id="pageCalc">
@@ -165,12 +171,14 @@ window.marketManifestReady = (async () => {{
 }})();
 
 const navButtons = {{navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'}};
+const navFeatureStatuses = {{navCycle:'cycleSourceStatus', navScan:'scanSourceStatus', navSwing:'swingSourceStatus', navDca:'dcaSourceStatus'}};
 Object.keys(navButtons).forEach(navId => {{
   document.getElementById(navId).addEventListener('click', () => {{
     Object.entries(navButtons).forEach(([nId, pId]) => {{
       document.getElementById(nId).classList.toggle('active', nId===navId);
       document.getElementById(pId).classList.toggle('active', pId===navButtons[navId]);
     }});
+    Object.values(navFeatureStatuses).forEach(id => document.getElementById(id).hidden = id !== navFeatureStatuses[navId]);
   }});
 }});
 

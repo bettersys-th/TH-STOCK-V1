@@ -275,10 +275,10 @@
   }
   .nav-tab:hover{color:var(--text);border-color:#3a4a5c;}
   .nav-tab.active{background:var(--amber);color:#161006;border-color:var(--amber);font-weight:700;}
+  .nav-status-cluster{order:99;margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.nav-status-cluster [hidden]{display:none!important}.nav-status-cluster .feature-source-status,.nav-status-cluster .cycle-source-status,.nav-status-cluster .dca-source-status{display:inline-block;margin:0;white-space:nowrap}
   .cloud-data-status{
     align-self:center;
-    order:99;
-    margin-left:auto;
+    margin:0;
     border:1px solid var(--line);
     border-radius:999px;
     padding:8px 12px;
@@ -293,7 +293,7 @@
   .feature-source-status{display:table;margin:0 0 12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0b1017;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px}.feature-source-status.loading{color:var(--amber)}.feature-source-status.online{color:var(--teal);border-color:rgba(45,212,191,.45)}.feature-source-status.fallback{color:var(--muted)}.feature-source-status.error{color:var(--red);border-color:rgba(226,89,107,.5)}
   .page{display:none;}
   .page.active{display:block;}
-  @media(max-width:760px){.cloud-data-status{width:100%;margin-left:0;text-align:center;}}
+  @media(max-width:760px){.nav-status-cluster{width:100%;margin-left:0;justify-content:flex-start}.cloud-data-status{width:auto;text-align:center;}}
   @media(min-width:1400px){.wrap{max-width:1280px;}}
 
 
@@ -469,12 +469,18 @@
 <body>
 <div class="wrap">
   <div class="nav-tabs">
-    <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
     <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
     <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
     <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
     <button class="nav-tab" id="navDca">🗓️ DCA</button>
+    <div class="nav-status-cluster">
+      <span class="feature-source-status fallback" id="cycleSourceStatus" hidden>Cycle: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>สะสม: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="swingSourceStatus" hidden>Swing: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="dcaSourceStatus" hidden>DCA: รอโหลดข้อมูล</span>
+      <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
+    </div>
   </div>
 
   <div class="page active" id="pageCalc">
@@ -594,7 +600,6 @@
 
   <div class="page" id="pageCycle">
 
-  <div class="cycle-source-status fallback" id="cycleSourceStatus" role="status" aria-live="polite">Cycle: พร้อมใช้ข้อมูลสำรอง</div>
   <div class="eyebrow">SET Cycle Analyzer</div>
   <h1>วิเคราะห์รอบวัฏจักรราคาหุ้น (Bull/Bear Cycle)</h1>
   <p class="sub">หา cycle ขาขึ้น-ขาลงของหุ้น โดยนับเป็นรอบเมื่อราคาขึ้นหรือลงอย่างน้อย <b>20%</b> จากจุดสูงสุด/ต่ำสุดก่อนหน้า (ราคารายวัน ปรับ split แล้วสำหรับหุ้นที่มีข้อมูล)</p>
@@ -644,7 +649,6 @@
   </div>
 
   <div class="page" id="pageScan">
-  <div class="feature-source-status fallback" id="scanSourceStatus">สะสม: รอโหลดข้อมูล</div>
   <div class="eyebrow">Point-in-time Accumulation Scanner</div>
   <h1>ช่วงเวลาที่น่าจับตาเพื่อทยอยสะสม</h1>
   <p class="scan-info">คะแนนใช้เฉพาะราคาและปริมาณซื้อขายที่ทราบถึงวันล่าสุด แยกเป็น <b>รูปแบบฐานราคา แรงรับซื้อ และการยืนยันแนวโน้ม</b> โดยไม่ใช้จุดต่ำสุดในอนาคต คลิกแถวเพื่อดู Cycle ย้อนหลังประกอบ</p>
@@ -727,7 +731,6 @@
   </div>
 
   <div class="page" id="pageSwing">
-  <div class="feature-source-status fallback" id="swingSourceStatus">Swing: รอโหลดข้อมูล</div>
   <div class="eyebrow">EOD Swing Trade Scanner</div>
   <h1>ค้นหา Swing Setup</h1>
   <p class="sub">จัดอันดับจากแนวโน้ม MA20/50/200, ระยะถึง breakout 20 วัน, Volume, Momentum และ Risk/Reward โดยใช้ข้อมูลถึงวันล่าสุดเท่านั้น</p>
@@ -749,7 +752,6 @@
   </div>
 
   <div class="page" id="pageDca">
-  <div class="dca-source-status fallback" id="dcaSourceStatus" role="status" aria-live="polite">DCA: พร้อมใช้ข้อมูลสำรอง</div>
   <div class="eyebrow">Forward-looking DCA Risk Planner</div><h1>วางแผน DCA ก่อนลงทุน</h1>
   <p class="sub">จำลองว่าหากราคาค่อย ๆ ลงแล้วฟื้น แผนต้องใช้เงินเท่าไร ต้นทุนเฉลี่ยอยู่ที่ใด และขาดทุนระหว่างทางเกินระดับที่รับได้หรือไม่</p>
 
@@ -847,12 +849,14 @@ window.marketManifestReady = (async () => {
 })();
 
 const navButtons = {navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'};
+const navFeatureStatuses = {navCycle:'cycleSourceStatus', navScan:'scanSourceStatus', navSwing:'swingSourceStatus', navDca:'dcaSourceStatus'};
 Object.keys(navButtons).forEach(navId => {
   document.getElementById(navId).addEventListener('click', () => {
     Object.entries(navButtons).forEach(([nId, pId]) => {
       document.getElementById(nId).classList.toggle('active', nId===navId);
       document.getElementById(pId).classList.toggle('active', pId===navButtons[navId]);
     });
+    Object.values(navFeatureStatuses).forEach(id => document.getElementById(id).hidden = id !== navFeatureStatuses[navId]);
   });
 });
 
@@ -1437,7 +1441,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-02 18:48";
+const UPDATED_AT = "2026-08-02 18:57";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 

@@ -24,6 +24,9 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("/v1/summaries/swing", html)
         self.assertIn("['accumulation_signals.json','dividends.json']", html)
         self.assertIn("data/swing_signals.json", html)
+        self.assertIn('class="nav-status-cluster"', html)
+        for status_id in ("cycleSourceStatus", "scanSourceStatus", "swingSourceStatus", "dcaSourceStatus"):
+            self.assertEqual(html.count(f'id="{status_id}"'), 1)
 
 
 if __name__ == "__main__":

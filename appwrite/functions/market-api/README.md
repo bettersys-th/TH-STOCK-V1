@@ -7,7 +7,7 @@ Read-only gateway from the public website to the private versioned market-data b
 - Function ID: `market-api`
 - Runtime: latest supported Python 3.12
 - Root directory: `appwrite/functions/market-api`
-- Entrypoint: `main.py` (compatibility wrapper delegates to `src/main.py`)
+- Entrypoint: `main.py` (self-contained; no package-relative imports)
 - Build command: `pip install -r requirements.txt`
 - Execute access: `Any` (market prices are public; Storage remains private)
 - Dynamic API key scopes: `files.read`, `rows.read` only

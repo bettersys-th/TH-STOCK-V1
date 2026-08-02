@@ -5,7 +5,7 @@ import os
 import unittest
 from pathlib import Path
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "appwrite" / "functions" / "market-api" / "src" / "main.py"
+MODULE_PATH = Path(__file__).resolve().parents[1] / "appwrite" / "functions" / "market-api" / "main.py"
 spec = importlib.util.spec_from_file_location("market_api", MODULE_PATH)
 market_api = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(market_api)

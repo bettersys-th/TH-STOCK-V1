@@ -1,0 +1,38 @@
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*secret*.json
+credentials/
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+.coverage
+coverage.xml
+htmlcov/
+
+# Editors, runtime, and local/private data
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+*.bak
+*.sqlite
+*.sqlite3
+exports/
+private/
+user-data/

@@ -1,3 +1,5 @@
+param([switch]$UpdateFirst)
+
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -14,6 +16,37 @@ function Read-WithDefault {
 Write-Host "TH Stock -> Appwrite staging upload" -ForegroundColor Cyan
 Write-Host "Credentials remain in this process only and are not written to a file."
 Write-Host ""
+
+if ($UpdateFirst) {
+    Write-Host "This mode downloads fresh Yahoo data, runs quality checks, rebuilds the website, then offers an Appwrite upload." -ForegroundColor Yellow
+    $updateAnswer = Read-Host "Type UPDATE to start the local market update"
+    if ($updateAnswer -cne "UPDATE") {
+        Write-Host "Canceled before downloading market data." -ForegroundColor Yellow
+        exit 0
+    }
+
+    Write-Host "Installing pinned update dependencies..." -ForegroundColor Yellow
+    & python -m pip install --disable-pip-version-check -r requirements.txt
+    if ($LASTEXITCODE -ne 0) { throw "Update dependency installation failed." }
+
+    Write-Host "Running security checks and tests..." -ForegroundColor Yellow
+    & python scripts/security_guard.py
+    if ($LASTEXITCODE -ne 0) { throw "Security guard failed." }
+    & python -m unittest discover -s scripts -p "test_*.py"
+    if ($LASTEXITCODE -ne 0) { throw "Tests failed; market update was not started." }
+
+    Write-Host "Downloading prices and rebuilding verified summaries. This can take a while..." -ForegroundColor Yellow
+    & python scripts/update_and_build.py
+    if ($LASTEXITCODE -ne 0) { throw "Update or quality gate failed; Appwrite upload was not started." }
+
+    $qualityPath = Join-Path $repoRoot "data\data_quality.json"
+    if (Test-Path -LiteralPath $qualityPath) {
+        $quality = Get-Content -LiteralPath $qualityPath -Raw | ConvertFrom-Json
+        Write-Host ("Verified local data: {0} | {1} price tickers | status {2}" -f $quality.latestDate, $quality.priceTickers, $quality.status) -ForegroundColor Green
+    }
+    Write-Host "Local update passed. Appwrite credentials will be requested now." -ForegroundColor Green
+    Write-Host ""
+}
 
 $endpoint = Read-WithDefault "Appwrite endpoint" "https://sgp.cloud.appwrite.io/v1"
 $projectId = Read-Host "Appwrite Project ID"

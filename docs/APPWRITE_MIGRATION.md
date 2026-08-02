@@ -80,6 +80,12 @@ export, shows a dry-run, and requires typing `UPLOAD` before any network write. 
 collisions with GitHub Desktop, antivirus, or another generated export. GitHub Actions remains an
 optional staging fallback rather than the recommended first upload path.
 
+For later manual evening updates, run `update_and_upload_appwrite_staging.bat`. Confirm with
+`UPDATE`; the wrapper installs pinned dependencies, runs the security guard and full test suite,
+downloads Yahoo data, applies the quality gate, and rebuilds all summaries. It asks for the hidden
+Appwrite API key only after the local update passes. Review the dry-run and type `UPLOAD` to publish
+the new staging manifest. The key remains process-only and is cleared when the wrapper exits.
+
 If an upload is canceled, immutable objects from that incomplete attempt can remain safely but use
 storage. Run `cleanup_appwrite_staging.bat` to inspect them. It downloads the newest completed
 manifest, proves every referenced object exists, retains that manifest and all referenced objects,

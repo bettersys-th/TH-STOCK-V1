@@ -70,6 +70,7 @@ async function loadCloudCycles(){
   })();
   return cycleCloudPromise;
 }
+window.ensureCycleData = loadCloudCycles;
 
 function fmtNum(n, dec=2){
   return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});

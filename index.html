@@ -563,6 +563,7 @@ async function loadCloudCycles(){
   })();
   return cycleCloudPromise;
 }
+window.ensureCycleData = loadCloudCycles;
 
 function fmtNum(n, dec=2){
   return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -765,7 +766,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-02 19:01";
+const UPDATED_AT = "2026-08-02 19:13";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -865,8 +866,9 @@ function render(){
       <td class="dividend-cell">${dividendHtml}</td>
       <td class="reason-cell">${s.reasons.length ? s.reasons.join(' · ') : 'ยังไม่มีเงื่อนไขเด่น'}</td>
     </tr>`}).join('');
-  tbody.querySelectorAll('.scan-row').forEach(row => row.addEventListener('click', () => {
+  tbody.querySelectorAll('.scan-row').forEach(row => row.addEventListener('click', async () => {
     document.getElementById('navCycle').click();
+    await window.ensureCycleData?.();
     const input = document.getElementById('cycTicker');
     input.value = row.dataset.ticker;
     input.dispatchEvent(new Event('change'));
@@ -904,7 +906,7 @@ function render(){
  const rules={score:(a,b)=>b.score-a.score,breakout:(a,b)=>Math.abs(a.breakoutPct)-Math.abs(b.breakoutPct),volume:(a,b)=>b.volumeRatio-a.volumeRatio,rr:(a,b)=>b.rr-a.rr}; rows=rows.slice().sort(rules[sort.value]);
  document.getElementById('swingCount').textContent=`พบ ${rows.length} หุ้น · Triggered ${rows.filter(x=>x.status==='triggered').length} · Setup ${rows.filter(x=>x.status==='setup').length}`;
  tbody.innerHTML=rows.map(x=>`<tr class="swing-row" data-t="${x.t}"><td class="swing-symbol">${x.t}<small>${x.date}</small></td><td><span class="swing-pill ${x.status}">${labels[x.status]}</span></td><td class="swing-score">${x.score}</td><td>${n(x.price)}</td><td>${n(x.ma20)} / ${n(x.ma50)} / ${n(x.ma200)}</td><td class="${x.breakoutPct>=0?'dir-up':''}">${x.breakoutPct>=0?'+':''}${n(x.breakoutPct)}%</td><td>${n(x.volumeRatio)}x</td><td class="${x.momentum20>=0?'dir-up':'dir-down'}">${x.momentum20>=0?'+':''}${n(x.momentum20)}%</td><td>${n(x.stop)} / ${n(x.target)}</td><td>${n(x.rr)}x</td><td class="swing-reason">${x.reasons.join(' · ')||'—'}</td></tr>`).join('');
- tbody.querySelectorAll('.swing-row').forEach(row=>row.onclick=()=>{document.getElementById('navCycle').click();const input=document.getElementById('cycTicker');input.value=row.dataset.t;input.dispatchEvent(new Event('change'));document.getElementById('analyzeBtn').click();});
+ tbody.querySelectorAll('.swing-row').forEach(row=>row.onclick=async()=>{document.getElementById('navCycle').click();await window.ensureCycleData?.();const input=document.getElementById('cycTicker');input.value=row.dataset.t;input.dispatchEvent(new Event('change'));document.getElementById('analyzeBtn').click();});
 }
 function renderValidation(){const r=BACKTEST.results||{},hi=r['score70+_20d']||{},low=r['score<50_20d']||{},trigger=r.triggered_20d||{},setup=r.setup_20d||{},ts=BACKTEST.targetStop60d||{},tr=ts.triggered||{},su=ts.setup||{};const pct=(a,b,c)=>a+b+c?100*a/(a+b+c):0;const items=[['Score 70+ · ผลตอบแทนเฉลี่ย 20D',`${hi.meanPct>=0?'+':''}${n(hi.meanPct||0)}%`],['Score <50 · ผลตอบแทนเฉลี่ย 20D',`${(low.meanPct||0)>=0?'+':''}${n(low.meanPct||0)}%`],['Triggered · Target ก่อน Stop ภายใน 60D',`${n(pct(tr.targetFirst||0,tr.stopFirst||0,tr.neither||0))}%`],['Setup · Target ก่อน Stop ภายใน 60D',`${n(pct(su.targetFirst||0,su.stopFirst||0,su.neither||0))}%`]];document.getElementById('swingValidationGrid').innerHTML=items.map(x=>`<div class="validation-stat"><small>${x[0]}</small><b>${x[1]}</b></div>`).join('');document.getElementById('swingValidationNote').textContent=`ทดสอบตั้งแต่ ${BACKTEST.startYear||'—'} สุ่มทุก ${BACKTEST.sampleStepTradingDays||'—'} วันทำการ · Triggered 20D เฉลี่ย ${(trigger.meanPct||0)>=0?'+':''}${n(trigger.meanPct||0)}% (บวก ${n(trigger.positivePct||0)}%) · Setup 20D เฉลี่ย ${(setup.meanPct||0)>=0?'+':''}${n(setup.meanPct||0)}% (บวก ${n(setup.positivePct||0)}%) · มี survivorship bias, ใช้ราคาปิด และยังไม่รวมค่าธรรมเนียม/ปันผล/slippage`;}
 [search,status,score,sort].forEach(x=>x.addEventListener(x===search?'input':'change',render));

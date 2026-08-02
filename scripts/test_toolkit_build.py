@@ -30,6 +30,8 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertNotIn('id="navCalc"', html)
         self.assertNotIn('id="pageCalc"', html)
         self.assertIn('<button class="nav-tab active" id="navScan">', html)
+        self.assertIn("window.ensureCycleData = loadCloudCycles", html)
+        self.assertGreaterEqual(html.count("await window.ensureCycleData?.()"), 2)
 
 
 if __name__ == "__main__":

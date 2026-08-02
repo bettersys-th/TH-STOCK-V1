@@ -100,8 +100,9 @@ function render(){
       <td class="dividend-cell">${dividendHtml}</td>
       <td class="reason-cell">${s.reasons.length ? s.reasons.join(' · ') : 'ยังไม่มีเงื่อนไขเด่น'}</td>
     </tr>`}).join('');
-  tbody.querySelectorAll('.scan-row').forEach(row => row.addEventListener('click', () => {
+  tbody.querySelectorAll('.scan-row').forEach(row => row.addEventListener('click', async () => {
     document.getElementById('navCycle').click();
+    await window.ensureCycleData?.();
     const input = document.getElementById('cycTicker');
     input.value = row.dataset.ticker;
     input.dispatchEvent(new Event('change'));

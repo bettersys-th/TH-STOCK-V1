@@ -10,6 +10,11 @@ spec = importlib.util.spec_from_file_location("market_api", MODULE_PATH)
 market_api = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(market_api)
 
+COMPAT_PATH = MODULE_PATH.with_name("main.py")
+compat_spec = importlib.util.spec_from_file_location("market_api_compat", COMPAT_PATH)
+market_api_compat = importlib.util.module_from_spec(compat_spec)
+compat_spec.loader.exec_module(market_api_compat)
+
 
 class FakeRepository:
     def __init__(self):
@@ -40,6 +45,10 @@ class MarketApiTests(unittest.TestCase):
         self.assertEqual(version["dataAsOf"], 20260731)
         self.assertEqual(stock["ticker"], "PTT")
         self.assertEqual(stock["v"], [100])
+
+    def test_compatibility_entrypoint_loads_handler(self):
+        self.assertTrue(callable(market_api_compat.main))
+        self.assertEqual(market_api_compat.main.__name__, market_api.main.__name__)
 
     def test_rejects_unknown_and_invalid_ticker(self):
         service = market_api.MarketService(FakeRepository())

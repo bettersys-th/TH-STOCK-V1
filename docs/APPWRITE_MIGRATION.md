@@ -50,6 +50,9 @@ Create a staging project in Appwrite Console, then:
 
 The uploader verifies every object's size and SHA-256 checksum, uses immutable content-addressed
 file IDs, skips existing objects, and uploads the manifest last. It does not delete remote data.
+The workflow job allows up to 90 minutes because a full Yahoo refresh and the first staging upload
+can exceed 30 minutes. A canceled run is safe to retry: already uploaded objects are detected and
+skipped.
 
 Add the following GitHub Actions repository secrets. During staging, uploads run only from a manual
 **Run workflow** with `upload_appwrite_staging` selected. Scheduled daily runs do not upload until

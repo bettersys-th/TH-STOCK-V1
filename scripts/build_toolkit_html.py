@@ -74,12 +74,12 @@ def build(data_dir, output_path):
 <div class="wrap">
   <div class="nav-tabs">
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
-    <button class="nav-tab active" id="navScan">🎯 จังหวะสะสม</button>
+    <button class="nav-tab active" id="navScan">🔎 คัดกรองหุ้น</button>
     <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
     <button class="nav-tab" id="navDca">🗓️ DCA</button>
     <div class="nav-status-cluster">
       <span class="feature-source-status fallback" id="cycleSourceStatus" hidden>Cycle: รอโหลดข้อมูล</span>
-      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>สะสม: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>คัดกรอง: รอโหลดข้อมูล</span>
       <span class="feature-source-status fallback" id="swingSourceStatus" hidden>Swing: รอโหลดข้อมูล</span>
       <span class="feature-source-status fallback" id="dcaSourceStatus" hidden>DCA: รอโหลดข้อมูล</span>
       <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
@@ -157,7 +157,9 @@ async function fetchMarketSummary(name, signal) {{
         if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) {{
           const payload = await cached.json();
           payload._clientSource = 'cache';
-          return payload;
+          const compatible = name !== 'accumulation' || payload.summary?.some(item => Number.isFinite(Number(item.volume5Ratio)));
+          if (compatible) return payload;
+          await cache.delete(cacheKey);
         }}
         await cache.delete(cacheKey);
       }}
@@ -168,6 +170,9 @@ async function fetchMarketSummary(name, signal) {{
   }});
   if (!response.ok) throw new Error(`${{name}} HTTP ${{response.status}}`);
   const payload = await response.json();
+  if (name === 'accumulation' && !payload.summary?.some(item => Number.isFinite(Number(item.volume5Ratio)))) {{
+    throw new Error('Cloud screener schema is older than this page');
+  }}
   if (cache) {{
     try {{
       const keys = await cache.keys();

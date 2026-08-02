@@ -32,6 +32,7 @@
   .liquidity-cell small{color:var(--muted);margin-top:2px;}
   .liquidity-warning{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:5px;background:#4b2027;color:#ff9ca7;font-size:9px;font-weight:700;white-space:nowrap;}
   .dividend-cell{min-width:145px;font-size:10px;line-height:1.5}.dividend-pill{display:inline-block;padding:4px 7px;border-radius:6px;background:#172b3b;color:#83c7f4}.dividend-pill.continuous{background:#173f35;color:#72dfb4}.dividend-pill.stopped{background:#4b3c20;color:#ffd478}.dividend-cell small{display:block;color:var(--muted);margin-top:4px}
+  .trend-pill{display:inline-block;min-width:145px;padding:5px 8px;border-radius:6px;background:#252c35;color:var(--muted);font-size:10px;line-height:1.35}.trend-pill.surge,.trend-pill.recover{background:#173f35;color:#72dfb4}.trend-pill.base{background:#183650;color:#80c7ff}.trend-pill.watch,.trend-pill.discount{background:#4b3c20;color:#ffd478}.trend-pill.weak{background:#4b2027;color:#ff9ca7}.volume-cell,.momentum-cell{min-width:115px}.volume-cell small,.momentum-cell small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
   .methodology h3{margin:0 0 8px;}
   .methodology p{margin:0;color:var(--muted);line-height:1.7;font-size:13px;}
   .advanced-filter{border:1px solid var(--line);border-radius:10px;margin:-4px 0 18px;background:rgba(11,16,23,.45);}

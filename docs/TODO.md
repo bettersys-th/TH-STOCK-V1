@@ -1,8 +1,10 @@
 # Project TODO
 
-## P0 — Price data completeness
+## Deferred — Price data completeness
 
-- [ ] Produce a coverage report for every ticker: first date, last date, bar count, and missing trading-date gaps.
+Status: deferred while product functions are completed. Existing coverage warnings remain active; do not treat flagged histories as verified until this work resumes.
+
+- [x] Produce a coverage report for every ticker: first date, last date, bar count, and missing trading-date gaps (`data/price_coverage.csv`).
 - [ ] Separate expected gaps (IPO date, suspension, delisting, no-trade day) from provider/download failures.
 - [ ] Compare suspicious tickers against a second price source before repairing data.
 - [ ] Prevent incomplete or materially stale ticker histories from being published silently.
@@ -20,4 +22,3 @@ Status: deferred until price coverage and the remaining analysis features are re
 ## Deferred — Free/Pro packages
 
 See `DCA_PACKAGES_ROADMAP.md`. Membership, payments, and entitlements remain deferred.
-

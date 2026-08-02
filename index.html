@@ -163,6 +163,7 @@
   .liquidity-cell small{color:var(--muted);margin-top:2px;}
   .liquidity-warning{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:5px;background:#4b2027;color:#ff9ca7;font-size:9px;font-weight:700;white-space:nowrap;}
   .dividend-cell{min-width:145px;font-size:10px;line-height:1.5}.dividend-pill{display:inline-block;padding:4px 7px;border-radius:6px;background:#172b3b;color:#83c7f4}.dividend-pill.continuous{background:#173f35;color:#72dfb4}.dividend-pill.stopped{background:#4b3c20;color:#ffd478}.dividend-cell small{display:block;color:var(--muted);margin-top:4px}
+  .trend-pill{display:inline-block;min-width:145px;padding:5px 8px;border-radius:6px;background:#252c35;color:var(--muted);font-size:10px;line-height:1.35}.trend-pill.surge,.trend-pill.recover{background:#173f35;color:#72dfb4}.trend-pill.base{background:#183650;color:#80c7ff}.trend-pill.watch,.trend-pill.discount{background:#4b3c20;color:#ffd478}.trend-pill.weak{background:#4b2027;color:#ff9ca7}.volume-cell,.momentum-cell{min-width:115px}.volume-cell small,.momentum-cell small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
   .methodology h3{margin:0 0 8px;}
   .methodology p{margin:0;color:var(--muted);line-height:1.7;font-size:13px;}
   .advanced-filter{border:1px solid var(--line);border-radius:10px;margin:-4px 0 18px;background:rgba(11,16,23,.45);}
@@ -218,12 +219,12 @@
 <div class="wrap">
   <div class="nav-tabs">
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
-    <button class="nav-tab active" id="navScan">🎯 จังหวะสะสม</button>
+    <button class="nav-tab active" id="navScan">🔎 คัดกรองหุ้น</button>
     <button class="nav-tab" id="navSwing">📈 Swing Trade</button>
     <button class="nav-tab" id="navDca">🗓️ DCA</button>
     <div class="nav-status-cluster">
       <span class="feature-source-status fallback" id="cycleSourceStatus" hidden>Cycle: รอโหลดข้อมูล</span>
-      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>สะสม: รอโหลดข้อมูล</span>
+      <span class="feature-source-status fallback" id="scanSourceStatus" hidden>คัดกรอง: รอโหลดข้อมูล</span>
       <span class="feature-source-status fallback" id="swingSourceStatus" hidden>Swing: รอโหลดข้อมูล</span>
       <span class="feature-source-status fallback" id="dcaSourceStatus" hidden>DCA: รอโหลดข้อมูล</span>
       <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
@@ -285,9 +286,9 @@
   </div>
 
   <div class="page active" id="pageScan">
-  <div class="eyebrow">Point-in-time Accumulation Scanner</div>
-  <h1>ช่วงเวลาที่น่าจับตาเพื่อทยอยสะสม</h1>
-  <p class="scan-info">คะแนนใช้เฉพาะราคาและปริมาณซื้อขายที่ทราบถึงวันล่าสุด แยกเป็น <b>รูปแบบฐานราคา แรงรับซื้อ และการยืนยันแนวโน้ม</b> โดยไม่ใช้จุดต่ำสุดในอนาคต คลิกแถวเพื่อดู Cycle ย้อนหลังประกอบ</p>
+  <div class="eyebrow">Price & Volume Stock Screener</div>
+  <h1>คัดกรองหุ้นจากราคา Volume และจังหวะสะสม</h1>
+  <p class="scan-info">ค้นหาหุ้นตามพฤติกรรมราคาและปริมาณซื้อขาย แล้วใช้ <b>คะแนนจังหวะสะสม</b> ช่วยจัดลำดับเพื่อศึกษาต่อ ตัวกรองและแนวโน้มที่พบไม่ใช่คำสั่งซื้อ คลิกแถวเพื่อดู Cycle ย้อนหลังประกอบ</p>
   <div class="scan-updated" id="scanUpdated"></div>
 
   <div class="signal-legend">
@@ -321,6 +322,8 @@
         <option value="demandDesc">เรียงแรงรับสูงสุด</option>
         <option value="drawdownDesc">เรียงลงจากยอดมากสุด</option>
         <option value="liquidityDesc">เรียงสภาพคล่องสูงสุด</option>
+        <option value="volume5Desc">เรียง Volume 5 วันเร่งสูงสุด</option>
+        <option value="momentumDesc">เรียง Momentum 5 วันสูงสุด</option>
         <option value="tickerAsc">เรียงตาม Ticker</option>
       </select>
       <select id="scanDividendMode"><option value="all">ปันผล: ทั้งหมด</option><option value="continuous">ปันผลต่อเนื่อง</option><option value="stopped">เคยจ่ายแต่หยุดแล้ว</option></select>
@@ -331,6 +334,9 @@
         <button type="button" class="filter-preset" data-preset="nearConfirm">ใกล้ยืนยัน</button>
         <button type="button" class="filter-preset" data-preset="tightBase">ฐานราคาแน่น</button>
         <button type="button" class="filter-preset" data-preset="strongDemand">แรงรับสูง</button>
+        <button type="button" class="filter-preset" data-preset="belowPeak">ต่ำกว่ายอด 20–50%</button>
+        <button type="button" class="filter-preset" data-preset="volumeSurge">Volume 5 วันเร่ง</button>
+        <button type="button" class="filter-preset" data-preset="recovering">เริ่มฟื้นตัว</button>
         <button type="button" class="filter-reset" id="scanReset">ล้างเงื่อนไข</button>
       </div>
       <div class="advanced-grid">
@@ -341,6 +347,9 @@
         <label>ลงจากยอดไม่เกิน (%)<input type="number" id="scanDrawdownMax" min="0" max="100" placeholder="เช่น 50"></label>
         <label>กรอบราคา 20 วันไม่เกิน (%)<input type="number" id="scanRangeMax" min="0" step="0.1" placeholder="เช่น 12"></label>
         <label>Up/Down volume ขั้นต่ำ<input type="number" id="scanDemandRatioMin" min="0" step="0.1" placeholder="เช่น 1.2"></label>
+        <label>Volume 5 วัน / 20 วันก่อนหน้า ขั้นต่ำ<input type="number" id="scanVolume5RatioMin" min="0" step="0.1" placeholder="เช่น 1.3"></label>
+        <label>Momentum 5 วันขั้นต่ำ (%)<input type="number" id="scanMomentum5Min" step="0.1" placeholder="เช่น 2"></label>
+        <label>Momentum 5 วันสูงสุด (%)<input type="number" id="scanMomentum5Max" step="0.1" placeholder="เช่น 10"></label>
         <label>มูลค่าซื้อขายขั้นต่ำ (ล้านบาท/วัน)<input type="number" id="scanLiquidityMin" min="0" step="0.1" placeholder="เช่น 5"></label>
         <label>คำเตือนสภาพคล่อง<select id="scanLiquidityWarning"><option value="all">ทั้งหมด</option><option value="exclude">ไม่รวมหุ้นเตือน 30 วัน</option><option value="only">เฉพาะหุ้นที่ถูกเตือน</option></select></label>
         <label>ปันผลต่อเนื่องอย่างน้อย (ปี)<input type="number" id="scanDividendYears" min="1" max="20" value="3"></label>
@@ -351,7 +360,7 @@
     <div class="scan-count" id="scanCount"></div>
     <div class="table-wrap" style="padding:0;">
       <table class="signal-table">
-        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>สภาพคล่อง 30 วัน</th><th>สถานะปันผล</th><th>เหตุผลสำคัญ</th></tr></thead>
+        <thead><tr><th>Ticker</th><th>แนวโน้มที่พบ</th><th>สถานะสะสม</th><th>คะแนนสะสม</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>Volume 5 วัน</th><th>Momentum</th><th>สภาพคล่อง 30 วัน</th><th>สถานะปันผล</th><th>เหตุผลสำคัญ</th></tr></thead>
         <tbody id="scanTable"></tbody>
       </table>
     </div>
@@ -489,7 +498,9 @@ async function fetchMarketSummary(name, signal) {
         if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) {
           const payload = await cached.json();
           payload._clientSource = 'cache';
-          return payload;
+          const compatible = name !== 'accumulation' || payload.summary?.some(item => Number.isFinite(Number(item.volume5Ratio)));
+          if (compatible) return payload;
+          await cache.delete(cacheKey);
         }
         await cache.delete(cacheKey);
       }
@@ -500,6 +511,9 @@ async function fetchMarketSummary(name, signal) {
   });
   if (!response.ok) throw new Error(`${name} HTTP ${response.status}`);
   const payload = await response.json();
+  if (name === 'accumulation' && !payload.summary?.some(item => Number.isFinite(Number(item.volume5Ratio)))) {
+    throw new Error('Cloud screener schema is older than this page');
+  }
   if (cache) {
     try {
       const keys = await cache.keys();
@@ -837,7 +851,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-02 20:30";
+const UPDATED_AT = "2026-08-02 20:47";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -857,7 +871,8 @@ let referenceDate = new Date();
 const numericFilters = {
   setupMin:'scanSetupMin', demandMin:'scanDemandMin', confirmationMin:'scanConfirmationMin',
   drawdownMin:'scanDrawdownMin', drawdownMax:'scanDrawdownMax', rangeMax:'scanRangeMax',
-  demandRatioMin:'scanDemandRatioMin', liquidityMin:'scanLiquidityMin'
+  demandRatioMin:'scanDemandRatioMin', volume5RatioMin:'scanVolume5RatioMin',
+  momentum5Min:'scanMomentum5Min', momentum5Max:'scanMomentum5Max', liquidityMin:'scanLiquidityMin'
 };
 const numericEls = Object.fromEntries(Object.entries(numericFilters).map(([key,id]) => [key,document.getElementById(id)]));
 
@@ -890,6 +905,16 @@ function dividendInfo(ticker){
   return{has:true,continuous,stopped:monthsSince>=stopMonths,last,monthsSince,required};
 }
 function dividendMatches(ticker){const info=dividendInfo(ticker),mode=dividendModeSelect.value;return mode==='all'||(mode==='continuous'&&info.continuous)||(mode==='stopped'&&info.has&&info.stopped);}
+function trendInfo(s){
+  const momentum=Number(s.momentum5||0),volume=Number(s.volume5Ratio||0),depth=Math.max(0,-s.drawdown52);
+  if(s.status==='invalidated')return{key:'weak',label:'แนวโน้มอ่อน / หลุดฐาน'};
+  if(volume>=1.3&&momentum>=2&&s.confirmation>=18)return{key:'surge',label:'Volume เร่ง + ราคาเริ่มฟื้น'};
+  if(s.status==='confirmed'&&momentum>=0)return{key:'recover',label:'เริ่มยืนยันการฟื้นตัว'};
+  if(depth>=15&&s.range20<=12&&s.setup>=18)return{key:'base',label:'พักตัวสร้างฐาน'};
+  if(volume>=1.3&&momentum<0)return{key:'watch',label:'Volume สูงแต่ราคายังอ่อน'};
+  if(depth>=20)return{key:'discount',label:'ต่ำกว่ายอด — รอหลักฐานเพิ่ม'};
+  return{key:'neutral',label:'ยังไม่เห็นแนวโน้มเด่น'};
+}
 function advancedMatches(s, f){
   const depth = Math.max(0, -s.drawdown52);
   return (f.setupMin === null || s.setup >= f.setupMin) &&
@@ -899,6 +924,9 @@ function advancedMatches(s, f){
     (f.drawdownMax === null || depth <= f.drawdownMax) &&
     (f.rangeMax === null || s.range20 <= f.rangeMax) &&
     (f.demandRatioMin === null || s.demandRatio >= f.demandRatioMin) &&
+    (f.volume5RatioMin === null || Number(s.volume5Ratio||0) >= f.volume5RatioMin) &&
+    (f.momentum5Min === null || Number(s.momentum5||0) >= f.momentum5Min) &&
+    (f.momentum5Max === null || Number(s.momentum5||0) <= f.momentum5Max) &&
     (f.liquidityMin === null || (s.medianValue30||s.medianValue20) >= f.liquidityMin * 1000000) &&
     (liquidityWarningSelect.value === 'all' || (liquidityWarningSelect.value === 'only' ? s.lowLiquidity30 : !s.lowLiquidity30));
 }
@@ -910,6 +938,8 @@ function sortRows(rows, mode){
     demandDesc:(a,b)=>b.demand-a.demand || b.score-a.score,
     drawdownDesc:(a,b)=>a.drawdown52-b.drawdown52,
     liquidityDesc:(a,b)=>(b.medianValue30||b.medianValue20)-(a.medianValue30||a.medianValue20),
+    volume5Desc:(a,b)=>Number(b.volume5Ratio||0)-Number(a.volume5Ratio||0),
+    momentumDesc:(a,b)=>Number(b.momentum5||0)-Number(a.momentum5||0),
     tickerAsc:(a,b)=>a.t.localeCompare(b.t)
   };
   return sorted.sort(rules[mode] || rules.scoreDesc);
@@ -920,19 +950,23 @@ function render(){
   const minScore = Number(minScoreSelect.value);
   const advanced = readAdvancedFilters();
   const invalidRange = advanced.drawdownMin !== null && advanced.drawdownMax !== null && advanced.drawdownMin > advanced.drawdownMax;
-  errorEl.textContent = invalidRange ? 'ระยะลงขั้นต่ำต้องไม่มากกว่าระยะลงสูงสุด' : '';
-  const filtered = invalidRange ? [] : SIGNALS.filter(s => statusMatches(s.status, selected) && s.score >= minScore && (!q || s.t.includes(q)) && advancedMatches(s, advanced) && dividendMatches(s.t));
+  const invalidMomentum = advanced.momentum5Min !== null && advanced.momentum5Max !== null && advanced.momentum5Min > advanced.momentum5Max;
+  errorEl.textContent = invalidRange ? 'ระยะลงขั้นต่ำต้องไม่มากกว่าระยะลงสูงสุด' : invalidMomentum ? 'Momentum ขั้นต่ำต้องไม่มากกว่าค่าสูงสุด' : '';
+  const filtered = invalidRange||invalidMomentum ? [] : SIGNALS.filter(s => statusMatches(s.status, selected) && s.score >= minScore && (!q || s.t.includes(q)) && advancedMatches(s, advanced) && dividendMatches(s.t));
   const rows = sortRows(filtered, sortSelect.value);
   const summary = rows.reduce((a,s) => (a[s.status]=(a[s.status]||0)+1,a), {});
   const lowLiquidityCount = rows.filter(s => s.lowLiquidity30).length;
   countEl.textContent = `พบ ${rows.length} หุ้น · Confirmed ${summary.confirmed||0} · Building ${summary.building||0} · Watch ${summary.watch||0} · เตือนสภาพคล่อง 30 วัน ${lowLiquidityCount}`;
-  tbody.innerHTML = rows.map(s => {const div=dividendInfo(s.t),dividendHtml=!div.has?'<span class="dividend-pill">ไม่มีข้อมูล</span>':div.continuous?`<span class="dividend-pill continuous">ต่อเนื่อง ${div.required} ปี</span><small>ล่าสุด ${div.last}</small>`:div.stopped?`<span class="dividend-pill stopped">หยุด ${Math.floor(div.monthsSince)} เดือน</span><small>ล่าสุด ${div.last}</small>`:`<span class="dividend-pill">มีการจ่าย</span><small>ล่าสุด ${div.last}</small>`;return `
+  tbody.innerHTML = rows.map(s => {const trend=trendInfo(s),div=dividendInfo(s.t),dividendHtml=!div.has?'<span class="dividend-pill">ไม่มีข้อมูล</span>':div.continuous?`<span class="dividend-pill continuous">ต่อเนื่อง ${div.required} ปี</span><small>ล่าสุด ${div.last}</small>`:div.stopped?`<span class="dividend-pill stopped">หยุด ${Math.floor(div.monthsSince)} เดือน</span><small>ล่าสุด ${div.last}</small>`:`<span class="dividend-pill">มีการจ่าย</span><small>ล่าสุด ${div.last}</small>`;return `
     <tr class="scan-row" data-ticker="${s.t}">
       <td>${s.t}<small>${s.date}</small></td>
+      <td><span class="trend-pill ${trend.key}">${trend.label}</span></td>
       <td><span class="status-pill ${s.status}">${LABELS[s.status]}</span></td>
       <td><strong class="total-score">${s.score}</strong></td>
       <td>${scoreBar(s.setup,40)}</td><td>${scoreBar(s.demand,30)}</td><td>${scoreBar(s.confirmation,30)}</td>
       <td class="${s.drawdown52 < 0 ? 'dir-down' : ''}">${s.drawdown52.toFixed(2)}%</td>
+      <td class="volume-cell"><b>${Number(s.volume5Ratio||0).toFixed(2)}x</b><small>${compactNumber(s.avgVolume5||0)} หุ้น/วัน</small></td>
+      <td class="momentum-cell ${Number(s.momentum5||0)>=0?'dir-up':'dir-down'}"><b>${Number(s.momentum5||0)>=0?'+':''}${Number(s.momentum5||0).toFixed(2)}%</b><small>20 วัน ${Number(s.momentum20||0)>=0?'+':''}${Number(s.momentum20||0).toFixed(2)}%</small></td>
       <td class="liquidity-cell"><b>${compactNumber(s.avgVolume30||0)} หุ้น/วัน</b><small>มัธยฐาน ${(s.medianValue30||s.medianValue20)/1000000 < 0.01 ? '<0.01' : ((s.medianValue30||s.medianValue20)/1000000).toFixed(2)} ลบ./วัน</small>${s.lowLiquidity30 ? '<span class="liquidity-warning">⚠ ต่ำมากต่อเนื่อง 30 วัน</span>' : ''}</td>
       <td class="dividend-cell">${dividendHtml}</td>
       <td class="reason-cell">${s.reasons.length ? s.reasons.join(' · ') : 'ยังไม่มีเงื่อนไขเด่น'}</td>
@@ -953,6 +987,9 @@ document.querySelectorAll('.filter-preset').forEach(button => button.addEventLis
   if(button.dataset.preset === 'nearConfirm'){ numericEls.confirmationMin.value='18'; numericEls.setupMin.value='18'; }
   if(button.dataset.preset === 'tightBase'){ numericEls.setupMin.value='20'; numericEls.rangeMax.value='12'; }
   if(button.dataset.preset === 'strongDemand'){ numericEls.demandMin.value='18'; numericEls.demandRatioMin.value='1.2'; }
+  if(button.dataset.preset === 'belowPeak'){ numericEls.drawdownMin.value='20'; numericEls.drawdownMax.value='50'; }
+  if(button.dataset.preset === 'volumeSurge'){ numericEls.volume5RatioMin.value='1.3'; numericEls.liquidityMin.value='3'; }
+  if(button.dataset.preset === 'recovering'){ numericEls.momentum5Min.value='2'; numericEls.confirmationMin.value='18'; }
   render();
 }));
 document.getElementById('scanReset').addEventListener('click', () => {
@@ -962,7 +999,7 @@ document.getElementById('scanReset').addEventListener('click', () => {
   Object.values(numericEls).forEach(el => el.value=''); render();
 });
 let scanLoadPromise=null;
-async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(name=>fetchMarketSummary(name)));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');setCloudSummaryStatus(badge,'สะสม',a,SIGNALS.length);render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
+async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='คัดกรอง: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(name=>fetchMarketSummary(name)));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');setCloudSummaryStatus(badge,'คัดกรอง',a,SIGNALS.length);render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`คัดกรอง: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='คัดกรอง: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
 document.getElementById('navScan').addEventListener('click',loadScanData);
 render();
 })();

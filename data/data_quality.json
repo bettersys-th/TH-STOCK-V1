@@ -1,6 +1,6 @@
 {
   "mode": "offline_audit",
-  "generatedAt": "2026-08-02T00:09:58",
+  "generatedAt": "2026-08-02T20:38:16",
   "status": "unverified",
   "configuredTickers": 965,
   "priceTickers": 965,
@@ -35,5 +35,17 @@
     "mismatchCount": 0,
     "errorCount": 0,
     "mismatches": []
+  },
+  "priceCoverage": {
+    "referenceMarketDays": 242,
+    "activeTickers": 756,
+    "referenceThreshold": 189,
+    "lookbackDays": 365,
+    "statusCounts": {
+      "ok": 537,
+      "stale": 223,
+      "gaps": 205
+    },
+    "ohlcLast5Complete": 0
   }
 }

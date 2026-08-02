@@ -71,6 +71,10 @@ def score_at(dates, closes, volumes, idx=None):
     median_value = median(value20)
     median_value30 = median(value30)
     average_volume30 = _mean(v30)
+    average_volume5 = _mean(v[-5:])
+    prior_volume20 = _mean(v[-25:-5])
+    volume5_ratio = average_volume5 / prior_volume20 if prior_volume20 > 0 else 0.0
+    average_value5 = _mean([price * volume for price, volume in zip(p[-5:], v[-5:])])
     low_value_30_straight = len(value30) == 30 and all(value < VERY_LOW_VALUE for value in value30)
 
     high252 = max(p252)
@@ -112,6 +116,7 @@ def score_at(dates, closes, volumes, idx=None):
     slope_points = 8 * _clamp((sma20 / sma20_5_days_ago - 0.995) / 0.02) if sma20_5_days_ago else 0
     breakout_points = 8 * _clamp((current / prior_high20 - 0.94) / 0.06) if prior_high20 else 0
     momentum5 = current / p[-6] - 1
+    momentum20 = current / p[-21] - 1
     momentum_points = 4 * _clamp((momentum5 + 0.01) / 0.05)
     confirmation = round(above_ma_points + slope_points + breakout_points + momentum_points)
 
@@ -140,6 +145,8 @@ def score_at(dates, closes, volumes, idx=None):
         reasons.append("ความผันผวนกำลังลดลง")
     if demand_ratio >= 1.2:
         reasons.append(f"Up-volume/Down-volume {demand_ratio:.1f}x")
+    if volume5_ratio >= 1.3:
+        reasons.append(f"Volume 5 วันเร่งขึ้น {volume5_ratio:.1f}x")
     if current > sma20 and sma20 > sma20_5_days_ago:
         reasons.append("ราคาเหนือ MA20 และเส้นเริ่มชันขึ้น")
     if invalidated:
@@ -156,6 +163,9 @@ def score_at(dates, closes, volumes, idx=None):
         "range20": round(range20 * 100, 2), "demandRatio": round(demand_ratio, 2),
         "medianValue20": round(median_value), "medianValue30": round(median_value30),
         "avgVolume30": round(average_volume30), "lowLiquidity30": low_value_30_straight,
+        "avgVolume5": round(average_volume5), "avgValue5": round(average_value5),
+        "volume5Ratio": round(volume5_ratio, 2),
+        "momentum5": round(momentum5 * 100, 2), "momentum20": round(momentum20 * 100, 2),
         "reasons": reasons[:5]
     }
 

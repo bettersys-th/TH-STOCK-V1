@@ -27,6 +27,15 @@ class AccumulationTests(unittest.TestCase):
         self.assertTrue(signal["lowLiquidity30"])
         self.assertEqual(signal["avgVolume30"], 100_000)
 
+    def test_exposes_recent_volume_and_momentum_for_screening(self):
+        dates = list(range(20200000, 20200320))
+        close = [10.0] * 315 + [10.0, 10.2, 10.4, 10.6, 11.0]
+        volume = [100_000] * 315 + [200_000] * 5
+        signal = score_at(dates, close, volume)
+        self.assertEqual(signal["volume5Ratio"], 2.0)
+        self.assertEqual(signal["avgVolume5"], 200_000)
+        self.assertGreater(signal["momentum5"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

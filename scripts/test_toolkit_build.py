@@ -41,6 +41,10 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("เก่ากว่าวันปัจจุบัน", html)
         self.assertIn('id="recentOhlcRow"', html)
         self.assertIn("function renderRecentOhlc(stock)", html)
+        self.assertIn('id="scanVolume5RatioMin"', html)
+        self.assertIn("function trendInfo(s)", html)
+        self.assertIn("🔎 คัดกรองหุ้น", html)
+        self.assertIn("Cloud screener schema is older than this page", html)
 
 
 if __name__ == "__main__":

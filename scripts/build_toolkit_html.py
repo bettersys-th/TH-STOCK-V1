@@ -88,6 +88,7 @@ def build(data_dir, output_path):
 <body>
 <div class="wrap">
   <div class="nav-tabs">
+    <span class="cloud-data-status" id="cloudDataStatus" role="status" aria-live="polite">Cloud: checking...</span>
     <button class="nav-tab active" id="navCalc">📊 เครื่องคำนวณผลตอบแทน</button>
     <button class="nav-tab" id="navCycle">🌊 วิเคราะห์ Cycle</button>
     <button class="nav-tab" id="navScan">🎯 จังหวะสะสม</button>
@@ -117,6 +118,54 @@ def build(data_dir, output_path):
 </div>
 
 <script>
+const MARKET_API_BASE = 'https://6a6f0c5a00324368985a.sgp.appwrite.run';
+const MARKET_API_TIMEOUT_MS = 12000;
+
+function formatMarketDate(value) {{
+  const text = String(value || '');
+  return /^\\d{{8}}$/.test(text) ? `${{text.slice(6,8)}}/${{text.slice(4,6)}}/${{text.slice(0,4)}}` : text;
+}}
+
+function mergeTickerOptions(listId, tickers) {{
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const existing = new Set(Array.from(list.options).map(option => option.value));
+  tickers.forEach(ticker => {{
+    if (existing.has(ticker)) return;
+    const option = document.createElement('option');
+    option.value = ticker;
+    list.appendChild(option);
+  }});
+}}
+
+window.marketManifestReady = (async () => {{
+  const status = document.getElementById('cloudDataStatus');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MARKET_API_TIMEOUT_MS);
+  try {{
+    const response = await fetch(`${{MARKET_API_BASE}}/v1/manifest`, {{
+      headers: {{Accept: 'application/json'}},
+      cache: 'no-store',
+      signal: controller.signal,
+    }});
+    if (!response.ok) throw new Error(`market API HTTP ${{response.status}}`);
+    const manifest = await response.json();
+    if (!Array.isArray(manifest.tickers) || !manifest.tickers.length) throw new Error('invalid market manifest');
+    ['tickerList', 'cycTickerList', 'dcaTickerList'].forEach(id => mergeTickerOptions(id, manifest.tickers));
+    status.textContent = `Cloud ${{formatMarketDate(manifest.dataAsOf)}} · ${{manifest.tickerCount.toLocaleString('en-US')}} หุ้น`;
+    status.classList.add('online');
+    status.title = `Appwrite staging · schema ${{manifest.schemaVersion}}`;
+    return manifest;
+  }} catch (error) {{
+    status.textContent = 'ใช้ข้อมูลสำรองในหน้า';
+    status.classList.add('fallback');
+    status.title = `Market API unavailable: ${{error.message}}`;
+    return null;
+  }} finally {{
+    clearTimeout(timer);
+  }}
+}})();
+
 const navButtons = {{navCalc:'pageCalc', navCycle:'pageCycle', navScan:'pageScan', navSwing:'pageSwing', navDca:'pageDca'}};
 Object.keys(navButtons).forEach(navId => {{
   document.getElementById(navId).addEventListener('click', () => {{

@@ -88,7 +88,7 @@ manually-created files are never deleted.
 
 ## Next steps
 
-1. Deploy `appwrite/functions/market-api` with read-only dynamic-key scopes.
-2. Validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.
-3. Add a frontend data-provider switch, keeping the current embedded provider as rollback.
-4. Add Auth and server-enforced Free/Pro entitlements before moving premium calculations.
+1. Completed: deploy `market-api-v2` from `appwrite/functions/market-api` with `rows.read` and `files.read` only.
+2. Completed: validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.
+3. In progress: the frontend verifies the Appwrite manifest and uses its ticker catalog while retaining embedded calculations as rollback.
+4. Next: migrate Cycle and DCA payloads lazily, one feature at a time, then add Auth and server-enforced Free/Pro entitlements.

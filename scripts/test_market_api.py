@@ -5,15 +5,20 @@ import os
 import unittest
 from pathlib import Path
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "appwrite" / "functions" / "market-api" / "handler.py"
+FUNCTION_PATH = Path(__file__).resolve().parents[1] / "appwrite" / "functions" / "market-api"
+MODULE_PATH = FUNCTION_PATH / "src" / "main.py"
 spec = importlib.util.spec_from_file_location("market_api", MODULE_PATH)
 market_api = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(market_api)
 
-COMPAT_PATH = MODULE_PATH.with_name("main.py")
+COMPAT_PATH = FUNCTION_PATH / "main.py"
 compat_spec = importlib.util.spec_from_file_location("market_api_compat", COMPAT_PATH)
 market_api_compat = importlib.util.module_from_spec(compat_spec)
 compat_spec.loader.exec_module(market_api_compat)
+
+handler_spec = importlib.util.spec_from_file_location("market_api_handler_compat", FUNCTION_PATH / "handler.py")
+market_api_handler_compat = importlib.util.module_from_spec(handler_spec)
+handler_spec.loader.exec_module(market_api_handler_compat)
 
 
 class FakeRepository:
@@ -49,6 +54,7 @@ class MarketApiTests(unittest.TestCase):
     def test_compatibility_entrypoint_loads_handler(self):
         self.assertTrue(callable(market_api_compat.main))
         self.assertEqual(market_api_compat.main.__name__, market_api.main.__name__)
+        self.assertTrue(callable(market_api_handler_compat.main))
 
     def test_rejects_unknown_and_invalid_ticker(self):
         service = market_api.MarketService(FakeRepository())

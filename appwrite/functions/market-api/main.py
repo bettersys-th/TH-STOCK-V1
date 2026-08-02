@@ -1,15 +1,15 @@
-"""Compatibility entrypoint for Appwrite deployments configured as main.py."""
+"""Compatibility entrypoint for deployments configured as main.py."""
 
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-_handler_path = Path(__file__).with_name("handler.py")
-_handler_spec = spec_from_file_location("market_api_handler", _handler_path)
-if _handler_spec is None or _handler_spec.loader is None:
-    raise RuntimeError(f"Unable to load Appwrite handler at {_handler_path}")
+_source = Path(__file__).parent / "src" / "main.py"
+_spec = spec_from_file_location("market_api_src_main", _source)
+if _spec is None or _spec.loader is None:
+    raise RuntimeError(f"Unable to load Appwrite handler at {_source}")
 
-_handler_module = module_from_spec(_handler_spec)
-_handler_spec.loader.exec_module(_handler_module)
-main = _handler_module.main
+_module = module_from_spec(_spec)
+_spec.loader.exec_module(_module)
+main = _module.main
 
 __all__ = ["main"]

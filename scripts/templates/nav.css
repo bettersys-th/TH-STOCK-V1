@@ -14,6 +14,22 @@
   }
   .nav-tab:hover{color:var(--text);border-color:#3a4a5c;}
   .nav-tab.active{background:var(--amber);color:#161006;border-color:var(--amber);font-weight:700;}
+  .cloud-data-status{
+    align-self:center;
+    order:99;
+    margin-left:auto;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:8px 12px;
+    color:var(--muted);
+    background:var(--panel);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .cloud-data-status.online{color:var(--teal);border-color:rgba(45,212,191,.45);}
+  .cloud-data-status.fallback{color:var(--amber);border-color:rgba(245,166,35,.45);}
   .page{display:none;}
   .page.active{display:block;}
+  @media(max-width:760px){.cloud-data-status{width:100%;margin-left:0;text-align:center;}}
   @media(min-width:1400px){.wrap{max-width:1280px;}}

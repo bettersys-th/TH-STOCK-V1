@@ -1,4 +1,7 @@
-"""Read-only Appwrite Function for versioned SET market data."""
+"""Read-only Appwrite Function for versioned SET market data.
+
+The non-default filename intentionally prevents stale Appwrite entrypoint artifacts.
+"""
 
 from __future__ import annotations
 

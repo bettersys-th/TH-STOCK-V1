@@ -12,9 +12,11 @@ import json
 import os
 import shutil
 import tempfile
+import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
 SUMMARY_FILES = {
     "cycles": "cycles_compact.json",
@@ -153,3 +155,22 @@ def build_cloud_export(prices: dict, data_dir: str | Path, output_dir: str | Pat
         if staging.exists():
             shutil.rmtree(staging)
         raise
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Build verified per-ticker cloud market objects")
+    parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
+    args = parser.parse_args()
+    data_dir = args.data_dir.resolve()
+    with gzip.open(data_dir / "prices.json.gz", "rt", encoding="utf-8") as handle:
+        prices = json.load(handle)
+    manifest = build_cloud_export(prices, data_dir)
+    print(
+        f"cloud export: {manifest['tickerCount']} tickers | "
+        f"{manifest['totalBars']} bars | as of {manifest['dataAsOf']}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -46,11 +46,16 @@ jobs:
         run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py scripts/test_cloud_export.py scripts/test_upload_appwrite.py
 
       - name: Run update and build pipeline
+        if: github.event_name != 'workflow_dispatch' || !inputs.upload_appwrite_staging
         run: python scripts/update_and_build.py
         env:
           # Optional independent checks. Configure only in GitHub Actions secrets.
           SET_API_KEY: ${{ secrets.SET_API_KEY }}
           TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+
+      - name: Build staging export from verified repository data
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_appwrite_staging
+        run: python scripts/cloud_export.py
 
       - name: Check Appwrite staging configuration
         id: appwrite

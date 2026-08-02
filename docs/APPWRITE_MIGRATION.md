@@ -64,6 +64,10 @@ staging upload and do not interrupt the existing daily website update:
 - `APPWRITE_API_KEY`
 - `APPWRITE_MARKET_BUCKET_ID`
 
+Manual staging upload deliberately uses the already verified `prices.json.gz` committed in the
+repository. It does not call Yahoo first, keeping provider availability separate from an Appwrite
+deployment test. Scheduled runs continue to use the full update-and-quality pipeline.
+
 ## Next steps
 
 1. Create the staging resources after owner review.

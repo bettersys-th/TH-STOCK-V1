@@ -26,10 +26,45 @@ unchanged ticker does not create a new binary diff.
 The browser still uses the embedded datasets in `index.html`; no production behavior changes in
 this step.
 
+## Step 2 — staging infrastructure contract (prepared)
+
+`appwrite/resources.json` documents the database tables, private Storage bucket, two-Function
+budget, and deny-by-default permissions. It is intentionally reviewed before resources are created;
+the production project must not be provisioned from an unreviewed, broad admin key.
+
+Create a staging project in Appwrite Console, then:
+
+1. Create a private bucket with ID `market-data`, file security enabled, extensions `gz,json`,
+   encryption enabled, and a 50 MB maximum file size. Grant no client permissions.
+2. Create a server API key limited to Storage file read/write scopes for this bucket workflow.
+   Do not grant key-management, user-management, or database scopes.
+3. Store the endpoint, project ID, key, and bucket ID outside the repository using the names in
+   `.env.example`. The API key must never use an `APP_*` browser-visible variable prefix.
+4. Build and inspect the upload without network access:
+
+   `python scripts/upload_appwrite.py`
+
+5. Only after reviewing the dry-run, upload to staging with server environment variables present:
+
+   `python scripts/upload_appwrite.py --apply`
+
+The uploader verifies every object's size and SHA-256 checksum, uses immutable content-addressed
+file IDs, skips existing objects, and uploads the manifest last. It does not delete remote data.
+
+Add the following GitHub Actions repository secrets. During staging, uploads run only from a manual
+**Run workflow** with `upload_appwrite_staging` selected. Scheduled daily runs do not upload until
+the database pointer and retention policy are implemented. Missing secrets also stop only the
+staging upload and do not interrupt the existing daily website update:
+
+- `APPWRITE_ENDPOINT`
+- `APPWRITE_PROJECT_ID`
+- `APPWRITE_API_KEY`
+- `APPWRITE_MARKET_BUCKET_ID`
+
 ## Next steps
 
-1. Create the Appwrite project, database, bucket, and two Functions.
-2. Upload the manifest objects to a private staging bucket.
+1. Create the staging resources after owner review.
+2. Upload the manifest objects to the private staging bucket.
 3. Implement `market-api` and validate its responses against this local contract.
 4. Add a frontend data-provider switch, keeping the current embedded provider as rollback.
 5. Add Auth and server-enforced Free/Pro entitlements before moving premium calculations.

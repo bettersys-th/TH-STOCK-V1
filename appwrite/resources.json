@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "project": "th-stock",
+  "database": {
+    "id": "app",
+    "name": "TH Stock App",
+    "tables": [
+      {
+        "id": "profiles",
+        "rowSecurity": true,
+        "purpose": "Display preferences only; one row per Appwrite user",
+        "columns": {"userId": "varchar(36) unique", "displayName": "varchar(128)", "locale": "varchar(10)"},
+        "permissions": "server creates rows; owner read/update via row permissions"
+      },
+      {
+        "id": "subscriptions",
+        "rowSecurity": true,
+        "purpose": "Server-authoritative Free/Pro entitlement",
+        "columns": {"userId": "varchar(36) unique", "plan": "enum(free,pro)", "status": "enum(active,past_due,canceled)", "validUntil": "datetime nullable"},
+        "permissions": "server only; never grant client update/delete"
+      },
+      {
+        "id": "saved_plans",
+        "rowSecurity": true,
+        "purpose": "Saved DCA plans",
+        "columns": {"userId": "varchar(36) index", "name": "varchar(128)", "payload": "mediumtext", "schemaVersion": "integer", "updatedAt": "datetime"},
+        "permissions": "owner read/update/delete via row permissions; create through analysis-api"
+      },
+      {
+        "id": "watchlists",
+        "rowSecurity": true,
+        "purpose": "User stock groups",
+        "columns": {"userId": "varchar(36) index", "name": "varchar(128)", "tickers": "varchar(24)[]", "updatedAt": "datetime"},
+        "permissions": "owner read/update/delete via row permissions; create through analysis-api"
+      },
+      {
+        "id": "usage_daily",
+        "rowSecurity": false,
+        "purpose": "Server-side quota counters",
+        "columns": {"userDate": "varchar(64) unique", "userId": "varchar(36) index", "date": "varchar(10) index", "analysisCount": "integer"},
+        "permissions": "server only"
+      },
+      {
+        "id": "data_versions",
+        "rowSecurity": false,
+        "purpose": "Atomic pointer to a verified market-data manifest",
+        "columns": {"channel": "varchar(20) unique", "manifestFileId": "varchar(36)", "dataAsOf": "integer", "schemaVersion": "integer", "publishedAt": "datetime"},
+        "permissions": "server write; market-api read"
+      }
+    ]
+  },
+  "storage": {
+    "id": "market-data",
+    "public": false,
+    "fileSecurity": true,
+    "allowedExtensions": ["gz", "json"],
+    "maximumFileSizeMb": 50,
+    "encryption": true,
+    "permissions": "server functions and least-privilege uploader key only"
+  },
+  "functions": [
+    {"id": "market-api", "public": true, "purpose": "Validated, cached market-data reads"},
+    {"id": "analysis-api", "public": false, "purpose": "Authenticated analysis, quotas, plans and entitlements"}
+  ]
+}

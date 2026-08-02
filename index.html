@@ -432,6 +432,8 @@
 <script>
 const MARKET_API_BASE = 'https://6a6f0c5a00324368985a.sgp.appwrite.run';
 const MARKET_API_TIMEOUT_MS = 12000;
+const MARKET_CACHE_NAME = 'th-stock-market-v1';
+const MARKET_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function formatMarketDate(value) {
   const text = String(value || '');
@@ -448,6 +450,40 @@ function mergeTickerOptions(listId, tickers) {
     option.value = ticker;
     list.appendChild(option);
   });
+}
+
+async function fetchMarketSummary(name, signal) {
+  const manifest = await window.marketManifestReady;
+  if (manifest && !manifest.summaries?.includes(name)) throw new Error(`${name} summary unavailable`);
+  const version = manifest ? `${manifest.dataAsOf}-${manifest.schemaVersion}` : 'latest';
+  const cacheKey = new Request(`${location.origin}${location.pathname}?market-summary=${encodeURIComponent(name)}&version=${encodeURIComponent(version)}`);
+  let cache = null;
+  try {
+    if ('caches' in window) {
+      cache = await caches.open(MARKET_CACHE_NAME);
+      const cached = await cache.match(cacheKey);
+      if (cached) {
+        const savedAt = Number(cached.headers.get('x-th-stock-cached-at') || 0);
+        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) return await cached.json();
+        await cache.delete(cacheKey);
+      }
+    }
+  } catch (_) { cache = null; }
+  const response = await fetch(`${MARKET_API_BASE}/v1/summaries/${name}`, {
+    headers: {Accept: 'application/json'}, cache: 'no-store', signal,
+  });
+  if (!response.ok) throw new Error(`${name} HTTP ${response.status}`);
+  const payload = await response.json();
+  if (cache) {
+    try {
+      const keys = await cache.keys();
+      await Promise.all(keys.filter(key => key.url.includes(`market-summary=${encodeURIComponent(name)}`)).map(key => cache.delete(key)));
+      await cache.put(cacheKey, new Response(JSON.stringify(payload), {
+        headers: {'content-type': 'application/json', 'x-th-stock-cached-at': String(Date.now())},
+      }));
+    } catch (_) { /* Cache quota or privacy mode: network data remains usable. */ }
+  }
+  return payload;
 }
 
 window.marketManifestReady = (async () => {
@@ -522,11 +558,7 @@ async function loadCloudCycles(){
     const timer = setTimeout(()=>controller.abort(), 30000);
     let cloudError = null;
     try{
-      const manifest = await window.marketManifestReady;
-      if(manifest && !manifest.summaries?.includes('cycles')) throw new Error('Cycle summary unavailable');
-      const response = await fetch(`${MARKET_API_BASE}/v1/summaries/cycles`, {headers:{Accept:'application/json'}, cache:'no-store', signal:controller.signal});
-      if(!response.ok) throw new Error(`Cycle API HTTP ${response.status}`);
-      const payload = await response.json();
+      const payload = await fetchMarketSummary('cycles', controller.signal);
       if(payload.name !== 'cycles' || !payload.summary || Array.isArray(payload.summary)) throw new Error('invalid Cycle response');
       CYCLES = payload.summary;
       renderCycleTickerOptions();
@@ -766,7 +798,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-02 19:13";
+const UPDATED_AT = "2026-08-02 20:14";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -891,7 +923,7 @@ document.getElementById('scanReset').addEventListener('click', () => {
   Object.values(numericEls).forEach(el => el.value=''); render();
 });
 let scanLoadPromise=null;
-async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(async name=>{const r=await fetch(`${MARKET_API_BASE}/v1/summaries/${name}`,{headers:{Accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status online';badge.textContent=`สะสม Cloud ${formatMarketDate(a.dataAsOf)} · ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
+async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(name=>fetchMarketSummary(name)));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status online';badge.textContent=`สะสม Cloud ${formatMarketDate(a.dataAsOf)} · ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
 document.getElementById('navScan').addEventListener('click',loadScanData);
 render();
 })();
@@ -910,7 +942,7 @@ function render(){
 }
 function renderValidation(){const r=BACKTEST.results||{},hi=r['score70+_20d']||{},low=r['score<50_20d']||{},trigger=r.triggered_20d||{},setup=r.setup_20d||{},ts=BACKTEST.targetStop60d||{},tr=ts.triggered||{},su=ts.setup||{};const pct=(a,b,c)=>a+b+c?100*a/(a+b+c):0;const items=[['Score 70+ · ผลตอบแทนเฉลี่ย 20D',`${hi.meanPct>=0?'+':''}${n(hi.meanPct||0)}%`],['Score <50 · ผลตอบแทนเฉลี่ย 20D',`${(low.meanPct||0)>=0?'+':''}${n(low.meanPct||0)}%`],['Triggered · Target ก่อน Stop ภายใน 60D',`${n(pct(tr.targetFirst||0,tr.stopFirst||0,tr.neither||0))}%`],['Setup · Target ก่อน Stop ภายใน 60D',`${n(pct(su.targetFirst||0,su.stopFirst||0,su.neither||0))}%`]];document.getElementById('swingValidationGrid').innerHTML=items.map(x=>`<div class="validation-stat"><small>${x[0]}</small><b>${x[1]}</b></div>`).join('');document.getElementById('swingValidationNote').textContent=`ทดสอบตั้งแต่ ${BACKTEST.startYear||'—'} สุ่มทุก ${BACKTEST.sampleStepTradingDays||'—'} วันทำการ · Triggered 20D เฉลี่ย ${(trigger.meanPct||0)>=0?'+':''}${n(trigger.meanPct||0)}% (บวก ${n(trigger.positivePct||0)}%) · Setup 20D เฉลี่ย ${(setup.meanPct||0)>=0?'+':''}${n(setup.meanPct||0)}% (บวก ${n(setup.positivePct||0)}%) · มี survivorship bias, ใช้ราคาปิด และยังไม่รวมค่าธรรมเนียม/ปันผล/slippage`;}
 [search,status,score,sort].forEach(x=>x.addEventListener(x===search?'input':'change',render));
-let swingLoadPromise=null;async function loadSwingData(){if(swingLoadPromise)return swingLoadPromise;const badge=document.getElementById('swingSourceStatus');swingLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='Swing: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const r=await fetch(`${MARKET_API_BASE}/v1/summaries/swing`,{headers:{Accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error(`Swing HTTP ${r.status}`);const p=await r.json();DATA=p.summary;badge.className='feature-source-status online';badge.textContent=`Swing Cloud ${formatMarketDate(p.dataAsOf)} · ${DATA.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const r=await fetch(new URL('data/swing_signals.json',document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`Swing fallback HTTP ${r.status}`);DATA=await r.json();badge.className='feature-source-status fallback';badge.textContent=`Swing: ข้อมูลสำรอง ${DATA.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='Swing: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return swingLoadPromise}document.getElementById('navSwing').addEventListener('click',loadSwingData);render();
+let swingLoadPromise=null;async function loadSwingData(){if(swingLoadPromise)return swingLoadPromise;const badge=document.getElementById('swingSourceStatus');swingLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='Swing: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const p=await fetchMarketSummary('swing');DATA=p.summary;badge.className='feature-source-status online';badge.textContent=`Swing Cloud ${formatMarketDate(p.dataAsOf)} · ${DATA.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const r=await fetch(new URL('data/swing_signals.json',document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`Swing fallback HTTP ${r.status}`);DATA=await r.json();badge.className='feature-source-status fallback';badge.textContent=`Swing: ข้อมูลสำรอง ${DATA.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='Swing: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return swingLoadPromise}document.getElementById('navSwing').addEventListener('click',loadSwingData);render();
 renderValidation();
 })();
 
@@ -937,10 +969,7 @@ async function loadCloudDca(){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
   let cloudError=null;
   try{
-   const manifest=await window.marketManifestReady;if(manifest&&!manifest.summaries?.includes('dca'))throw new Error('DCA summary unavailable');
-   const response=await fetch(`${MARKET_API_BASE}/v1/summaries/dca`,{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
-   if(!response.ok)throw new Error(`DCA API HTTP ${response.status}`);
-   const payload=await response.json();if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
+   const payload=await fetchMarketSummary('dca',controller.signal);if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
    dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
    return true;
   }catch(error){cloudError=error}

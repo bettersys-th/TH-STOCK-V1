@@ -106,6 +106,8 @@ def build(data_dir, output_path):
 <script>
 const MARKET_API_BASE = 'https://6a6f0c5a00324368985a.sgp.appwrite.run';
 const MARKET_API_TIMEOUT_MS = 12000;
+const MARKET_CACHE_NAME = 'th-stock-market-v1';
+const MARKET_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function formatMarketDate(value) {{
   const text = String(value || '');
@@ -122,6 +124,40 @@ function mergeTickerOptions(listId, tickers) {{
     option.value = ticker;
     list.appendChild(option);
   }});
+}}
+
+async function fetchMarketSummary(name, signal) {{
+  const manifest = await window.marketManifestReady;
+  if (manifest && !manifest.summaries?.includes(name)) throw new Error(`${{name}} summary unavailable`);
+  const version = manifest ? `${{manifest.dataAsOf}}-${{manifest.schemaVersion}}` : 'latest';
+  const cacheKey = new Request(`${{location.origin}}${{location.pathname}}?market-summary=${{encodeURIComponent(name)}}&version=${{encodeURIComponent(version)}}`);
+  let cache = null;
+  try {{
+    if ('caches' in window) {{
+      cache = await caches.open(MARKET_CACHE_NAME);
+      const cached = await cache.match(cacheKey);
+      if (cached) {{
+        const savedAt = Number(cached.headers.get('x-th-stock-cached-at') || 0);
+        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) return await cached.json();
+        await cache.delete(cacheKey);
+      }}
+    }}
+  }} catch (_) {{ cache = null; }}
+  const response = await fetch(`${{MARKET_API_BASE}}/v1/summaries/${{name}}`, {{
+    headers: {{Accept: 'application/json'}}, cache: 'no-store', signal,
+  }});
+  if (!response.ok) throw new Error(`${{name}} HTTP ${{response.status}}`);
+  const payload = await response.json();
+  if (cache) {{
+    try {{
+      const keys = await cache.keys();
+      await Promise.all(keys.filter(key => key.url.includes(`market-summary=${{encodeURIComponent(name)}}`)).map(key => cache.delete(key)));
+      await cache.put(cacheKey, new Response(JSON.stringify(payload), {{
+        headers: {{'content-type': 'application/json', 'x-th-stock-cached-at': String(Date.now())}},
+      }}));
+    }} catch (_) {{ /* Cache quota or privacy mode: network data remains usable. */ }}
+  }}
+  return payload;
 }}
 
 window.marketManifestReady = (async () => {{

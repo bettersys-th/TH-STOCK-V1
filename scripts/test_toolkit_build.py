@@ -14,14 +14,13 @@ class ToolkitBuildTests(unittest.TestCase):
 
         self.assertIn("let CYCLES = {};", html)
         self.assertIn("let DATA={};", html)
-        self.assertIn("/v1/summaries/cycles", html)
-        self.assertIn("/v1/summaries/dca", html)
+        self.assertIn("fetchMarketSummary('cycles'", html)
+        self.assertIn("fetchMarketSummary('dca'", html)
         self.assertIn("data/cycles_compact.json", html)
         self.assertIn("data/dca_compact.json", html)
         self.assertIn("let SIGNALS = [];", html)
         self.assertIn("let DATA=[];", html)
         self.assertIn("/v1/summaries/${name}", html)
-        self.assertIn("/v1/summaries/swing", html)
         self.assertIn("['accumulation_signals.json','dividends.json']", html)
         self.assertIn("data/swing_signals.json", html)
         self.assertIn('class="nav-status-cluster"', html)
@@ -32,6 +31,11 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn('<button class="nav-tab active" id="navScan">', html)
         self.assertIn("window.ensureCycleData = loadCloudCycles", html)
         self.assertGreaterEqual(html.count("await window.ensureCycleData?.()"), 2)
+        self.assertIn("const MARKET_CACHE_NAME = 'th-stock-market-v1'", html)
+        self.assertIn("async function fetchMarketSummary(name, signal)", html)
+        self.assertIn("MARKET_CACHE_TTL_MS", html)
+        self.assertIn("fetchMarketSummary('swing')", html)
+        self.assertIn("map(name=>fetchMarketSummary(name))", html)
 
 
 if __name__ == "__main__":

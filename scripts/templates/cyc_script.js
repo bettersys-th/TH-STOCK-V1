@@ -29,11 +29,7 @@ async function loadCloudCycles(){
     const timer = setTimeout(()=>controller.abort(), 30000);
     let cloudError = null;
     try{
-      const manifest = await window.marketManifestReady;
-      if(manifest && !manifest.summaries?.includes('cycles')) throw new Error('Cycle summary unavailable');
-      const response = await fetch(`${MARKET_API_BASE}/v1/summaries/cycles`, {headers:{Accept:'application/json'}, cache:'no-store', signal:controller.signal});
-      if(!response.ok) throw new Error(`Cycle API HTTP ${response.status}`);
-      const payload = await response.json();
+      const payload = await fetchMarketSummary('cycles', controller.signal);
       if(payload.name !== 'cycles' || !payload.summary || Array.isArray(payload.summary)) throw new Error('invalid Cycle response');
       CYCLES = payload.summary;
       renderCycleTickerOptions();

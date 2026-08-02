@@ -21,10 +21,7 @@ async function loadCloudDca(){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
   let cloudError=null;
   try{
-   const manifest=await window.marketManifestReady;if(manifest&&!manifest.summaries?.includes('dca'))throw new Error('DCA summary unavailable');
-   const response=await fetch(`${MARKET_API_BASE}/v1/summaries/dca`,{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
-   if(!response.ok)throw new Error(`DCA API HTTP ${response.status}`);
-   const payload=await response.json();if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
+   const payload=await fetchMarketSummary('dca',controller.signal);if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
    dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
    return true;
   }catch(error){cloudError=error}

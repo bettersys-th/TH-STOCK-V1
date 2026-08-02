@@ -157,6 +157,7 @@ def build_dca_compact(prices, splits, dividends, tickers, cycles=None):
                   "peakProjected": not bool(higher_peaks), "troughProjected": not bool(lower_troughs),
                   "upDays": round(_mean(up_days)) if up_days else None,
                   "downDays": round(_mean(down_days)) if down_days else None,
+                  "downCycles": len(down_days),
                   "maxDrawdown": round(max_drawdown * 100, 2),
                   "medianValue30": round(recent_value), "div12": round(trailing_dividend, 5)},
         }

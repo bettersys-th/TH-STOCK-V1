@@ -8,5 +8,10 @@
     <select id="swingSort"><option value="score">คะแนนสูงสุด</option><option value="breakout">ใกล้ Breakout</option><option value="volume">Volume Ratio</option><option value="rr">Risk/Reward</option></select>
   </div>
   <div class="swing-count" id="swingCount"></div>
+  <div class="panel swing-validation">
+    <div class="validation-head"><div><div class="eyebrow">Walk-forward Validation</div><h3>ผลทดสอบสัญญาณย้อนหลังแบบไม่ใช้ข้อมูลอนาคต</h3></div><span class="validation-badge">Research only</span></div>
+    <div class="validation-grid" id="swingValidationGrid"></div>
+    <div class="validation-note" id="swingValidationNote"></div>
+  </div>
   <div class="panel table-wrap swing-table-wrap"><table class="swing-table"><thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>ราคา</th><th>MA20 / 50 / 200</th><th>ถึง Breakout</th><th>Volume</th><th>Momentum 20D</th><th>Stop / Target</th><th>R:R</th><th>เหตุผล</th></tr></thead><tbody id="swingTable"></tbody></table></div>
   <div class="panel"><div class="disclaimer" style="border-top:none;padding:0"><b>ข้อจำกัด:</b> เป็น EOD scanner ไม่ใช่สัญญาณระหว่างวัน และเกณฑ์คะแนนยังไม่ผ่าน walk-forward validation Stop ใช้จุดต่ำสุด 20 วันแทน ATR เพราะฐานข้อมูลย้อนหลังยังไม่มี OHLC ครบ ต้องตรวจข่าว งบการเงิน และสภาพคล่องก่อนตัดสินใจ</div></div>

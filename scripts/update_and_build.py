@@ -28,6 +28,7 @@ from datetime import datetime, date, timedelta
 from accumulation import build_signals
 from market_validation import cross_check
 from strategy_data import build_swing_signals, build_dca_compact
+from backtest_swing import run as run_swing_backtest
 
 try:
     import yfinance as yf
@@ -468,11 +469,13 @@ def main():
     accumulation_signals = build_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
     swing_signals = build_swing_signals(prices, splits_sorted, tickers, ACTIVE_WINDOW_DAYS)
     dca_compact = build_dca_compact(prices, splits_sorted, dividends_sorted, tickers, cycles_compact)
+    swing_backtest = run_swing_backtest(start_year=2016, step=20)
     write_json_atomic("stock_yearend.json", {"years": sorted({int(y) for v in yearend.values() for y in v}), "tickers": yearend})
     write_json_atomic("cycles_compact.json", cycles_compact)
     write_json_atomic("downlist.json", downlist)
     write_json_atomic("accumulation_signals.json", accumulation_signals)
     write_json_atomic("swing_signals.json", swing_signals)
+    write_json_atomic("swing_backtest.json", swing_backtest, pretty=True)
     write_json_atomic("dca_compact.json", dca_compact)
     print(f"yearend: {len(yearend)} | cycles: {len(cycles_compact)} | accumulation: {len(accumulation_signals)} | swing: {len(swing_signals)} | dca: {len(dca_compact)}")
 

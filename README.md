@@ -25,6 +25,7 @@
 │   ├── accumulation_backtest.json ← ผล walk-forward diagnostic (สร้างด้วยสคริปต์ backtest)
 │   ├── data_quality.json           ← สุขภาพการดึงข้อมูลและผลเทียบแหล่งสำรอง
 │   ├── swing_signals.json          ← คะแนนและสถานะ Swing Trade ล่าสุด
+│   ├── swing_backtest.json         ← ผล walk-forward validation ของ Swing
 │   ├── dca_compact.json            ← ราคาสิ้นเดือน/ปันผลปรับ Split สำหรับ DCA
 │   └── clean_tickers.txt          ← รายชื่อหุ้นที่ระบบติดตาม (965 ตัว, แก้เพิ่ม/ลดเองได้)
 ├── scripts/
@@ -32,6 +33,7 @@
 │   ├── accumulation.py            ← เครื่องยนต์ Setup / Demand / Confirmation
 │   ├── backtest_accumulation.py   ← ทดสอบผลตอบแทนล่วงหน้าแบบไม่ใช้ข้อมูลอนาคต
 │   ├── strategy_data.py           ← สร้าง Swing signals และข้อมูล DCA รายเดือน
+│   ├── backtest_swing.py           ← ทดสอบ Swing แบบ point-in-time
 │   ├── build_toolkit_html.py      ← ประกอบ HTML จาก data/*.json (เรียกจากสคริปต์หลัก)
 │   └── templates/                 ← ชิ้นส่วน HTML/CSS/JS ของแต่ละหน้า (ไม่ค่อยต้องแก้)
 └── .github/workflows/

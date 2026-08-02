@@ -22,7 +22,7 @@ async function loadCloudDca(){
   let cloudError=null;
   try{
    const payload=await fetchMarketSummary('dca',controller.signal);if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
-   dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
+   setCloudSummaryStatus(dcaSourceStatus,'DCA',payload,Object.keys(DATA).length);
    return true;
   }catch(error){cloudError=error}
   try{

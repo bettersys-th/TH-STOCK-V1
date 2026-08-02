@@ -35,8 +35,9 @@
     white-space:nowrap;
   }
   .cloud-data-status.online{color:var(--teal);border-color:rgba(45,212,191,.45);}
+  .cloud-data-status.stale{color:var(--amber);border-color:rgba(245,166,35,.55);}
   .cloud-data-status.fallback{color:var(--amber);border-color:rgba(245,166,35,.45);}
-  .feature-source-status{display:table;margin:0 0 12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0b1017;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px}.feature-source-status.loading{color:var(--amber)}.feature-source-status.online{color:var(--teal);border-color:rgba(45,212,191,.45)}.feature-source-status.fallback{color:var(--muted)}.feature-source-status.error{color:var(--red);border-color:rgba(226,89,107,.5)}
+  .feature-source-status{display:table;margin:0 0 12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0b1017;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px}.feature-source-status.loading{color:var(--amber)}.feature-source-status.online{color:var(--teal);border-color:rgba(45,212,191,.45)}.feature-source-status.stale{color:var(--amber);border-color:rgba(245,166,35,.55)}.feature-source-status.fallback{color:var(--muted)}.feature-source-status.error{color:var(--red);border-color:rgba(226,89,107,.5)}
   .page{display:none;}
   .page.active{display:block;}
   @media(max-width:760px){.nav-status-cluster{width:100%;margin-left:0;justify-content:flex-start}.cloud-data-status{width:auto;text-align:center;}}
@@ -91,6 +92,7 @@
   .stat-value.up{color:var(--teal);}
   .stat-value.down{color:var(--red);}
   .scenario-box{margin:24px 0 8px;padding:22px;border:1px solid var(--line);background:#0b1118;border-radius:12px;}
+  .recent-ohlc-wrap{margin:18px 0 0;overflow-x:auto}.recent-ohlc-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.05em;margin-bottom:8px}.recent-ohlc-table{min-width:760px;border:1px solid var(--line);table-layout:fixed}.recent-ohlc-table td{padding:10px 12px;border-right:1px solid var(--line);border-bottom:0;background:#0b1118;vertical-align:top}.recent-ohlc-table td:last-child{border-right:0}.ohlc-date{display:block;color:var(--amber);font-size:10px;margin-bottom:6px}.ohlc-values{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.ohlc-values span{color:var(--muted);font-size:8px}.ohlc-values b{display:block;color:var(--text);font-size:11px;margin-top:2px}.ohlc-missing{color:var(--muted);font-size:10px}
   .scenario-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:14px;}
   .scenario-head h2{font-size:19px;margin:0;}
   .investment-field{width:220px;margin:0;}
@@ -247,6 +249,10 @@
 
   <div class="panel result" id="cycResultPanel">
     <div class="summary-grid" id="summaryGrid"></div>
+    <div class="recent-ohlc-wrap">
+      <div class="recent-ohlc-title">ราคาย้อนหลัง 5 วัน สำหรับตรวจสอบ (Open / High / Low / Close)</div>
+      <table class="recent-ohlc-table"><tbody><tr id="recentOhlcRow"></tr></tbody></table>
+    </div>
     <div class="scenario-box">
       <div class="scenario-head">
         <div><div class="eyebrow">Next Price-Level Scenario</div><h2>ถ้าซื้อวันนี้ แนวต้านถัดไป / แนวรับถัดไปอยู่ที่ใด</h2></div>
@@ -440,6 +446,22 @@ function formatMarketDate(value) {
   return /^\d{8}$/.test(text) ? `${text.slice(6,8)}/${text.slice(4,6)}/${text.slice(0,4)}` : text;
 }
 
+function marketDataAgeDays(value) {
+  const text = String(value || '');
+  if (!/^\d{8}$/.test(text)) return null;
+  const date = Date.UTC(Number(text.slice(0,4)), Number(text.slice(4,6)) - 1, Number(text.slice(6,8)));
+  return Math.max(0, Math.floor((Date.now() - date) / 86400000));
+}
+
+function setCloudSummaryStatus(element, label, payload, count) {
+  const age = marketDataAgeDays(payload?.dataAsOf);
+  const source = payload?._clientSource === 'cache' ? 'Cache' : 'Cloud';
+  const stale = age !== null && age > 4;
+  element.className = `feature-source-status ${stale ? 'stale' : 'online'}`;
+  element.textContent = `${label} ${source} ${formatMarketDate(payload?.dataAsOf)} · ${Number(count).toLocaleString('en-US')} หุ้น${stale ? ` · เก่า ${age} วัน` : ''}`;
+  element.title = stale ? `ข้อมูลตลาดเก่ากว่าวันปัจจุบัน ${age} วัน โปรดตรวจสอบก่อนใช้วางแผน` : `${source} data · schema ${payload?.schemaVersion ?? '-'}`;
+}
+
 function mergeTickerOptions(listId, tickers) {
   const list = document.getElementById(listId);
   if (!list) return;
@@ -464,7 +486,11 @@ async function fetchMarketSummary(name, signal) {
       const cached = await cache.match(cacheKey);
       if (cached) {
         const savedAt = Number(cached.headers.get('x-th-stock-cached-at') || 0);
-        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) return await cached.json();
+        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) {
+          const payload = await cached.json();
+          payload._clientSource = 'cache';
+          return payload;
+        }
         await cache.delete(cacheKey);
       }
     }
@@ -483,6 +509,7 @@ async function fetchMarketSummary(name, signal) {
       }));
     } catch (_) { /* Cache quota or privacy mode: network data remains usable. */ }
   }
+  payload._clientSource = 'cloud';
   return payload;
 }
 
@@ -500,9 +527,11 @@ window.marketManifestReady = (async () => {
     const manifest = await response.json();
     if (!Array.isArray(manifest.tickers) || !manifest.tickers.length) throw new Error('invalid market manifest');
     ['tickerList', 'cycTickerList', 'dcaTickerList'].forEach(id => mergeTickerOptions(id, manifest.tickers));
-    status.textContent = `Cloud ${formatMarketDate(manifest.dataAsOf)} · ${manifest.tickerCount.toLocaleString('en-US')} หุ้น`;
-    status.classList.add('online');
-    status.title = `Appwrite staging · schema ${manifest.schemaVersion}`;
+    const age = marketDataAgeDays(manifest.dataAsOf);
+    const stale = age !== null && age > 4;
+    status.textContent = `Cloud ${formatMarketDate(manifest.dataAsOf)} · ${manifest.tickerCount.toLocaleString('en-US')} หุ้น${stale ? ` · เก่า ${age} วัน` : ''}`;
+    status.classList.add(stale ? 'stale' : 'online');
+    status.title = stale ? `ข้อมูลตลาดเก่ากว่าวันปัจจุบัน ${age} วัน โปรดตรวจสอบก่อนใช้วางแผน` : `Appwrite staging · schema ${manifest.schemaVersion}`;
     return manifest;
   } catch (error) {
     status.textContent = 'ใช้ข้อมูลสำรองในหน้า';
@@ -565,8 +594,7 @@ async function loadCloudCycles(){
       if(!CYCLES[tickerInput.value.trim().toUpperCase()]) tickerInput.value = CYCLES.PTT ? 'PTT' : Object.keys(CYCLES).sort()[0];
       checkTicker();
       if(resultPanel.classList.contains('show')) analyzeBtn.click();
-      cycleSourceStatus.className = 'cycle-source-status online';
-      cycleSourceStatus.textContent = `Cycle Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(CYCLES).length.toLocaleString('en-US')} หุ้น`;
+      setCloudSummaryStatus(cycleSourceStatus, 'Cycle', payload, Object.keys(CYCLES).length);
       return true;
     }catch(error){
       cloudError = error;
@@ -770,6 +798,16 @@ function renderTable(cycles){
   `).join('');
 }
 
+function renderRecentOhlc(stock){
+  const row = document.getElementById('recentOhlcRow');
+  const recent = Array.isArray(stock.r) ? stock.r.slice(-5) : [];
+  const value = number => Number.isFinite(Number(number)) && number !== null ? fmtNum(Number(number), 2) : '—';
+  row.innerHTML = recent.length ? recent.map(bar => `<td>
+    <span class="ohlc-date">${bar[0]}</span>
+    <div class="ohlc-values"><span>เปิด<b>${value(bar[1])}</b></span><span>สูง<b>${value(bar[2])}</b></span><span>ต่ำ<b>${value(bar[3])}</b></span><span>ปิด<b>${value(bar[4])}</b></span></div>
+  </td>`).join('') : '<td class="ohlc-missing">ยังไม่มีข้อมูล OHLC สำหรับหุ้นนี้ — ระบบจะเริ่มเก็บในการอัปเดตราคาครั้งถัดไป</td>';
+}
+
 analyzeBtn.addEventListener('click', () => {
   const t = tickerInput.value.trim().toUpperCase();
   if(!CYCLES[t]) return;
@@ -779,6 +817,7 @@ analyzeBtn.addEventListener('click', () => {
   renderScenario(CYCLES[t], events, cycles);
   renderChart(events);
   renderTable(cycles);
+  renderRecentOhlc(CYCLES[t]);
   resultPanel.classList.add('show');
   resultPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
 });
@@ -798,7 +837,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-02 20:14";
+const UPDATED_AT = "2026-08-02 20:30";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -923,7 +962,7 @@ document.getElementById('scanReset').addEventListener('click', () => {
   Object.values(numericEls).forEach(el => el.value=''); render();
 });
 let scanLoadPromise=null;
-async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(name=>fetchMarketSummary(name)));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status online';badge.textContent=`สะสม Cloud ${formatMarketDate(a.dataAsOf)} · ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
+async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(name=>fetchMarketSummary(name)));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');setCloudSummaryStatus(badge,'สะสม',a,SIGNALS.length);render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
 document.getElementById('navScan').addEventListener('click',loadScanData);
 render();
 })();
@@ -942,7 +981,7 @@ function render(){
 }
 function renderValidation(){const r=BACKTEST.results||{},hi=r['score70+_20d']||{},low=r['score<50_20d']||{},trigger=r.triggered_20d||{},setup=r.setup_20d||{},ts=BACKTEST.targetStop60d||{},tr=ts.triggered||{},su=ts.setup||{};const pct=(a,b,c)=>a+b+c?100*a/(a+b+c):0;const items=[['Score 70+ · ผลตอบแทนเฉลี่ย 20D',`${hi.meanPct>=0?'+':''}${n(hi.meanPct||0)}%`],['Score <50 · ผลตอบแทนเฉลี่ย 20D',`${(low.meanPct||0)>=0?'+':''}${n(low.meanPct||0)}%`],['Triggered · Target ก่อน Stop ภายใน 60D',`${n(pct(tr.targetFirst||0,tr.stopFirst||0,tr.neither||0))}%`],['Setup · Target ก่อน Stop ภายใน 60D',`${n(pct(su.targetFirst||0,su.stopFirst||0,su.neither||0))}%`]];document.getElementById('swingValidationGrid').innerHTML=items.map(x=>`<div class="validation-stat"><small>${x[0]}</small><b>${x[1]}</b></div>`).join('');document.getElementById('swingValidationNote').textContent=`ทดสอบตั้งแต่ ${BACKTEST.startYear||'—'} สุ่มทุก ${BACKTEST.sampleStepTradingDays||'—'} วันทำการ · Triggered 20D เฉลี่ย ${(trigger.meanPct||0)>=0?'+':''}${n(trigger.meanPct||0)}% (บวก ${n(trigger.positivePct||0)}%) · Setup 20D เฉลี่ย ${(setup.meanPct||0)>=0?'+':''}${n(setup.meanPct||0)}% (บวก ${n(setup.positivePct||0)}%) · มี survivorship bias, ใช้ราคาปิด และยังไม่รวมค่าธรรมเนียม/ปันผล/slippage`;}
 [search,status,score,sort].forEach(x=>x.addEventListener(x===search?'input':'change',render));
-let swingLoadPromise=null;async function loadSwingData(){if(swingLoadPromise)return swingLoadPromise;const badge=document.getElementById('swingSourceStatus');swingLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='Swing: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const p=await fetchMarketSummary('swing');DATA=p.summary;badge.className='feature-source-status online';badge.textContent=`Swing Cloud ${formatMarketDate(p.dataAsOf)} · ${DATA.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const r=await fetch(new URL('data/swing_signals.json',document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`Swing fallback HTTP ${r.status}`);DATA=await r.json();badge.className='feature-source-status fallback';badge.textContent=`Swing: ข้อมูลสำรอง ${DATA.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='Swing: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return swingLoadPromise}document.getElementById('navSwing').addEventListener('click',loadSwingData);render();
+let swingLoadPromise=null;async function loadSwingData(){if(swingLoadPromise)return swingLoadPromise;const badge=document.getElementById('swingSourceStatus');swingLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='Swing: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const p=await fetchMarketSummary('swing');DATA=p.summary;setCloudSummaryStatus(badge,'Swing',p,DATA.length);render();return true}catch(e){cloudError=e}try{const r=await fetch(new URL('data/swing_signals.json',document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`Swing fallback HTTP ${r.status}`);DATA=await r.json();badge.className='feature-source-status fallback';badge.textContent=`Swing: ข้อมูลสำรอง ${DATA.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='Swing: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return swingLoadPromise}document.getElementById('navSwing').addEventListener('click',loadSwingData);render();
 renderValidation();
 })();
 
@@ -970,7 +1009,7 @@ async function loadCloudDca(){
   let cloudError=null;
   try{
    const payload=await fetchMarketSummary('dca',controller.signal);if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
-   dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
+   setCloudSummaryStatus(dcaSourceStatus,'DCA',payload,Object.keys(DATA).length);
    return true;
   }catch(error){cloudError=error}
   try{

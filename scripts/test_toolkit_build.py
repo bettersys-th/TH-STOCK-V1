@@ -36,6 +36,11 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("MARKET_CACHE_TTL_MS", html)
         self.assertIn("fetchMarketSummary('swing')", html)
         self.assertIn("map(name=>fetchMarketSummary(name))", html)
+        self.assertIn("function setCloudSummaryStatus", html)
+        self.assertIn("payload._clientSource = 'cache'", html)
+        self.assertIn("เก่ากว่าวันปัจจุบัน", html)
+        self.assertIn('id="recentOhlcRow"', html)
+        self.assertIn("function renderRecentOhlc(stock)", html)
 
 
 if __name__ == "__main__":

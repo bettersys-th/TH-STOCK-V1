@@ -114,6 +114,22 @@ function formatMarketDate(value) {{
   return /^\\d{{8}}$/.test(text) ? `${{text.slice(6,8)}}/${{text.slice(4,6)}}/${{text.slice(0,4)}}` : text;
 }}
 
+function marketDataAgeDays(value) {{
+  const text = String(value || '');
+  if (!/^\\d{{8}}$/.test(text)) return null;
+  const date = Date.UTC(Number(text.slice(0,4)), Number(text.slice(4,6)) - 1, Number(text.slice(6,8)));
+  return Math.max(0, Math.floor((Date.now() - date) / 86400000));
+}}
+
+function setCloudSummaryStatus(element, label, payload, count) {{
+  const age = marketDataAgeDays(payload?.dataAsOf);
+  const source = payload?._clientSource === 'cache' ? 'Cache' : 'Cloud';
+  const stale = age !== null && age > 4;
+  element.className = `feature-source-status ${{stale ? 'stale' : 'online'}}`;
+  element.textContent = `${{label}} ${{source}} ${{formatMarketDate(payload?.dataAsOf)}} · ${{Number(count).toLocaleString('en-US')}} หุ้น${{stale ? ` · เก่า ${{age}} วัน` : ''}}`;
+  element.title = stale ? `ข้อมูลตลาดเก่ากว่าวันปัจจุบัน ${{age}} วัน โปรดตรวจสอบก่อนใช้วางแผน` : `${{source}} data · schema ${{payload?.schemaVersion ?? '-'}}`;
+}}
+
 function mergeTickerOptions(listId, tickers) {{
   const list = document.getElementById(listId);
   if (!list) return;
@@ -138,7 +154,11 @@ async function fetchMarketSummary(name, signal) {{
       const cached = await cache.match(cacheKey);
       if (cached) {{
         const savedAt = Number(cached.headers.get('x-th-stock-cached-at') || 0);
-        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) return await cached.json();
+        if (Date.now() - savedAt < MARKET_CACHE_TTL_MS) {{
+          const payload = await cached.json();
+          payload._clientSource = 'cache';
+          return payload;
+        }}
         await cache.delete(cacheKey);
       }}
     }}
@@ -157,6 +177,7 @@ async function fetchMarketSummary(name, signal) {{
       }}));
     }} catch (_) {{ /* Cache quota or privacy mode: network data remains usable. */ }}
   }}
+  payload._clientSource = 'cloud';
   return payload;
 }}
 
@@ -174,9 +195,11 @@ window.marketManifestReady = (async () => {{
     const manifest = await response.json();
     if (!Array.isArray(manifest.tickers) || !manifest.tickers.length) throw new Error('invalid market manifest');
     ['tickerList', 'cycTickerList', 'dcaTickerList'].forEach(id => mergeTickerOptions(id, manifest.tickers));
-    status.textContent = `Cloud ${{formatMarketDate(manifest.dataAsOf)}} · ${{manifest.tickerCount.toLocaleString('en-US')}} หุ้น`;
-    status.classList.add('online');
-    status.title = `Appwrite staging · schema ${{manifest.schemaVersion}}`;
+    const age = marketDataAgeDays(manifest.dataAsOf);
+    const stale = age !== null && age > 4;
+    status.textContent = `Cloud ${{formatMarketDate(manifest.dataAsOf)}} · ${{manifest.tickerCount.toLocaleString('en-US')}} หุ้น${{stale ? ` · เก่า ${{age}} วัน` : ''}}`;
+    status.classList.add(stale ? 'stale' : 'online');
+    status.title = stale ? `ข้อมูลตลาดเก่ากว่าวันปัจจุบัน ${{age}} วัน โปรดตรวจสอบก่อนใช้วางแผน` : `Appwrite staging · schema ${{manifest.schemaVersion}}`;
     return manifest;
   }} catch (error) {{
     status.textContent = 'ใช้ข้อมูลสำรองในหน้า';

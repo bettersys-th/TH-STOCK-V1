@@ -1,5 +1,15 @@
 # DCA package roadmap
 
+## Deferred TODO
+
+- [ ] Define Free/Pro feature flags and entitlement names.
+- [ ] Add Appwrite authentication and server-enforced entitlement checks.
+- [ ] Add private per-user portfolio storage and cloud sync.
+- [ ] Select a payment provider and implement verified payment webhooks.
+- [ ] Add subscription lifecycle, audit logs, data export, and account deletion.
+
+Status: deferred. Do not implement membership, payments, or browser-only access control until this roadmap is explicitly resumed.
+
 เอกสารนี้กำหนดขอบเขตเบื้องต้นเท่านั้น ยังไม่มีระบบสมาชิกหรือชำระเงินจริง และไม่ควรใช้การซ่อนปุ่มฝั่ง browser เป็นการตรวจสิทธิ์เมื่อเปิดขายแพ็กเกจ
 
 ## Free
@@ -36,4 +46,3 @@
 - `portfolio.export`
 - `dca.conditional`
 - `alerts.price_safety`
-

@@ -136,10 +136,16 @@ def update_prices(prices, tickers):
             if hist.empty:
                 empty.append(t)
                 continue
-            entry = prices.setdefault(t, {"d": [], "c": [], "v": []})
+            entry = prices.setdefault(t, {"d": [], "c": [], "v": [], "o": [], "h": [], "lo": []})
             entry.setdefault("v", [0] * len(entry["d"]))  # migrate เก่าไม่มี volume
+            entry.setdefault("o", [None] * len(entry["d"]))
+            entry.setdefault("h", [None] * len(entry["d"]))
+            entry.setdefault("lo", [None] * len(entry["d"]))
             combined_c = dict(zip(entry["d"], entry["c"]))
             combined_v = dict(zip(entry["d"], entry["v"]))
+            combined_o = dict(zip(entry["d"], entry["o"]))
+            combined_h = dict(zip(entry["d"], entry["h"]))
+            combined_lo = dict(zip(entry["d"], entry["lo"]))
             before_dates = set(entry["d"])
             changed_existing = False
             for idx, row in hist.iterrows():
@@ -149,15 +155,24 @@ def update_prices(prices, tickers):
                 if not (close > 0) or volume <= 0:
                     continue
                 rounded = round(close, 4)
+                def optional_price(column):
+                    value = row.get(column)
+                    return round(float(value), 4) if value is not None and value == value and float(value) > 0 else None
                 if d_int in combined_c and (combined_c[d_int] != rounded or combined_v.get(d_int) != volume):
                     changed_existing = True
                 combined_c[d_int] = rounded
                 combined_v[d_int] = volume
+                combined_o[d_int] = optional_price("Open")
+                combined_h[d_int] = optional_price("High")
+                combined_lo[d_int] = optional_price("Low")
             if combined_c:
                 all_dates = sorted(combined_c.keys())
                 entry["d"] = all_dates
                 entry["c"] = [combined_c[d] for d in all_dates]
                 entry["v"] = [combined_v.get(d, 0) for d in all_dates]
+                entry["o"] = [combined_o.get(d) for d in all_dates]
+                entry["h"] = [combined_h.get(d) for d in all_dates]
+                entry["lo"] = [combined_lo.get(d) for d in all_dates]
             if set(entry["d"]) - before_dates:
                 n_updated += 1
             if changed_existing:
@@ -403,8 +418,17 @@ def build_derived(prices, splits_raw, tickers):
                   for idx, typ in pivots]
         has_split = t in splits_raw
         # l = latest actual bar; the final ZigZag extreme can be earlier than today.
+        opens = prices[t].get("o") or [None] * len(dates)
+        highs = prices[t].get("h") or [None] * len(dates)
+        lows = prices[t].get("lo") or [None] * len(dates)
+        recent_ohlc = []
+        for i in range(max(0, len(dates) - 5), len(dates)):
+            def recent_value(values):
+                return round(values[i], 4) if i < len(values) and values[i] is not None else None
+            recent_ohlc.append([ymd_to_iso(dates[i]), recent_value(opens), recent_value(highs),
+                                recent_value(lows), round(closes[i], 4)])
         cycles_compact[t] = {"sa": 1 if has_split else 0, "e": events,
-                             "l": [ymd_to_iso(latest_d), round(latest_p, 3)]}
+                             "l": [ymd_to_iso(latest_d), round(latest_p, 3)], "r": recent_ohlc}
 
         # --- downlist: ราคาสูงสุดตั้งแต่จุดยืนยันล่าสุด เทียบราคาล่าสุด ---
         last_pivot_date_int = int(events[-1][0].replace("-", ""))

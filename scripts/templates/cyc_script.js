@@ -36,8 +36,7 @@ async function loadCloudCycles(){
       if(!CYCLES[tickerInput.value.trim().toUpperCase()]) tickerInput.value = CYCLES.PTT ? 'PTT' : Object.keys(CYCLES).sort()[0];
       checkTicker();
       if(resultPanel.classList.contains('show')) analyzeBtn.click();
-      cycleSourceStatus.className = 'cycle-source-status online';
-      cycleSourceStatus.textContent = `Cycle Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(CYCLES).length.toLocaleString('en-US')} หุ้น`;
+      setCloudSummaryStatus(cycleSourceStatus, 'Cycle', payload, Object.keys(CYCLES).length);
       return true;
     }catch(error){
       cloudError = error;
@@ -241,6 +240,16 @@ function renderTable(cycles){
   `).join('');
 }
 
+function renderRecentOhlc(stock){
+  const row = document.getElementById('recentOhlcRow');
+  const recent = Array.isArray(stock.r) ? stock.r.slice(-5) : [];
+  const value = number => Number.isFinite(Number(number)) && number !== null ? fmtNum(Number(number), 2) : '—';
+  row.innerHTML = recent.length ? recent.map(bar => `<td>
+    <span class="ohlc-date">${bar[0]}</span>
+    <div class="ohlc-values"><span>เปิด<b>${value(bar[1])}</b></span><span>สูง<b>${value(bar[2])}</b></span><span>ต่ำ<b>${value(bar[3])}</b></span><span>ปิด<b>${value(bar[4])}</b></span></div>
+  </td>`).join('') : '<td class="ohlc-missing">ยังไม่มีข้อมูล OHLC สำหรับหุ้นนี้ — ระบบจะเริ่มเก็บในการอัปเดตราคาครั้งถัดไป</td>';
+}
+
 analyzeBtn.addEventListener('click', () => {
   const t = tickerInput.value.trim().toUpperCase();
   if(!CYCLES[t]) return;
@@ -250,6 +259,7 @@ analyzeBtn.addEventListener('click', () => {
   renderScenario(CYCLES[t], events, cycles);
   renderChart(events);
   renderTable(cycles);
+  renderRecentOhlc(CYCLES[t]);
   resultPanel.classList.add('show');
   resultPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
 });

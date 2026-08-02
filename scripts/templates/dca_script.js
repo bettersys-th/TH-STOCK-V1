@@ -47,7 +47,7 @@ function calculateRisk(){
   ['ขาลงยาว','ลงลึกขึ้นและใช้เวลานาน 1.5 เท่า',current*(1-Math.min(.95,drop*1.25)),target,Math.min(steps,Math.max(1,Math.round(downSteps*1.5)))],
   ['ไม่ฟื้น','ลงลึกแล้วทรงตัวถึงจบแผน',current*(1-Math.min(.95,drop*1.25)),current*(1-Math.min(.95,drop*1.25)),downSteps]
  ].map(s=>({name:s[0],desc:s[1],...simulateScenario({...common,bottom:s[2],target:s[3],downSteps:s[4]})}));
- document.getElementById('scenarioGrid').innerHTML=scenarios.map(s=>`<div class="scenario-card"><small>${s.name}</small><b class="${s.pnl>=0?'gain':'loss'}">${signed(s.pnl)} บาท</b><small>ผลตอบแทน ${signed(s.pct)}%<br>ขาดทุนสูงสุด ${fmt(s.worst)}%<br>${s.desc}</small></div>`).join('');
+ document.getElementById('dcaScenarioGrid').innerHTML=scenarios.length?scenarios.map(s=>`<div class="scenario-card"><small>${s.name}</small><b class="${s.pnl>=0?'gain':'loss'}">${signed(s.pnl)} บาท</b><small>ผลตอบแทน ${signed(s.pct)}%<br>ขาดทุนสูงสุด ${fmt(s.worst)}%<br>${s.desc}</small></div>`).join(''):'<div class="scenario-placeholder">ไม่สามารถคำนวณสถานการณ์ได้ กรุณาตรวจค่าที่กรอก</div>';
  const safety=[];const addSafety=(level,text)=>safety.push({level,text});
  if(current<=Number(risk.low252||0)*1.02)addSafety('danger',`ราคาอยู่ใกล้จุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);else addSafety('ok',`ราคายังเหนือจุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);
  if(risk.return60<=-20)addSafety('danger',`ราคาลด ${fmt(Math.abs(risk.return60))}% ใน 60 วันทำการ`);else if(risk.return60<=-10)addSafety('watch',`Momentum 60 วันยังติดลบ ${fmt(risk.return60)}%`);else addSafety('ok',`Momentum 60 วัน ${signed(risk.return60||0)}%`);

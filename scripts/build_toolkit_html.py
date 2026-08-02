@@ -123,6 +123,7 @@ Object.keys(navButtons).forEach(navId => {{
       document.getElementById(nId).classList.toggle('active', nId===navId);
       document.getElementById(pId).classList.toggle('active', pId===navButtons[navId]);
     }});
+    document.body.classList.toggle('dca-page', navId==='navDca');
   }});
 }});
 

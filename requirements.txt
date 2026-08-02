@@ -1,2 +1,2 @@
 # Dependabot proposes reviewed upgrades to this reproducible dependency.
-yfinance==1.5.1
+yfinance==1.5.2

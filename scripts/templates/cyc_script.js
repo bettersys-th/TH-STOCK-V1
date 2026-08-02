@@ -66,6 +66,7 @@ async function loadCloudCycles(){
   return cycleCloudPromise;
 }
 window.ensureCycleData = loadCloudCycles;
+window.getCycleTickerSymbols = () => Object.keys(CYCLES);
 
 function fmtNum(n, dec=2){
   return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -272,5 +273,6 @@ document.getElementById('scenarioInvestment').addEventListener('input', () => {
 
 // default example
 document.getElementById('navCycle').addEventListener('click', loadCloudCycles);
+document.getElementById('cycleStockMenuOpen').addEventListener('click',()=>window.openSharedStockMenu?.('cycle'));
 tickerInput.value = 'PTT';
 checkTicker();

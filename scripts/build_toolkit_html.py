@@ -101,6 +101,14 @@ def build(data_dir, output_path):
   <div class="page" id="pageDca">
 {dca_wrap}
   </div>
+
+  <div class="stock-menu-backdrop" id="stockMenuBackdrop"></div>
+  <aside class="stock-side-menu" id="stockSideMenu" aria-hidden="true">
+    <div class="stock-menu-head"><b id="stockMenuTitle">เลือกหุ้น</b><button type="button" id="stockMenuClose" aria-label="ปิดรายชื่อหุ้น">×</button></div>
+    <input id="stockMenuSearch" placeholder="ค้นหา Ticker..." autocomplete="off">
+    <div class="stock-menu-groups" id="stockMenuGroups"></div>
+    <div class="stock-menu-note">จัดกลุ่มตามตัวอักษร เนื่องจากระบบยังไม่มีข้อมูล Sector ที่ตรวจสอบแล้ว</div>
+  </aside>
 </div>
 
 <script>

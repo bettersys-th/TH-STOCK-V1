@@ -50,6 +50,10 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("function boardLotPurchase(cash,price)", html)
         self.assertIn("ซื้อขั้นต่ำ 100 หุ้นและเพิ่มทีละ 100 หุ้น", html)
         self.assertNotIn("bought=buy/price", html)
+        self.assertEqual(html.count('id="stockSideMenu"'), 1)
+        self.assertIn('id="cycleStockMenuOpen"', html)
+        self.assertIn("window.openSharedStockMenu=openStockMenu", html)
+        self.assertIn("window.getCycleTickerSymbols", html)
 
 
 if __name__ == "__main__":

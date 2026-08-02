@@ -47,8 +47,6 @@ def build(data_dir, output_path):
     splits = _read_json(data_dir, "splits.json", {})
     dividends = _read_json(data_dir, "dividends.json", {})
     downlist = _read_json(data_dir, "downlist.json", [])
-    accumulation_signals = _read_json(data_dir, "accumulation_signals.json", [])
-    swing_signals = _read_json(data_dir, "swing_signals.json", [])
     swing_backtest = _read_json(data_dir, "swing_backtest.json", {})
 
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -62,11 +60,11 @@ def build(data_dir, output_path):
     cyc_script = cyc_script.replace("__CYCLES_JSON__", "{}")
     scan_script = (scan_script
                    .replace("__DOWNLIST_JSON__", json.dumps(downlist, ensure_ascii=False, separators=(",", ":")))
-                   .replace("__ACCUMULATION_JSON__", json.dumps(accumulation_signals, ensure_ascii=False, separators=(",", ":")))
+                   .replace("__ACCUMULATION_JSON__", "[]")
                    .replace("__UPDATED_AT_JSON__", json.dumps(updated_at, ensure_ascii=False))
-                   .replace("__SCAN_DIVIDENDS_JSON__", json.dumps(dividends, ensure_ascii=False, separators=(",", ":"))))
+                   .replace("__SCAN_DIVIDENDS_JSON__", "{}"))
     swing_script = (swing_script
-                    .replace("__SWING_JSON__", json.dumps(swing_signals, ensure_ascii=False, separators=(",", ":")))
+                    .replace("__SWING_JSON__", "[]")
                     .replace("__SWING_BACKTEST_JSON__", json.dumps(swing_backtest, ensure_ascii=False, separators=(",", ":"))))
     dca_script = dca_script.replace("__DCA_JSON__", "{}")
 

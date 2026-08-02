@@ -29,6 +29,7 @@
   }
   .cloud-data-status.online{color:var(--teal);border-color:rgba(45,212,191,.45);}
   .cloud-data-status.fallback{color:var(--amber);border-color:rgba(245,166,35,.45);}
+  .feature-source-status{display:table;margin:0 0 12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0b1017;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px}.feature-source-status.loading{color:var(--amber)}.feature-source-status.online{color:var(--teal);border-color:rgba(45,212,191,.45)}.feature-source-status.fallback{color:var(--muted)}.feature-source-status.error{color:var(--red);border-color:rgba(226,89,107,.5)}
   .page{display:none;}
   .page.active{display:block;}
   @media(max-width:760px){.cloud-data-status{width:100%;margin-left:0;text-align:center;}}

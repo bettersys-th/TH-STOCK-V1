@@ -1,7 +1,7 @@
 (function(){
-const SIGNALS = __ACCUMULATION_JSON__;
+let SIGNALS = __ACCUMULATION_JSON__;
 const UPDATED_AT = __UPDATED_AT_JSON__;
-const DIVIDENDS = __SCAN_DIVIDENDS_JSON__;
+let DIVIDENDS = __SCAN_DIVIDENDS_JSON__;
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
 document.getElementById('scanUpdated').textContent = 'ข้อมูลล่าสุดอัปเดตเมื่อ: ' + UPDATED_AT;
@@ -16,7 +16,7 @@ const liquidityWarningSelect = document.getElementById('scanLiquidityWarning');
 const dividendModeSelect = document.getElementById('scanDividendMode');
 const dividendYearsEl = document.getElementById('scanDividendYears');
 const dividendStopMonthsEl = document.getElementById('scanDividendStopMonths');
-const referenceDate = new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');
+let referenceDate = new Date();
 const numericFilters = {
   setupMin:'scanSetupMin', demandMin:'scanDemandMin', confirmationMin:'scanConfirmationMin',
   drawdownMin:'scanDrawdownMin', drawdownMax:'scanDrawdownMax', rangeMax:'scanRangeMax',
@@ -123,5 +123,8 @@ document.getElementById('scanReset').addEventListener('click', () => {
   dividendModeSelect.value='all';dividendYearsEl.value='3';dividendStopMonthsEl.value='12';
   Object.values(numericEls).forEach(el => el.value=''); render();
 });
+let scanLoadPromise=null;
+async function loadScanData(){if(scanLoadPromise)return scanLoadPromise;const badge=document.getElementById('scanSourceStatus');scanLoadPromise=(async()=>{badge.className='feature-source-status loading';badge.textContent='สะสม: กำลังโหลดข้อมูล Cloud…';let cloudError;try{const [a,d]=await Promise.all(['accumulation','dividends'].map(async name=>{const r=await fetch(`${MARKET_API_BASE}/v1/summaries/${name}`,{headers:{Accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a.summary;DIVIDENDS=d.summary;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status online';badge.textContent=`สะสม Cloud ${formatMarketDate(a.dataAsOf)} · ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;render();return true}catch(e){cloudError=e}try{const [a,d]=await Promise.all(['accumulation_signals.json','dividends.json'].map(async name=>{const r=await fetch(new URL(`data/${name}`,document.baseURI),{cache:'no-store'});if(!r.ok)throw Error(`${name} HTTP ${r.status}`);return r.json()}));SIGNALS=a;DIVIDENDS=d;referenceDate=new Date((SIGNALS.map(s=>s.date).sort().at(-1)||new Date().toISOString().slice(0,10))+'T00:00:00');badge.className='feature-source-status fallback';badge.textContent=`สะสม: ข้อมูลสำรอง ${SIGNALS.length.toLocaleString('en-US')} หุ้น`;badge.title=cloudError.message;render();return false}catch(e){badge.className='feature-source-status error';badge.textContent='สะสม: โหลดข้อมูลไม่สำเร็จ';badge.title=`${cloudError.message}; ${e.message}`;return false}})();return scanLoadPromise}
+document.getElementById('navScan').addEventListener('click',loadScanData);
 render();
 })();

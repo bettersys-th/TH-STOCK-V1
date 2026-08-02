@@ -18,6 +18,12 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn("/v1/summaries/dca", html)
         self.assertIn("data/cycles_compact.json", html)
         self.assertIn("data/dca_compact.json", html)
+        self.assertIn("let SIGNALS = [];", html)
+        self.assertIn("let DATA=[];", html)
+        self.assertIn("/v1/summaries/${name}", html)
+        self.assertIn("/v1/summaries/swing", html)
+        self.assertIn("['accumulation_signals.json','dividends.json']", html)
+        self.assertIn("data/swing_signals.json", html)
 
 
 if __name__ == "__main__":

@@ -16,3 +16,4 @@
   .nav-tab.active{background:var(--amber);color:#161006;border-color:var(--amber);font-weight:700;}
   .page{display:none;}
   .page.active{display:block;}
+  @media(min-width:1400px){.wrap{max-width:1280px;}}

@@ -36,9 +36,10 @@
         <option value="liquidityDesc">เรียงสภาพคล่องสูงสุด</option>
         <option value="tickerAsc">เรียงตาม Ticker</option>
       </select>
+      <select id="scanDividendMode"><option value="all">ปันผล: ทั้งหมด</option><option value="continuous">ปันผลต่อเนื่อง</option><option value="stopped">เคยจ่ายแต่หยุดแล้ว</option></select>
     </div>
     <details class="advanced-filter" id="advancedFilter">
-      <summary>ตัวกรองขั้นสูง <span>คะแนนรายหมวด · ระยะลง · ฐานราคา · แรงซื้อ · สภาพคล่อง</span></summary>
+      <summary>ตัวกรองขั้นสูง <span>คะแนนรายหมวด · ระยะลง · ฐานราคา · แรงซื้อ · สภาพคล่อง · ปันผล</span></summary>
       <div class="preset-row">
         <button type="button" class="filter-preset" data-preset="nearConfirm">ใกล้ยืนยัน</button>
         <button type="button" class="filter-preset" data-preset="tightBase">ฐานราคาแน่น</button>
@@ -55,13 +56,15 @@
         <label>Up/Down volume ขั้นต่ำ<input type="number" id="scanDemandRatioMin" min="0" step="0.1" placeholder="เช่น 1.2"></label>
         <label>มูลค่าซื้อขายขั้นต่ำ (ล้านบาท/วัน)<input type="number" id="scanLiquidityMin" min="0" step="0.1" placeholder="เช่น 5"></label>
         <label>คำเตือนสภาพคล่อง<select id="scanLiquidityWarning"><option value="all">ทั้งหมด</option><option value="exclude">ไม่รวมหุ้นเตือน 30 วัน</option><option value="only">เฉพาะหุ้นที่ถูกเตือน</option></select></label>
+        <label>ปันผลต่อเนื่องอย่างน้อย (ปี)<input type="number" id="scanDividendYears" min="1" max="20" value="3"></label>
+        <label>หยุดจ่ายอย่างน้อย (เดือน)<input type="number" id="scanDividendStopMonths" min="1" max="240" value="12"></label>
       </div>
       <div class="filter-error" id="scanFilterError"></div>
     </details>
     <div class="scan-count" id="scanCount"></div>
     <div class="table-wrap" style="padding:0;">
       <table class="signal-table">
-        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>สภาพคล่อง 30 วัน</th><th>เหตุผลสำคัญ</th></tr></thead>
+        <thead><tr><th>Ticker</th><th>สถานะ</th><th>คะแนน</th><th>Setup</th><th>แรงรับ</th><th>ยืนยัน</th><th>จากยอด 52 สัปดาห์</th><th>สภาพคล่อง 30 วัน</th><th>สถานะปันผล</th><th>เหตุผลสำคัญ</th></tr></thead>
         <tbody id="scanTable"></tbody>
       </table>
     </div>
@@ -72,4 +75,4 @@
     <p><b>Watch</b> คือราคาอยู่ในบริเวณสนใจแต่ยังไม่กลับตัว, <b>Building Base</b> คือความผันผวนลดและเริ่มมีแรงรับ, <b>Confirmed</b> คือราคา/MA20 เริ่มยืนยัน ส่วน <b>Invalidated</b> คือราคาหลุดฐาน 20 วัน คะแนนเป็นตัวจัดลำดับงานวิจัย ไม่ใช่คำสั่งซื้อ และควรแบ่งไม้พร้อมกำหนดระดับยกเลิกแผนเสมอ</p>
   </div>
 
-  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0;"><b>ข้อควรระวัง:</b> โมเดลใช้เฉพาะราคาปิดและ volume ไม่ครอบคลุมปัจจัยพื้นฐาน ข่าว สภาพคล่องระหว่างวัน หรือความเสี่ยงเฉพาะบริษัท ผลในอดีตไม่รับประกันผลในอนาคต และไม่ใช่คำแนะนำการลงทุน</div></div>
+  <div class="panel"><div class="disclaimer" style="border-top:none;padding:0;"><b>ข้อควรระวัง:</b> โมเดลใช้เฉพาะราคาปิดและ volume ไม่ครอบคลุมปัจจัยพื้นฐาน ข่าว สภาพคล่องระหว่างวัน หรือความเสี่ยงเฉพาะบริษัท ข้อมูลปันผลมาจาก Yahoo Finance และอาจไม่ครบ การแสดง “ไม่มีข้อมูล” ไม่ได้ยืนยันว่าบริษัทไม่เคยจ่ายปันผล ผลในอดีตไม่รับประกันผลในอนาคต และไม่ใช่คำแนะนำการลงทุน</div></div>

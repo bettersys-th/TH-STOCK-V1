@@ -1,6 +1,8 @@
   <div class="eyebrow">Forward-looking DCA Risk Planner</div><h1>วางแผน DCA ก่อนลงทุน</h1>
   <p class="sub">จำลองว่าหากราคาค่อย ๆ ลงแล้วฟื้น แผนต้องใช้เงินเท่าไร ต้นทุนเฉลี่ยอยู่ที่ใด และขาดทุนระหว่างทางเกินระดับที่รับได้หรือไม่</p>
 
+  <div class="panel dca-batch-panel"><div class="dca-batch-row"><label>สร้างแผนหลายหุ้นพร้อมกัน<input id="dcaBatchTickers" placeholder="เช่น PTT, ADVANC, TKN"></label><button class="btn" id="dcaBatchCreate">สร้างแผน</button></div><div class="dca-batch-note" id="dcaBatchNote">งบของแต่ละหุ้นเป็นคนละแผน ระบบจะรวมงบทุกแท็บให้ตรวจสอบ</div><div class="dca-plan-tabs" id="dcaPlanTabs"></div></div>
+
   <div class="panel risk-form">
     <label>Ticker<input list="dcaTickerList" id="riskTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
     <label>ซื้อครั้งแรกวันนี้ (บาท)<input type="number" id="riskInitial" min="0" step="1000" value="10000"><small class="cycle-time-note">ซื้อทันทีที่ราคาปัจจุบัน และรวมในต้นทุนเฉลี่ย</small></label>

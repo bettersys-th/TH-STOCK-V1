@@ -1,7 +1,7 @@
 
   .scan-info{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:24px;max-width:680px;}
-  .scan-controls{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
-  .scan-controls input{width:auto;flex:1;min-width:180px;}
+  .scan-controls{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;align-items:center;margin-bottom:20px;}
+  .scan-controls input{width:100%;min-width:0;box-sizing:border-box;}
   .scan-controls select{
     background:#0b1017;border:1px solid var(--line);color:var(--text);
     font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 12px;border-radius:8px;
@@ -31,6 +31,7 @@
   .liquidity-cell b,.liquidity-cell small{display:block;white-space:nowrap;}
   .liquidity-cell small{color:var(--muted);margin-top:2px;}
   .liquidity-warning{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:5px;background:#4b2027;color:#ff9ca7;font-size:9px;font-weight:700;white-space:nowrap;}
+  .dividend-cell{min-width:145px;font-size:10px;line-height:1.5}.dividend-pill{display:inline-block;padding:4px 7px;border-radius:6px;background:#172b3b;color:#83c7f4}.dividend-pill.continuous{background:#173f35;color:#72dfb4}.dividend-pill.stopped{background:#4b3c20;color:#ffd478}.dividend-cell small{display:block;color:var(--muted);margin-top:4px}
   .methodology h3{margin:0 0 8px;}
   .methodology p{margin:0;color:var(--muted);line-height:1.7;font-size:13px;}
   .advanced-filter{border:1px solid var(--line);border-radius:10px;margin:-4px 0 18px;background:rgba(11,16,23,.45);}
@@ -46,5 +47,5 @@
   .advanced-grid input{width:100%;margin-top:6px;padding:9px 10px;font-size:12px;box-sizing:border-box;}
   .advanced-grid select{width:100%;margin-top:6px;background:#0b1017;border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:8px;font-size:12px;}
   .filter-error{min-height:16px;color:#ff8d9a;font-size:11px;padding:0 15px 10px;}
-  @media(max-width:850px){.advanced-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}}
+  @media(max-width:1100px){.scan-controls{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:850px){.advanced-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}}
   @media(max-width:480px){.advanced-grid{grid-template-columns:1fr}.filter-reset{margin-left:0}.advanced-filter summary span{display:block;margin:4px 0 0;}}

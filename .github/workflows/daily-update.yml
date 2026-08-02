@@ -43,7 +43,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
       - name: Run tests
-        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py scripts/test_cloud_export.py scripts/test_upload_appwrite.py
+        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py scripts/test_cloud_export.py scripts/test_upload_appwrite.py scripts/test_cleanup_appwrite.py scripts/test_market_api.py
 
       - name: Run update and build pipeline
         if: github.event_name != 'workflow_dispatch' || !inputs.upload_appwrite_staging

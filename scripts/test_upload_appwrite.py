@@ -13,6 +13,7 @@ from upload_appwrite import load_upload_plan, object_id, remote_manifest, upload
 class FakeStorage:
     def __init__(self):
         self.files = {}
+        self.published = []
 
     def exists(self, file_id):
         return file_id in self.files
@@ -22,6 +23,9 @@ class FakeStorage:
 
     def upload_bytes(self, file_id, content, filename):
         self.files[file_id] = content
+
+    def publish_version(self, manifest_file_id, manifest, channel="staging"):
+        self.published.append((channel, manifest_file_id, manifest["dataAsOf"]))
 
 
 class UploadAppwriteTests(unittest.TestCase):
@@ -48,6 +52,8 @@ class UploadAppwriteTests(unittest.TestCase):
             self.assertEqual(second["uploaded"], 0)
             self.assertEqual(second["skipped"], 2)
             self.assertEqual(len(first["manifestFileId"]), 34)
+            self.assertTrue(first["published"])
+            self.assertEqual(storage.published[-1][0], "staging")
 
     def test_remote_manifest_contains_content_addressed_file_ids(self):
         with tempfile.TemporaryDirectory() as temp:

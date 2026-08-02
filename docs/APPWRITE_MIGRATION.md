@@ -50,6 +50,9 @@ Create a staging project in Appwrite Console, then:
 
 The uploader verifies every object's size and SHA-256 checksum, uses immutable content-addressed
 file IDs, skips existing objects, and uploads the manifest last. It does not delete remote data.
+After the manifest exists, it upserts row ID `staging` in `app/data_versions` as the atomic current
+pointer. The uploader key therefore needs only Storage file read/write and Database row read/write
+scopes; table/schema administration scopes remain disabled.
 The workflow job allows up to 90 minutes because a full Yahoo refresh and the first staging upload
 can exceed 30 minutes. A canceled run is safe to retry: already uploaded objects are detected and
 skipped.
@@ -85,8 +88,7 @@ manually-created files are never deleted.
 
 ## Next steps
 
-1. Create the staging resources after owner review.
-2. Upload the manifest objects to the private staging bucket.
-3. Implement `market-api` and validate its responses against this local contract.
-4. Add a frontend data-provider switch, keeping the current embedded provider as rollback.
-5. Add Auth and server-enforced Free/Pro entitlements before moving premium calculations.
+1. Deploy `appwrite/functions/market-api` with read-only dynamic-key scopes.
+2. Validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.
+3. Add a frontend data-provider switch, keeping the current embedded provider as rollback.
+4. Add Auth and server-enforced Free/Pro entitlements before moving premium calculations.

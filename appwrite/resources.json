@@ -45,7 +45,7 @@
         "rowSecurity": false,
         "purpose": "Atomic pointer to a verified market-data manifest",
         "columns": {"channel": "varchar(20) unique", "manifestFileId": "varchar(36)", "dataAsOf": "integer", "schemaVersion": "integer", "publishedAt": "datetime"},
-        "permissions": "server write; market-api read"
+        "permissions": "server only; uploader publishes staging pointer after all files and manifest exist"
       }
     ]
   },

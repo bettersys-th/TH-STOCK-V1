@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,12 +52,16 @@ class AppwriteStorage:
         from appwrite.exception import AppwriteException
         from appwrite.input_file import InputFile
         from appwrite.services.storage import Storage
+        from appwrite.services.tables_db import TablesDB
 
         self._exception = AppwriteException
         self._input_file = InputFile
         self._bucket_id = bucket_id
+        self._database_id = os.environ.get("APPWRITE_DATABASE_ID", "app")
+        self._versions_table_id = os.environ.get("APPWRITE_DATA_VERSIONS_TABLE_ID", "data_versions")
         client = Client().set_endpoint(endpoint).set_project(project_id).set_key(api_key)
         self._storage = Storage(client)
+        self._tables = TablesDB(client)
 
     def exists(self, file_id: str) -> bool:
         try:
@@ -81,6 +86,21 @@ class AppwriteStorage:
             path.write_bytes(content)
             self.upload_path(file_id, path)
 
+    def publish_version(self, manifest_file_id: str, manifest: dict, channel: str = "staging") -> None:
+        self._tables.upsert_row(
+            database_id=self._database_id,
+            table_id=self._versions_table_id,
+            row_id=channel,
+            data={
+                "channel": channel,
+                "manifestFileId": manifest_file_id,
+                "dataAsOf": int(manifest["dataAsOf"]),
+                "schemaVersion": int(manifest["schemaVersion"]),
+                "publishedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            },
+            permissions=[],
+        )
+
 
 def upload(export_dir: Path, storage=None, apply: bool = False) -> dict:
     manifest, objects = load_upload_plan(export_dir)
@@ -91,7 +111,7 @@ def upload(export_dir: Path, storage=None, apply: bool = False) -> dict:
         if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"]:
             raise ValueError(f"local upload object failed integrity check: {item['path']}")
 
-    report = {"objects": len(objects), "bytes": sum(x["bytes"] for x in objects), "uploaded": 0, "skipped": 0}
+    report = {"objects": len(objects), "bytes": sum(x["bytes"] for x in objects), "uploaded": 0, "skipped": 0, "published": False}
     if not apply:
         return report
     if storage is None:
@@ -117,6 +137,10 @@ def upload(export_dir: Path, storage=None, apply: bool = False) -> dict:
         storage.upload_bytes(manifest_id, content, "manifest.json")
         report["uploaded"] += 1
     report["manifestFileId"] = manifest_id
+    if not hasattr(storage, "publish_version"):
+        raise RuntimeError("storage adapter cannot publish data_versions pointer")
+    storage.publish_version(manifest_id, manifest)
+    report["published"] = True
     return report
 
 

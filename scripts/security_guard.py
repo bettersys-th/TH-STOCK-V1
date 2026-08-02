@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TEXT_SUFFIXES = {".css", ".html", ".js", ".json", ".md", ".py", ".txt", ".yaml", ".yml"}
+TEXT_SUFFIXES = {".bat", ".css", ".html", ".js", ".json", ".md", ".ps1", ".py", ".txt", ".yaml", ".yml"}
 EXCLUDED_PARTS = {".git", ".venv", "data", "node_modules", "venv"}
 EXCLUDED_FILES = {"index.html", "scripts/security_guard.py"}
 MAX_BYTES = 2_000_000

@@ -48,6 +48,18 @@ class CloudExportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "misaligned price arrays for BAD"):
                 build_cloud_export(prices, data_dir)
 
+    def test_existing_export_is_updated_without_directory_rename(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data_dir = Path(temp) / "data"
+            output = data_dir / "cloud_market"
+            output.mkdir(parents=True)
+            locked_placeholder = output / "keep-unreferenced.txt"
+            locked_placeholder.write_text("retained", encoding="utf-8")
+            prices = {"AAA": {"d": [20260102], "c": [10.0], "v": [100]}}
+            build_cloud_export(prices, data_dir, output)
+            self.assertTrue((output / "stocks" / "AAA.json.gz").exists())
+            self.assertEqual(locked_placeholder.read_text(encoding="utf-8"), "retained")
+
 
 if __name__ == "__main__":
     unittest.main()

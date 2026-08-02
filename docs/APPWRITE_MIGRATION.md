@@ -68,6 +68,21 @@ Manual staging upload deliberately uses the already verified `prices.json.gz` co
 repository. It does not call Yahoo first, keeping provider availability separate from an Appwrite
 deployment test. Scheduled runs continue to use the full update-and-quality pipeline.
 
+### Recommended first upload from Windows
+
+Run `upload_appwrite_staging.bat`. The wrapper prompts for Project ID and API key, hides the key
+while typed, keeps credentials only in the current process environment, builds and verifies the
+export, shows a dry-run, and requires typing `UPLOAD` before any network write. It never creates an
+`.env` file. Each run uses a unique ignored session directory and removes it afterward, avoiding
+collisions with GitHub Desktop, antivirus, or another generated export. GitHub Actions remains an
+optional staging fallback rather than the recommended first upload path.
+
+If an upload is canceled, immutable objects from that incomplete attempt can remain safely but use
+storage. Run `cleanup_appwrite_staging.bat` to inspect them. It downloads the newest completed
+manifest, proves every referenced object exists, retains that manifest and all referenced objects,
+and reports orphan count/bytes. Deletion occurs only after typing `DELETE ORPHANS`; unknown or
+manually-created files are never deleted.
+
 ## Next steps
 
 1. Create the staging resources after owner review.

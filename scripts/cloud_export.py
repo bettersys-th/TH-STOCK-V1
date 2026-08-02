@@ -47,6 +47,30 @@ def _read_json(path: Path, default):
         return json.load(handle)
 
 
+def _publish_staging(staging: Path, target: Path) -> None:
+    """Publish objects atomically per file, with manifest last.
+
+    Renaming a whole directory is unreliable on Windows when GitHub Desktop or
+    antivirus holds a directory handle. Old unreferenced objects are harmless
+    and are retained until the future retention job removes them.
+    """
+    target.mkdir(parents=True, exist_ok=True)
+    files = sorted(
+        (path for path in staging.rglob("*") if path.is_file()),
+        key=lambda path: path.relative_to(staging).as_posix() == "manifest.json",
+    )
+    for source in files:
+        relative = source.relative_to(staging)
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        content = source.read_bytes()
+        if destination.exists() and destination.read_bytes() == content:
+            continue
+        temporary = destination.with_name(destination.name + ".publishing")
+        temporary.write_bytes(content)
+        os.replace(temporary, destination)
+
+
 def verify_cloud_export(export_dir: str | Path, prices: dict) -> dict:
     export_path = Path(export_dir)
     manifest = _read_json(export_path / "manifest.json", None)
@@ -142,14 +166,8 @@ def build_cloud_export(prices: dict, data_dir: str | Path, output_dir: str | Pat
         (staging / "manifest.json").write_bytes(_json_bytes(manifest))
         verify_cloud_export(staging, prices)
 
-        backup = target.with_name(target.name + ".previous")
-        if backup.exists():
-            shutil.rmtree(backup)
-        if target.exists():
-            os.replace(target, backup)
-        os.replace(staging, target)
-        if backup.exists():
-            shutil.rmtree(backup)
+        _publish_staging(staging, target)
+        shutil.rmtree(staging)
         return manifest
     except Exception:
         if staging.exists():
@@ -160,11 +178,12 @@ def build_cloud_export(prices: dict, data_dir: str | Path, output_dir: str | Pat
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build verified per-ticker cloud market objects")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
+    parser.add_argument("--output-dir", type=Path, help="optional isolated export directory under data-dir")
     args = parser.parse_args()
     data_dir = args.data_dir.resolve()
     with gzip.open(data_dir / "prices.json.gz", "rt", encoding="utf-8") as handle:
         prices = json.load(handle)
-    manifest = build_cloud_export(prices, data_dir)
+    manifest = build_cloud_export(prices, data_dir, args.output_dir)
     print(
         f"cloud export: {manifest['tickerCount']} tickers | "
         f"{manifest['totalBars']} bars | as of {manifest['dataAsOf']}"

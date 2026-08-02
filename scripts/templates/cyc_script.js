@@ -27,6 +27,7 @@ async function loadCloudCycles(){
     cycleSourceStatus.textContent = 'Cycle: กำลังโหลดข้อมูล Cloud…';
     const controller = new AbortController();
     const timer = setTimeout(()=>controller.abort(), 30000);
+    let cloudError = null;
     try{
       const manifest = await window.marketManifestReady;
       if(manifest && !manifest.summaries?.includes('cycles')) throw new Error('Cycle summary unavailable');
@@ -43,9 +44,25 @@ async function loadCloudCycles(){
       cycleSourceStatus.textContent = `Cycle Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(CYCLES).length.toLocaleString('en-US')} หุ้น`;
       return true;
     }catch(error){
+      cloudError = error;
+    }
+    try{
+      const response = await fetch(new URL('data/cycles_compact.json', document.baseURI), {headers:{Accept:'application/json'}, cache:'no-store'});
+      if(!response.ok) throw new Error(`Cycle fallback HTTP ${response.status}`);
+      const fallback = await response.json();
+      if(!fallback || Array.isArray(fallback) || !Object.keys(fallback).length) throw new Error('invalid Cycle fallback');
+      CYCLES = fallback;
+      renderCycleTickerOptions();
+      if(!CYCLES[tickerInput.value.trim().toUpperCase()]) tickerInput.value = CYCLES.PTT ? 'PTT' : Object.keys(CYCLES).sort()[0];
+      checkTicker();
       cycleSourceStatus.className = 'cycle-source-status fallback';
-      cycleSourceStatus.textContent = 'Cycle: ใช้ข้อมูลสำรองในหน้า';
-      cycleSourceStatus.title = error.message;
+      cycleSourceStatus.textContent = `Cycle: ข้อมูลสำรอง ${Object.keys(CYCLES).length.toLocaleString('en-US')} หุ้น`;
+      cycleSourceStatus.title = `Cloud unavailable: ${cloudError?.message || 'unknown error'}`;
+      return false;
+    }catch(fallbackError){
+      cycleSourceStatus.className = 'cycle-source-status error';
+      cycleSourceStatus.textContent = 'Cycle: โหลดข้อมูลไม่สำเร็จ';
+      cycleSourceStatus.title = `${cloudError?.message || 'Cloud unavailable'}; ${fallbackError.message}`;
       return false;
     }finally{
       clearTimeout(timer);

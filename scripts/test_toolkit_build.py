@@ -1,0 +1,24 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from scripts.build_toolkit_html import build
+
+
+class ToolkitBuildTests(unittest.TestCase):
+    def test_cycle_and_dca_payloads_are_lazy_loaded(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = Path(temp_dir) / "index.html"
+            build(temp_dir, output)
+            html = output.read_text(encoding="utf-8")
+
+        self.assertIn("let CYCLES = {};", html)
+        self.assertIn("let DATA={};", html)
+        self.assertIn("/v1/summaries/cycles", html)
+        self.assertIn("/v1/summaries/dca", html)
+        self.assertIn("data/cycles_compact.json", html)
+        self.assertIn("data/dca_compact.json", html)
+
+
+if __name__ == "__main__":
+    unittest.main()

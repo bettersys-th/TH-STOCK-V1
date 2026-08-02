@@ -46,12 +46,10 @@ def build(data_dir, output_path):
     stock_yearend = _read_json(data_dir, "stock_yearend.json", {"years": [], "tickers": {}})
     splits = _read_json(data_dir, "splits.json", {})
     dividends = _read_json(data_dir, "dividends.json", {})
-    cycles = _read_json(data_dir, "cycles_compact.json", {})
     downlist = _read_json(data_dir, "downlist.json", [])
     accumulation_signals = _read_json(data_dir, "accumulation_signals.json", [])
     swing_signals = _read_json(data_dir, "swing_signals.json", [])
     swing_backtest = _read_json(data_dir, "swing_backtest.json", {})
-    dca_compact = _read_json(data_dir, "dca_compact.json", {})
 
     updated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -59,7 +57,9 @@ def build(data_dir, output_path):
                    .replace("__DATA_JSON__", json.dumps(stock_yearend, ensure_ascii=False, separators=(",", ":")))
                    .replace("__SPLITS_JSON__", json.dumps(splits, ensure_ascii=False, separators=(",", ":")))
                    .replace("__DIVIDENDS_JSON__", json.dumps(dividends, ensure_ascii=False, separators=(",", ":"))))
-    cyc_script = cyc_script.replace("__CYCLES_JSON__", json.dumps(cycles, ensure_ascii=False, separators=(",", ":")))
+    # Cycle and DCA are loaded lazily from Appwrite with public data files as fallback.
+    # Keep only an empty bootstrap object in index.html so the landing page stays small.
+    cyc_script = cyc_script.replace("__CYCLES_JSON__", "{}")
     scan_script = (scan_script
                    .replace("__DOWNLIST_JSON__", json.dumps(downlist, ensure_ascii=False, separators=(",", ":")))
                    .replace("__ACCUMULATION_JSON__", json.dumps(accumulation_signals, ensure_ascii=False, separators=(",", ":")))
@@ -68,7 +68,7 @@ def build(data_dir, output_path):
     swing_script = (swing_script
                     .replace("__SWING_JSON__", json.dumps(swing_signals, ensure_ascii=False, separators=(",", ":")))
                     .replace("__SWING_BACKTEST_JSON__", json.dumps(swing_backtest, ensure_ascii=False, separators=(",", ":"))))
-    dca_script = dca_script.replace("__DCA_JSON__", json.dumps(dca_compact, ensure_ascii=False, separators=(",", ":")))
+    dca_script = dca_script.replace("__DCA_JSON__", "{}")
 
     html = f"""<!DOCTYPE html>
 <html lang="th">

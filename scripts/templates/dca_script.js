@@ -19,6 +19,7 @@ async function loadCloudDca(){
  dcaCloudPromise=(async()=>{
   dcaSourceStatus.className='dca-source-status loading';dcaSourceStatus.textContent='DCA: กำลังโหลดข้อมูล Cloud…';
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  let cloudError=null;
   try{
    const manifest=await window.marketManifestReady;if(manifest&&!manifest.summaries?.includes('dca'))throw new Error('DCA summary unavailable');
    const response=await fetch(`${MARKET_API_BASE}/v1/summaries/dca`,{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
@@ -26,8 +27,14 @@ async function loadCloudDca(){
    const payload=await response.json();if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
    dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
    return true;
-  }catch(error){
-   dcaSourceStatus.className='dca-source-status fallback';dcaSourceStatus.textContent='DCA: ใช้ข้อมูลสำรองในหน้า';dcaSourceStatus.title=error.message;return false;
+  }catch(error){cloudError=error}
+  try{
+   const response=await fetch(new URL('data/dca_compact.json',document.baseURI),{headers:{Accept:'application/json'},cache:'no-store'});
+   if(!response.ok)throw new Error(`DCA fallback HTTP ${response.status}`);
+   const fallback=await response.json();replaceDcaData(fallback);
+   dcaSourceStatus.className='dca-source-status fallback';dcaSourceStatus.textContent=`DCA: ข้อมูลสำรอง ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;dcaSourceStatus.title=`Cloud unavailable: ${cloudError?.message||'unknown error'}`;return false;
+  }catch(fallbackError){
+   dcaSourceStatus.className='dca-source-status error';dcaSourceStatus.textContent='DCA: โหลดข้อมูลไม่สำเร็จ';dcaSourceStatus.title=`${cloudError?.message||'Cloud unavailable'}; ${fallbackError.message}`;return false;
   }finally{clearTimeout(timer)}
  })();
  return dcaCloudPromise;

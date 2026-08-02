@@ -88,8 +88,9 @@ manually-created files are never deleted.
 
 ## Next steps
 
-- DCA summary API is available at `/v1/summaries/dca`; the web page loads it on first opening the DCA tab and keeps embedded data as a fallback during staging.
-- Cycle summary API is available at `/v1/summaries/cycles`; the Cycle tab lazy-loads it on first use and keeps embedded data as a fallback during staging.
+- DCA summary API is available at `/v1/summaries/dca`; the web page loads it on first opening the DCA tab and falls back to `data/dca_compact.json` on GitHub Pages.
+- Cycle summary API is available at `/v1/summaries/cycles`; the Cycle tab lazy-loads it on first use and falls back to `data/cycles_compact.json` on GitHub Pages.
+- Cycle and DCA payloads are no longer embedded in `index.html`, reducing the generated landing page by about 4.5 MiB while preserving a separate static rollback path.
 
 1. Completed: deploy `market-api-v2` from `appwrite/functions/market-api` with `rows.read` and `files.read` only.
 2. Completed: validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.

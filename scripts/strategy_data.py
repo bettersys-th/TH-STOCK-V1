@@ -146,7 +146,13 @@ def build_dca_compact(prices, splits, dividends, tickers, cycles=None):
             peak = max(peak, price)
             if peak:
                 max_drawdown = min(max_drawdown, price / peak - 1)
-        recent_value = median([p * v for p, v in zip(close[-30:], (raw.get("v") or [0] * len(dates))[-30:])])
+        daily_values = [p * v for p, v in zip(close, raw.get("v") or [0] * len(dates))]
+        recent_value = median(daily_values[-30:])
+        previous_value = median(daily_values[-60:-30]) if len(daily_values) >= 60 else recent_value
+        low_252 = min(close[-252:])
+        high_252 = max(close[-252:])
+        high_252_index = len(close) - min(252, len(close)) + close[-252:].index(high_252)
+        days_since_high = (datetime.strptime(str(dates[-1]), "%Y%m%d") - datetime.strptime(str(dates[high_252_index]), "%Y%m%d")).days
         last_month = monthly_items[-1][0]
         cutoff_month = str(int(last_month[:4]) - 1) + last_month[4:]
         trailing_dividend = sum(amount for month, amount in div_by_month.items() if month > cutoff_month)
@@ -157,8 +163,14 @@ def build_dca_compact(prices, splits, dividends, tickers, cycles=None):
                   "peakProjected": not bool(higher_peaks), "troughProjected": not bool(lower_troughs),
                   "upDays": round(_mean(up_days)) if up_days else None,
                   "downDays": round(_mean(down_days)) if down_days else None,
+                  "downDaysMedian": round(median(down_days)) if down_days else None,
                   "downCycles": len(down_days),
                   "maxDrawdown": round(max_drawdown * 100, 2),
-                  "medianValue30": round(recent_value), "div12": round(trailing_dividend, 5)},
+                  "medianValue30": round(recent_value),
+                  "liquidityTrend30": round((recent_value / previous_value - 1) * 100, 2) if previous_value else None,
+                  "low252": round(low_252, 4), "high252": round(high_252, 4),
+                  "daysSinceHigh252": days_since_high,
+                  "return60": round((close[-1] / close[-61] - 1) * 100, 2) if len(close) > 60 else None,
+                  "div12": round(trailing_dividend, 5)},
         }
     return out

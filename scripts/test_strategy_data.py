@@ -16,6 +16,9 @@ class StrategyDataTests(unittest.TestCase):
         latest = result["AAA"]["m"][-1][1]
         self.assertGreater(result["AAA"]["r"]["peak"], latest)
         self.assertLess(result["AAA"]["r"]["trough"], latest)
+        self.assertIn("downDaysMedian", result["AAA"]["r"])
+        self.assertIn("liquidityTrend30", result["AAA"]["r"])
+        self.assertIn("daysSinceHigh252", result["AAA"]["r"])
 
     def test_swing_signal_is_point_in_time_latest(self):
         dates = [int((date(2025, 1, 1) + timedelta(days=i)).strftime("%Y%m%d")) for i in range(300)]

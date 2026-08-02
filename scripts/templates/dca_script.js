@@ -6,10 +6,15 @@ const signed=x=>`${x>=0?'+':''}${fmt(x)}`;
 const pnlCell=(value,pct)=>`<td class="${value>0?'gain':value<0?'loss':'muted'}">${signed(value)}</td><td class="${pct>0?'gain':pct<0?'loss':'muted'}">${signed(pct)}%</td>`;
 function stock(){return DATA[ticker.value.trim().toUpperCase()]}
 function applyCycleTime(){
- const x=stock(),check=document.getElementById('riskUseCycleTime'),input=document.getElementById('riskDeclineMonths'),note=document.getElementById('cycleTimeNote'),days=x?.r?.downDays,samples=x?.r?.downCycles||0;
+ const x=stock(),check=document.getElementById('riskUseCycleTime'),input=document.getElementById('riskDeclineMonths'),note=document.getElementById('cycleTimeNote'),mean=x?.r?.downDays,median=x?.r?.downDaysMedian,days=median||mean,samples=x?.r?.downCycles||0;
  if(!days||samples<2){check.checked=false;check.disabled=true;note.textContent=samples===1?'มีเพียง 1 Cycle จึงยังไม่ใช้เป็นค่าอัตโนมัติ':'ไม่มี Cycle ขาลงเพียงพอ กรุณากำหนดเอง';return;}
- check.disabled=false;note.textContent=`ค่าเฉลี่ย ${days} วันตามปฏิทิน${x.r.downCycles?` จาก ${x.r.downCycles} รอบ`:''} ≈ ${fmt(days/30.44,1)} เดือน`;
+ check.disabled=false;note.textContent=`Median ${median||'—'} วัน · เฉลี่ย ${mean||'—'} วัน จาก ${samples} รอบ · ใช้ ${days} วัน`;
  if(check.checked)input.value=Math.min(120,Math.max(1,Math.round(days/30.44)));
+}
+function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear}){
+ let shares=initial/current,invested=initial,worst=0;
+ for(let i=1;i<=steps;i++){const price=i<=downSteps?current+(bottom-current)*i/downSteps:bottom+(target-bottom)*(i-downSteps)/Math.max(1,steps-downSteps);if(annualDiv)shares+=shares*(annualDiv/periodsPerYear)/price;if(!budget||invested+contribution<=budget){shares+=contribution/price;invested+=contribution;}const pct=invested?shares*price/invested-1:0;worst=Math.min(worst,pct);}
+ const value=shares*target,pnl=value-invested;return{invested,value,pnl,pct:invested?pnl/invested*100:0,worst:worst*100};
 }
 function loadStock(){
  const x=stock();if(!x)return;const months=x.m.map(r=>r[0]),current=x.m.at(-1)[1],risk=x.r||{};
@@ -36,6 +41,19 @@ function calculateRisk(){
  const stats=[['ราคาปัจจุบัน',fmt(current)+' บาท'],['ราคาวิกฤต',fmt(stress)+' บาท'],['เงินที่ใช้จริง',fmt(invested)+' บาท'],['ต้นทุนเฉลี่ย',fmt(avg)+' บาท'],['มูลค่าที่จุดต่ำ',fmt(troughValue)+' บาท'],['ขาดทุนสูงสุด',`${fmt(worstPct*100)}%`],['Downside จากต้นทุน',`${fmt(downside*100)}%`],['Upside ถึงเป้าหมาย',`${upside>=0?'+':''}${fmt(upside*100)}%`],['มูลค่าเมื่อถึงเป้า',fmt(endValue)+' บาท'],['กำไร/ขาดทุนเป้า',`${pnl>=0?'+':''}${fmt(pnl)} บาท`],['เงินที่แผนต้องการ',fmt(desired)+' บาท'],['DCA ได้จริง',`${usedPeriods}/${steps} งวด`]];
  document.getElementById('riskGrid').innerHTML=stats.map(s=>`<div class="dca-stat"><small>${s[0]}</small><b>${s[1]}</b></div>`).join('');
  document.getElementById('riskLedgerBody').innerHTML=ledger.map(r=>`<tr><td>${r.period}</td><td>${r.phase}</td><td>${fmt(r.price)}</td><td>${fmt(r.buy)}</td><td>${fmt(r.bought,4)}</td><td>${fmt(r.shares,4)}</td><td>${fmt(r.invested)}</td><td>${fmt(r.invested/r.shares)}</td><td>${fmt(r.value)}</td>${pnlCell(r.pnl,r.pct)}</tr>`).join('');
+ const common={current,steps,initial,contribution,budget,annualDiv,periodsPerYear},scenarios=[
+  ['ฟื้นเร็ว','ลงน้อยกว่าและใช้เวลาครึ่งหนึ่ง',current*(1-drop*.75),target,Math.max(1,Math.round(downSteps*.5))],
+  ['ตาม Cycle','ค่ากลางของแผนปัจจุบัน',stress,target,downSteps],
+  ['ขาลงยาว','ลงลึกขึ้นและใช้เวลานาน 1.5 เท่า',current*(1-Math.min(.95,drop*1.25)),target,Math.min(steps,Math.max(1,Math.round(downSteps*1.5)))],
+  ['ไม่ฟื้น','ลงลึกแล้วทรงตัวถึงจบแผน',current*(1-Math.min(.95,drop*1.25)),current*(1-Math.min(.95,drop*1.25)),downSteps]
+ ].map(s=>({name:s[0],desc:s[1],...simulateScenario({...common,bottom:s[2],target:s[3],downSteps:s[4]})}));
+ document.getElementById('scenarioGrid').innerHTML=scenarios.map(s=>`<div class="scenario-card"><small>${s.name}</small><b class="${s.pnl>=0?'gain':'loss'}">${signed(s.pnl)} บาท</b><small>ผลตอบแทน ${signed(s.pct)}%<br>ขาดทุนสูงสุด ${fmt(s.worst)}%<br>${s.desc}</small></div>`).join('');
+ const safety=[];const addSafety=(level,text)=>safety.push({level,text});
+ if(current<=Number(risk.low252||0)*1.02)addSafety('danger',`ราคาอยู่ใกล้จุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);else addSafety('ok',`ราคายังเหนือจุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);
+ if(risk.return60<=-20)addSafety('danger',`ราคาลด ${fmt(Math.abs(risk.return60))}% ใน 60 วันทำการ`);else if(risk.return60<=-10)addSafety('watch',`Momentum 60 วันยังติดลบ ${fmt(risk.return60)}%`);else addSafety('ok',`Momentum 60 วัน ${signed(risk.return60||0)}%`);
+ if((risk.medianValue30||0)<1000000)addSafety('danger','สภาพคล่องต่ำกว่า 1 ล้านบาท/วัน');else if(risk.liquidityTrend30<=-30)addSafety('watch',`สภาพคล่อง 30 วันลดลง ${fmt(Math.abs(risk.liquidityTrend30))}%`);else addSafety('ok',`สภาพคล่อง 30 วัน ${signed(risk.liquidityTrend30||0)}% จากช่วงก่อนหน้า`);
+ const normalDown=risk.downDaysMedian||risk.downDays;if(normalDown&&risk.daysSinceHigh252>normalDown*1.5)addSafety('watch',`ห่างจากจุดสูง 52 สัปดาห์ ${risk.daysSinceHigh252} วัน นานกว่า Cycle ปกติ`);else if(normalDown)addSafety('ok',`ห่างจากจุดสูง 52 สัปดาห์ ${risk.daysSinceHigh252} วัน เทียบ Cycle ${normalDown} วัน`);
+ document.getElementById('safetyMonitor').innerHTML=safety.map(s=>`<div class="safety-item ${s.level}">${s.level==='danger'?'⚠':s.level==='watch'?'•':'✓'} ${s.text}</div>`).join('');
  const headline=document.getElementById('riskHeadline');headline.className='risk-headline '+(overRisk?'danger':'safe');headline.textContent=overRisk?'⚠ Scenario นี้ขาดทุนเกินระดับที่คุณรับได้':'✓ Scenario นี้ยังอยู่ในกรอบขาดทุนที่กำหนด';
  document.getElementById('riskPathFill').style.width=Math.min(100,invested/(budget||desired)*100)+'%';document.getElementById('riskPathText').textContent=`ใช้งบ ${fmt(invested)} จาก ${fmt(budget||desired)} บาท`;
  const warnings=[];if(shortfall)warnings.push(`งบสูงสุดต่ำกว่าแผนที่ตั้งไว้ ${fmt(shortfall)} บาท`);if(overRisk)warnings.push(`ขาดทุนสูงสุด ${fmt(Math.abs(worstPct*100))}% มากกว่าเกณฑ์ ${fmt(tolerance)}%`);if(!liquid)warnings.push('มูลค่าซื้อขายมัธยฐานต่ำกว่า 1 ล้านบาท/วัน อาจซื้อหรือขายตามแผนได้ยาก');if(risk.trough&&stress<risk.trough)warnings.push(`ราคาวิกฤตต่ำกว่าแนวรับอ้างอิง ${fmt(risk.trough)} บาท`);

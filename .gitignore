@@ -36,3 +36,6 @@ Thumbs.db
 exports/
 private/
 user-data/
+
+# Generated cloud upload artifacts (rebuilt by the pipeline; do not duplicate in Git history)
+data/cloud_market/

@@ -36,7 +36,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
       - name: Run tests
-        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py
+        run: python -m unittest scripts/test_accumulation.py scripts/test_update_pipeline.py scripts/test_strategy_data.py scripts/test_cloud_export.py
 
       - name: Run update and build pipeline
         run: python scripts/update_and_build.py

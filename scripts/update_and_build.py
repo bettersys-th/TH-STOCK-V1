@@ -29,6 +29,7 @@ from accumulation import build_signals
 from market_validation import cross_check
 from strategy_data import build_swing_signals, build_dca_compact
 from backtest_swing import run as run_swing_backtest
+from cloud_export import build_cloud_export
 
 try:
     import yfinance as yf
@@ -478,6 +479,10 @@ def main():
     write_json_atomic("swing_backtest.json", swing_backtest, pretty=True)
     write_json_atomic("dca_compact.json", dca_compact)
     print(f"yearend: {len(yearend)} | cycles: {len(cycles_compact)} | accumulation: {len(accumulation_signals)} | swing: {len(swing_signals)} | dca: {len(dca_compact)}")
+
+    print("\n== STEP 3B: build cloud-ready per-ticker data ==")
+    cloud_manifest = build_cloud_export(prices, DATA_DIR)
+    print(f"cloud export: {cloud_manifest['tickerCount']} tickers | {cloud_manifest['totalBars']} bars | as of {cloud_manifest['dataAsOf']}")
 
     print("\n== STEP 4: rebuild stock_toolkit.html ==")
     import build_toolkit_html  # ไฟล์ข้างๆ กัน — ประกอบ HTML จากไฟล์ data/*.json

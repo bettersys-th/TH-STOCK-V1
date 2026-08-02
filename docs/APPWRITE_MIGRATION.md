@@ -88,6 +88,8 @@ manually-created files are never deleted.
 
 ## Next steps
 
+- DCA summary API is available at `/v1/summaries/dca`; the web page loads it on first opening the DCA tab and keeps embedded data as a fallback during staging.
+
 1. Completed: deploy `market-api-v2` from `appwrite/functions/market-api` with `rows.read` and `files.read` only.
 2. Completed: validate `/health`, `/v1/manifest`, and `/v1/stocks/PTT` against staging.
 3. In progress: the frontend verifies the Appwrite manifest and uses its ticker catalog while retaining embedded calculations as rollback.

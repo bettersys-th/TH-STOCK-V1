@@ -11,7 +11,7 @@ Read-only gateway from the public website to the private versioned market-data b
 - Build command: `pip install -r requirements.txt`
 - Execute access: `Any` (market prices are public; Storage remains private)
 - Dynamic API key scopes: `files.read`, `rows.read` only
-- Timeout: 15 seconds
+- Timeout: 30 seconds
 
 Function environment variables:
 
@@ -26,6 +26,8 @@ Do not create an API-key variable: Appwrite injects a per-execution dynamic key 
 `x-appwrite-key` request header.
 
 ## Endpoints
+
+- `GET /v1/summaries/{name}` — one generated summary from the fixed server allowlist
 
 - `GET /health` — verifies pointer, manifest, and Storage access
 - `GET /v1/manifest` — public dataset metadata and ticker names; no private file IDs

@@ -28,9 +28,10 @@ class FakeRepository:
             "dataAsOf": 20260731,
             "tickerCount": 1,
             "tickers": {"PTT": {"fileId": "o_stock"}},
-            "summaries": {},
+            "summaries": {"dca": {"fileId": "o_dca"}},
         }
         self.stock = {"schemaVersion": 1, "ticker": "PTT", "d": [20260731], "c": [30.0], "v": [100]}
+        self.dca = {"PTT": {"m": [["2026-07", 30.0]], "dv": [], "r": {}}}
 
     def current_version(self):
         return {"manifestFileId": "o_manifest", "schemaVersion": 1, "dataAsOf": 20260731}
@@ -38,6 +39,8 @@ class FakeRepository:
     def download(self, file_id):
         if file_id == "o_manifest":
             return self.manifest
+        if file_id == "o_dca":
+            return gzip.compress(json.dumps(self.dca).encode())
         return gzip.compress(json.dumps(self.stock).encode())
 
 
@@ -62,6 +65,18 @@ class MarketApiTests(unittest.TestCase):
             service.stock("UNKNOWN")
         with self.assertRaises(LookupError):
             service.stock("../PTT")
+
+    def test_reads_allowlisted_summary(self):
+        version, summary = market_api.MarketService(FakeRepository()).summary("dca")
+        self.assertEqual(version["dataAsOf"], 20260731)
+        self.assertEqual(summary["PTT"]["m"][0], ["2026-07", 30.0])
+
+    def test_rejects_unknown_and_path_like_summary(self):
+        service = market_api.MarketService(FakeRepository())
+        with self.assertRaises(LookupError):
+            service.summary("unknown")
+        with self.assertRaises(LookupError):
+            service.summary("../dca")
 
     def test_rejects_pointer_manifest_mismatch(self):
         repo = FakeRepository()

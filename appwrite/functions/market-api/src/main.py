@@ -13,6 +13,7 @@ from appwrite.services.storage import Storage
 from appwrite.services.tables_db import TablesDB
 
 TICKER_RE = re.compile(r"^[A-Z0-9.-]{1,24}$")
+SUMMARY_NAMES = frozenset({"accumulation", "cycles", "dca", "dividends", "swing"})
 DATABASE_ID = os.environ.get("MARKET_DATABASE_ID", "app")
 VERSIONS_TABLE_ID = os.environ.get("MARKET_VERSIONS_TABLE_ID", "data_versions")
 BUCKET_ID = os.environ.get("MARKET_BUCKET_ID", "market-data")
@@ -89,6 +90,21 @@ class MarketService:
             raise ValueError("stock payload integrity mismatch")
         return version, payload
 
+    def summary(self, name: str) -> tuple[dict, object]:
+        if name not in SUMMARY_NAMES:
+            raise LookupError("summary not found")
+        version, manifest = self.manifest()
+        metadata = manifest.get("summaries", {}).get(name)
+        if not metadata or not metadata.get("fileId"):
+            raise LookupError("summary not found")
+        compressed = self.repository.download(metadata["fileId"])
+        if not isinstance(compressed, bytes):
+            raise ValueError("summary object is not binary gzip data")
+        payload = json.loads(gzip.decompress(compressed).decode("utf-8"))
+        if not isinstance(payload, (dict, list)):
+            raise ValueError("summary payload integrity mismatch")
+        return version, payload
+
 
 def _allowed_origin(request_origin: str | None) -> str | None:
     configured = {value.strip() for value in os.environ.get("ALLOWED_ORIGINS", "").split(",") if value.strip()}
@@ -151,6 +167,15 @@ def main(context):
         if path.startswith(prefix) and "/" not in path[len(prefix):]:
             version, payload = service.stock(path[len(prefix):])
             return context.res.json({"dataAsOf": version["dataAsOf"], "stock": payload}, 200, _headers(origin, 3600))
+        summary_prefix = "/v1/summaries/"
+        if path.startswith(summary_prefix) and "/" not in path[len(summary_prefix):]:
+            name = path[len(summary_prefix):]
+            version, payload = service.summary(name)
+            return context.res.json({
+                "dataAsOf": version["dataAsOf"],
+                "name": name,
+                "summary": payload,
+            }, 200, _headers(origin, 3600))
         return context.res.json({"error": "not_found"}, 404, _headers(origin, 0))
     except LookupError as exc:
         return context.res.json({"error": str(exc).replace(" ", "_")}, 404, _headers(origin, 0))

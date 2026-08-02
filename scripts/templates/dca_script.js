@@ -1,9 +1,37 @@
 (function(){
-const DATA=__DCA_JSON__,ticker=document.getElementById('riskTicker'),start=document.getElementById('dcaStart'),end=document.getElementById('dcaEnd');
+let DATA=__DCA_JSON__;
+const ticker=document.getElementById('riskTicker'),start=document.getElementById('dcaStart'),end=document.getElementById('dcaEnd'),dcaSourceStatus=document.getElementById('dcaSourceStatus');
 const PLAN_FIELDS=['riskInitial','riskBudget','riskFrequency','riskMonths','riskDecline','riskDeclineMonths','riskUseCycleTime','riskTarget','riskTolerance','riskDividend'];
 const plans=new Map();let activePlan=null;
 const WORKSPACE_AUTO_KEY='dcaWorkspaceAutoV1',WORKSPACE_MAIN_KEY='dcaWorkspaceMainV1';
 Object.keys(DATA).sort().forEach(t=>{const o=document.createElement('option');o.value=t;document.getElementById('dcaTickerList').appendChild(o)});
+let dcaCloudPromise=null;
+function replaceDcaData(nextData){
+ if(!nextData||typeof nextData!=='object'||Array.isArray(nextData)||!Object.keys(nextData).length)throw new Error('invalid DCA summary');
+ saveActivePlan();DATA=nextData;
+ const list=document.getElementById('dcaTickerList');list.innerHTML='';Object.keys(DATA).sort().forEach(symbol=>{const option=document.createElement('option');option.value=symbol;list.appendChild(option)});
+ [...plans.keys()].filter(symbol=>!DATA[symbol]).forEach(symbol=>plans.delete(symbol));
+ const symbol=activePlan&&DATA[activePlan]?activePlan:(DATA.PTT?'PTT':Object.keys(DATA).sort()[0]);
+ const saved=plans.get(symbol)?.values||null;if(!plans.has(symbol))plans.set(symbol,{values:saved});activePlan=null;activatePlan(symbol,false);renderStockMenu();
+}
+async function loadCloudDca(){
+ if(dcaCloudPromise)return dcaCloudPromise;
+ dcaCloudPromise=(async()=>{
+  dcaSourceStatus.className='dca-source-status loading';dcaSourceStatus.textContent='DCA: กำลังโหลดข้อมูล Cloud…';
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  try{
+   const manifest=await window.marketManifestReady;if(manifest&&!manifest.summaries?.includes('dca'))throw new Error('DCA summary unavailable');
+   const response=await fetch(`${MARKET_API_BASE}/v1/summaries/dca`,{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});
+   if(!response.ok)throw new Error(`DCA API HTTP ${response.status}`);
+   const payload=await response.json();if(payload.name!=='dca')throw new Error('invalid DCA response');replaceDcaData(payload.summary);
+   dcaSourceStatus.className='dca-source-status online';dcaSourceStatus.textContent=`DCA Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(DATA).length.toLocaleString('en-US')} หุ้น`;
+   return true;
+  }catch(error){
+   dcaSourceStatus.className='dca-source-status fallback';dcaSourceStatus.textContent='DCA: ใช้ข้อมูลสำรองในหน้า';dcaSourceStatus.title=error.message;return false;
+  }finally{clearTimeout(timer)}
+ })();
+ return dcaCloudPromise;
+}
 const fmt=(x,d=2)=>Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const signed=x=>`${x>=0?'+':''}${fmt(x)}`;
 const pnlCell=(value,pct)=>`<td class="${value>0?'gain':value<0?'loss':'muted'}">${signed(value)}</td><td class="${pct>0?'gain':pct<0?'loss':'muted'}">${signed(pct)}%</td>`;
@@ -123,6 +151,7 @@ function calculateHistory(){
  document.getElementById('historyLedgerBody').innerHTML=ledger.map(r=>`<tr><td>${r.date}</td><td>${fmt(r.price)}</td><td>${fmt(r.buy)}</td><td>${fmt(r.bought,4)}</td><td>${fmt(r.shares,4)}</td><td>${fmt(r.invested)}</td><td>${fmt(r.divTotal)}</td><td>${fmt(r.avg)}</td><td>${fmt(r.value)}</td>${pnlCell(r.pnl,r.pct)}</tr>`).join('');
  document.getElementById('dcaDetail').textContent=`${ticker.value.toUpperCase()} · ${rows[0][0]} ถึง ${last[0]} · ซื้อ ${purchases} งวด · กำไร/ขาดทุนในตารางคำนวณด้วยราคาปิดของเดือนที่ซื้อ`;document.getElementById('dcaResult').classList.add('show');
 }
+document.getElementById('navDca').addEventListener('click',loadCloudDca);
 ticker.addEventListener('change',()=>activatePlan(ticker.value.trim().toUpperCase()));ticker.addEventListener('input',()=>{const symbol=ticker.value.trim().toUpperCase();if(DATA[symbol])activatePlan(symbol)});document.getElementById('riskCalculate').onclick=()=>{calculateRisk();renderPlanTabs()};
 document.getElementById('riskFrequency').addEventListener('change',()=>{const f=document.getElementById('riskFrequency').value;document.getElementById('riskContributionLabel').childNodes[0].nodeValue=f==='daily'?'DCA ต่อวันทำการ — คำนวณอัตโนมัติ (บาท)':f==='weekly'?'DCA ต่อสัปดาห์ — คำนวณอัตโนมัติ (บาท)':'DCA ต่อเดือน — คำนวณอัตโนมัติ (บาท)';calculateRisk();});
 ['riskInitial','riskBudget','riskMonths'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateContribution();if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();renderPlanTabs()}));

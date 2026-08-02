@@ -1,19 +1,58 @@
 
-const CYCLES = __CYCLES_JSON__;
+let CYCLES = __CYCLES_JSON__;
 
 const tickerListEl = document.getElementById('cycTickerList');
-const tickerNames = Object.keys(CYCLES).sort();
-for(const t of tickerNames){
-  const opt = document.createElement('option');
-  opt.value = t;
-  tickerListEl.appendChild(opt);
+const cycleSourceStatus = document.getElementById('cycleSourceStatus');
+function renderCycleTickerOptions(){
+  tickerListEl.innerHTML = '';
+  for(const t of Object.keys(CYCLES).sort()){
+    const opt = document.createElement('option');
+    opt.value = t;
+    tickerListEl.appendChild(opt);
+  }
 }
+renderCycleTickerOptions();
 
 const tickerInput = document.getElementById('cycTicker');
 const tickerInfo = document.getElementById('cycTickerInfo');
 const adjBadge = document.getElementById('adjBadge');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const resultPanel = document.getElementById('cycResultPanel');
+let cycleCloudPromise = null;
+
+async function loadCloudCycles(){
+  if(cycleCloudPromise) return cycleCloudPromise;
+  cycleCloudPromise = (async()=>{
+    cycleSourceStatus.className = 'cycle-source-status loading';
+    cycleSourceStatus.textContent = 'Cycle: กำลังโหลดข้อมูล Cloud…';
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 30000);
+    try{
+      const manifest = await window.marketManifestReady;
+      if(manifest && !manifest.summaries?.includes('cycles')) throw new Error('Cycle summary unavailable');
+      const response = await fetch(`${MARKET_API_BASE}/v1/summaries/cycles`, {headers:{Accept:'application/json'}, cache:'no-store', signal:controller.signal});
+      if(!response.ok) throw new Error(`Cycle API HTTP ${response.status}`);
+      const payload = await response.json();
+      if(payload.name !== 'cycles' || !payload.summary || Array.isArray(payload.summary)) throw new Error('invalid Cycle response');
+      CYCLES = payload.summary;
+      renderCycleTickerOptions();
+      if(!CYCLES[tickerInput.value.trim().toUpperCase()]) tickerInput.value = CYCLES.PTT ? 'PTT' : Object.keys(CYCLES).sort()[0];
+      checkTicker();
+      if(resultPanel.classList.contains('show')) analyzeBtn.click();
+      cycleSourceStatus.className = 'cycle-source-status online';
+      cycleSourceStatus.textContent = `Cycle Cloud ${formatMarketDate(payload.dataAsOf)} · ${Object.keys(CYCLES).length.toLocaleString('en-US')} หุ้น`;
+      return true;
+    }catch(error){
+      cycleSourceStatus.className = 'cycle-source-status fallback';
+      cycleSourceStatus.textContent = 'Cycle: ใช้ข้อมูลสำรองในหน้า';
+      cycleSourceStatus.title = error.message;
+      return false;
+    }finally{
+      clearTimeout(timer);
+    }
+  })();
+  return cycleCloudPromise;
+}
 
 function fmtNum(n, dec=2){
   return n.toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -208,5 +247,6 @@ document.getElementById('scenarioInvestment').addEventListener('input', () => {
 });
 
 // default example
+document.getElementById('navCycle').addEventListener('click', loadCloudCycles);
 tickerInput.value = 'PTT';
 checkTicker();

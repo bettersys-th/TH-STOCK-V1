@@ -51,6 +51,15 @@ class DcaDomainBaselineTests(unittest.TestCase):
         result = run_domain(expression)
         self.assertEqual([item["symbol"] for item in result], ["B", "C"])
 
+    def test_outcome_timeline_starts_after_drawdown_not_initial_purchase(self):
+        expression = "d.analyzeOutcomeTimeline({points:[{period:0,price:10,invested:1000,value:1000},{period:1,price:8,invested:2000,value:1600},{period:2,price:9,invested:3000,value:2700},{period:3,price:10,invested:3000,value:3300},{period:4,price:11,invested:3000,value:3600}],periodsPerMonth:1,buyPeriods:2,startPrice:10,declineEndPeriod:1})"
+        result = run_domain(expression)
+        self.assertEqual(result["buyCompleteMonth"], 2)
+        self.assertEqual(result["breakEvenMonth"], 3)
+        self.assertEqual(result["sustainedProfitMonth"], 3)
+        self.assertEqual(result["returnToStartMonth"], 3)
+        self.assertEqual(result["monthsAfterBuyingToBreakEven"], 1)
+
     def test_presets_keep_market_assumptions_separate(self):
         presets = run_domain("d.SCENARIO_PRESETS")
         self.assertTrue(presets["cycle"]["useCycleReference"])

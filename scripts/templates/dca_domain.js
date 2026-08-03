@@ -40,6 +40,16 @@
   }).sort((a,b)=>a.distance-b.distance||b.lotCost-a.lotCost).slice(0,Math.max(0,limit));
  }
 
+ function analyzeOutcomeTimeline({points,periodsPerMonth,buyPeriods,startPrice,declineEndPeriod}){
+  const rows=Array.isArray(points)?points:[],ppm=Math.max(1,Number(periodsPerMonth)||1),toMonth=period=>Math.max(0,Math.ceil(period/ppm)),valid=rows.filter(row=>row.invested>0),firstLoss=valid.findIndex(row=>row.value<row.invested-1e-8),searchFrom=firstLoss>=0?firstLoss:0;
+  const breakEven=valid.slice(searchFrom).find(row=>row.value>=row.invested-1e-8),firstProfit=valid.slice(searchFrom).find(row=>row.value>row.invested+1e-8);
+  let sustainedProfit=null;
+  for(let i=searchFrom;i<valid.length;i++){if(valid[i].value>valid[i].invested+1e-8&&valid.slice(i).every(row=>row.value>=row.invested-1e-8)){sustainedProfit=valid[i];break;}}
+  const returned=valid.find(row=>row.period>Math.max(0,declineEndPeriod||0)&&row.price>=startPrice-1e-8);
+  const buyCompleteMonth=toMonth(buyPeriods),breakEvenMonth=breakEven?toMonth(breakEven.period):null;
+  return{buyCompleteMonth,breakEvenMonth,firstProfitMonth:firstProfit?toMonth(firstProfit.period):null,sustainedProfitMonth:sustainedProfit?toMonth(sustainedProfit.period):null,returnToStartMonth:returned?toMonth(returned.period):null,monthsAfterBuyingToBreakEven:breakEvenMonth===null?null:Math.max(0,breakEvenMonth-buyCompleteMonth),experiencedLoss:firstLoss>=0};
+ }
+
  function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear}){
   let reserve=initial,allocated=initial,dividendCash=0,first=boardLotPurchase(reserve,current),shares=first.shares,invested=first.cost,worst=0;
   reserve-=first.cost;
@@ -63,5 +73,5 @@
   return{invested,value,pnl,pct:invested?pnl/invested*100:0,worst:worst*100};
  }
 
- return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,simulateScenario});
+ return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,simulateScenario});
 });

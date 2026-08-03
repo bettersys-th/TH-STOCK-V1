@@ -19,6 +19,7 @@
     <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
     <div class="scenario-sliders">
       <label><span>งบลงทุนต่อเดือน <button type="button" class="metric-help" data-tip="เลื่อนเพื่อทดลองเพิ่มหรือลดวงเงินรายเดือน ผลลัพธ์จะคำนวณใหม่ทันที" aria-label="คำอธิบาย slider งบต่อเดือน">?</button> <b id="riskBudgetValue">5,000 บาท</b></span><input type="range" id="riskBudgetSlider" min="0" max="50000" step="1000" value="5000"></label>
+      <label><span>ซื้อสะสมนาน <button type="button" class="metric-help" data-tip="ระบบจะเติมเงินตามงบรายเดือนเฉพาะช่วงนี้ หลังจากนั้นหยุดซื้อแต่ยังติดตามพอร์ตจนจบระยะเวลาจำลอง" aria-label="คำอธิบายระยะเวลาซื้อสะสม">?</button> <b id="riskBuyMonthsValue">3 เดือน</b></span><input type="range" id="riskBuyMonthsSlider" min="1" max="24" step="1" value="3"><input type="hidden" id="riskBuyMonths" value="3"></label>
       <label><span>ราคาลดลงสูงสุด <b id="riskDeclineValue">30%</b></span><input type="range" id="riskDeclineSlider" min="0" max="80" step="1" value="30"><input type="hidden" id="riskDecline" value="30"></label>
       <label><span>ระยะเวลาขาลง <b id="riskDeclineMonthsValue">12 เดือน</b></span><input type="range" id="riskDeclineMonthsSlider" min="1" max="36" step="1" value="12"><input type="hidden" id="riskDeclineMonths" value="12"><small class="cycle-time-note" id="cycleTimeNote"></small></label>
       <label><span>ระดับการฟื้นตัว <button type="button" class="metric-help" data-tip="0% คือราคาคงอยู่ที่จุดต่ำสุด และ 100% คือฟื้นกลับถึงราคาปัจจุบัน" aria-label="คำอธิบายระดับการฟื้นตัว">?</button> <b id="riskRecoveryValue">กลับถึงราคาปัจจุบัน</b></span><input type="range" id="riskRecoverySlider" min="0" max="150" step="5" value="100"></label>
@@ -28,6 +29,7 @@
 
   <div class="panel dca-result" id="riskResult">
     <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>
+    <section class="outcome-timeline"><div class="outcome-head"><h3>Timeline to Outcome</h3><span id="outcomeSummary"></span></div><div class="outcome-grid" id="outcomeGrid"></div></section>
     <div class="dca-analysis-row"><section class="scenario-box"><h3>เปรียบเทียบหลายสถานการณ์</h3><div class="scenario-grid" id="dcaScenarioGrid"><div class="scenario-placeholder">กำลังคำนวณสถานการณ์…</div></div></section><section class="safety-box" id="safetyBox"><div class="safety-head"><h3>คำแนะนำจาก Price-based Safety Monitor</h3><button type="button" id="safetyToggle">−</button></div><div id="safetyMonitor"></div></section></div>
     <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
     <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>

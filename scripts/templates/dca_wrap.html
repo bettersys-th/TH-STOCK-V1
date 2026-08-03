@@ -2,6 +2,8 @@
   <p class="sub">จำลองว่าหากราคาค่อย ๆ ลงแล้วฟื้น แผนต้องใช้เงินเท่าไร ต้นทุนเฉลี่ยอยู่ที่ใด และขาดทุนระหว่างทางเกินระดับที่รับได้หรือไม่</p>
 
   <div class="panel dca-batch-panel"><div class="dca-batch-row"><label>สร้างแผนหลายหุ้นพร้อมกัน<input id="dcaBatchTickers" placeholder="เช่น PTT, ADVANC, TKN"></label><button class="btn" id="dcaBatchCreate">สร้างแผน</button></div><div class="dca-workspace-row"><label>การจัดสรรงบ <button type="button" class="metric-help" data-tip="กำหนดงบต่อเดือนแยกแต่ละหุ้น หรือกำหนดงบรวมต่อเดือนแล้วให้ระบบแบ่งเท่ากัน" aria-label="คำอธิบายการจัดสรรงบ">?</button><select id="dcaAllocationMode"><option value="perStock">กำหนดงบต่อเดือนแยกรายหุ้น</option><option value="equal">แบ่งงบต่อเดือนรวมเท่ากัน</option></select></label><label id="dcaPortfolioBudgetLabel">งบต่อเดือนรวมทั้งพอร์ต (บาท)<input type="number" id="dcaPortfolioBudget" min="0" step="1000" value="20000"></label><div class="workspace-actions"><details class="workspace-menu"><summary>จัดการแผน ▾</summary><div class="workspace-menu-popover"><button type="button" id="dcaSaveWorkspace">บันทึกเป็นแผนหลัก</button><button type="button" id="dcaLoadWorkspace">โหลดแผนหลัก</button></div></details><span id="dcaSaveStatus">Auto-save ในเครื่อง</span></div></div><div class="dca-batch-note" id="dcaBatchNote">งบของแต่ละหุ้นเป็นงบต่อเดือน ระบบจะรวมทุกแท็บให้ตรวจสอบ</div><details class="future-tier"><summary><span class="tier-badge">PRO · อนาคต</span> เครื่องมือสำหรับแพ็กเกจรายเดือน</summary><div class="future-feature-grid"><div>🔒 หลายพอร์ตและ Cloud Sync</div><div>🔒 กำหนดน้ำหนักงบรายหุ้น</div><div>🔒 Export / Import และรายงาน</div><div>🔒 Conditional DCA / Buy Zones</div></div></details></div>
+  <div class="dca-workbench">
+  <div class="dca-sticky-controls">
   <div class="dca-sticky-planbar"><button type="button" class="stock-menu-toggle" id="stockMenuOpen">☰ รายชื่อหุ้น</button><div class="dca-plan-tabs" id="dcaPlanTabs"></div></div>
 
   <div class="panel risk-form dca-essential-form">
@@ -14,6 +16,9 @@
     <button class="btn" id="riskCalculate">ประเมินความเสี่ยง</button>
   </div>
   <div class="budget-fit-notice" id="budgetFitNotice" role="status" aria-live="polite"></div>
+  </div>
+  <div class="dca-planner-columns">
+  <aside class="dca-scenario-column">
   <section class="panel scenario-controls" aria-labelledby="scenarioControlTitle">
     <div class="scenario-control-head"><div><div class="eyebrow">Scenario Lab</div><h2 id="scenarioControlTitle">ปรับสมมติฐานเพื่อทดสอบแผน</h2></div><span>ข้อมูลส่วนนี้เป็นสถานการณ์จำลอง ไม่ใช่ราคาคาดการณ์</span></div>
     <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
@@ -27,6 +32,8 @@
     </div>
     <details class="dca-advanced"><summary>ตั้งค่าขั้นสูง</summary><div class="dca-advanced-grid"><label class="dca-check cycle-time-check"><input type="checkbox" id="riskUseCycleTime" checked> ใช้ระยะขาลงเฉลี่ยจาก Cycle</label><label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label><label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label><label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label></div></details>
   </section>
+  </aside>
+  <main class="dca-results-column">
 
   <div class="panel dca-result" id="riskResult">
     <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>
@@ -36,6 +43,9 @@
     <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
     <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>
     <details class="dca-ledger" open><summary>ตารางซื้อและกำไร/ขาดทุนระหว่างทาง</summary><div class="dca-table-wrap"><table class="dca-table"><thead><tr><th>งวด</th><th>ช่วง</th><th>ราคาซื้อ</th><th>เงินซื้อ</th><th>หุ้นที่ซื้อ</th><th>หุ้นสะสม</th><th>เงินลงทุนสะสม</th><th>ต้นทุนเฉลี่ย</th><th>มูลค่าพอร์ต</th><th>กำไร/ขาดทุน</th><th>ผลตอบแทน</th></tr></thead><tbody id="riskLedgerBody"></tbody></table></div></details>
+  </div>
+  </main>
+  </div>
   </div>
 
   <details class="history-panel panel">

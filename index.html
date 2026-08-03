@@ -236,7 +236,30 @@
 .path-model-row{display:flex;align-items:flex-end;gap:14px;margin:-5px 0 16px}.path-model-row label{margin:0;min-width:290px}.path-model-row select{display:block;width:100%;margin-top:6px;background:#0b1017;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:7px}.path-model-row>span{color:var(--muted);font-size:10px;line-height:1.5}
 .outcome-timeline{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:10px;background:#0c1219}.outcome-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.outcome-head h3{margin:0;font-size:15px}.outcome-head span{color:var(--muted);font-size:10px}.outcome-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.outcome-item{padding:12px;border:1px solid var(--line);border-radius:8px;background:#111923}.outcome-item small{display:block;color:var(--muted);font-size:9px;line-height:1.4;margin-bottom:6px}.outcome-item b{font-family:'JetBrains Mono',monospace;font-size:14px}.outcome-item.positive b{color:var(--teal)}.outcome-item.wait b{color:var(--amber)}
 .portfolio-chart{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:10px;background:#0c1219}.portfolio-chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}.portfolio-chart-head h3{margin:0 0 4px;font-size:15px}.portfolio-chart-head span,.chart-legend{color:var(--muted);font-size:9px}.chart-legend{display:flex;align-items:center;gap:5px;white-space:nowrap}.chart-legend i{width:18px;height:3px;border-radius:2px;margin-left:7px}.chart-legend .price{background:var(--amber)}.chart-legend .portfolio{background:var(--teal)}.chart-legend .invested{background:#7c8ba0}.portfolio-chart svg{width:100%;height:auto;min-height:220px}.chart-grid-line{stroke:#223040;stroke-width:1}.chart-axis-text{fill:#7c8ba0;font:10px 'JetBrains Mono',monospace}.chart-line-price{fill:none;stroke:var(--amber);stroke-width:3}.chart-line-portfolio{fill:none;stroke:var(--teal);stroke-width:3}.chart-line-invested{fill:none;stroke:#7c8ba0;stroke-width:2;stroke-dasharray:7 5}
-@media(max-width:1200px){.scenario-controls .scenario-sliders{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1100px){
+ .dca-sticky-controls{position:sticky;top:8px;z-index:50;padding:8px;background:rgba(10,15,20,.96);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 32px rgba(0,0,0,.38);margin-bottom:18px}
+ .dca-sticky-controls .dca-sticky-planbar{position:static;margin:0 0 8px;box-shadow:none;background:#0d141c}
+ .dca-sticky-controls .dca-essential-form{grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;padding:12px;margin:0}
+ .dca-sticky-controls .dca-essential-form input,.dca-sticky-controls .dca-essential-form select{padding:9px 10px;font-size:12px}
+ .dca-sticky-controls .dca-essential-form .btn{padding:12px 8px;font-size:11px}
+ .dca-sticky-controls .budget-fit-notice{margin:8px 0 0}
+ .dca-planner-columns{display:grid;grid-template-columns:minmax(350px,32%) minmax(0,68%);gap:18px;align-items:start}
+ .dca-scenario-column,.dca-results-column{min-width:0}
+ .dca-scenario-column .scenario-controls{margin:0;padding:18px}
+ .dca-scenario-column .scenario-control-head{align-items:flex-start;flex-direction:column}
+ .dca-scenario-column .scenario-presets{margin:13px 0}
+ .dca-scenario-column .path-model-row{align-items:stretch;flex-direction:column;margin-bottom:13px}
+ .dca-scenario-column .path-model-row label{min-width:0;width:100%}
+ .dca-scenario-column .scenario-sliders{grid-template-columns:1fr}
+ .dca-scenario-column .dca-advanced-grid{grid-template-columns:1fr}
+ .dca-results-column>#riskResult{margin:0;padding:18px}
+ .dca-results-column .dca-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .dca-results-column .dca-stat{padding:12px 8px}
+ .dca-results-column .dca-stat b{font-size:13px}
+ .dca-results-column .outcome-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .dca-results-column .scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(min-width:901px) and (max-width:1099px){.scenario-controls .scenario-sliders{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.outcome-grid{grid-template-columns:repeat(2,1fr)}.scenario-controls .scenario-sliders{grid-template-columns:1fr}}
 @media(max-width:760px){.workspace-menu-popover{left:0;right:auto}.outcome-head,.portfolio-chart-head{align-items:flex-start;flex-direction:column}.path-model-row{align-items:stretch;flex-direction:column}.path-model-row label{min-width:0;width:100%}}
 
@@ -429,6 +452,8 @@
   <p class="sub">จำลองว่าหากราคาค่อย ๆ ลงแล้วฟื้น แผนต้องใช้เงินเท่าไร ต้นทุนเฉลี่ยอยู่ที่ใด และขาดทุนระหว่างทางเกินระดับที่รับได้หรือไม่</p>
 
   <div class="panel dca-batch-panel"><div class="dca-batch-row"><label>สร้างแผนหลายหุ้นพร้อมกัน<input id="dcaBatchTickers" placeholder="เช่น PTT, ADVANC, TKN"></label><button class="btn" id="dcaBatchCreate">สร้างแผน</button></div><div class="dca-workspace-row"><label>การจัดสรรงบ <button type="button" class="metric-help" data-tip="กำหนดงบต่อเดือนแยกแต่ละหุ้น หรือกำหนดงบรวมต่อเดือนแล้วให้ระบบแบ่งเท่ากัน" aria-label="คำอธิบายการจัดสรรงบ">?</button><select id="dcaAllocationMode"><option value="perStock">กำหนดงบต่อเดือนแยกรายหุ้น</option><option value="equal">แบ่งงบต่อเดือนรวมเท่ากัน</option></select></label><label id="dcaPortfolioBudgetLabel">งบต่อเดือนรวมทั้งพอร์ต (บาท)<input type="number" id="dcaPortfolioBudget" min="0" step="1000" value="20000"></label><div class="workspace-actions"><details class="workspace-menu"><summary>จัดการแผน ▾</summary><div class="workspace-menu-popover"><button type="button" id="dcaSaveWorkspace">บันทึกเป็นแผนหลัก</button><button type="button" id="dcaLoadWorkspace">โหลดแผนหลัก</button></div></details><span id="dcaSaveStatus">Auto-save ในเครื่อง</span></div></div><div class="dca-batch-note" id="dcaBatchNote">งบของแต่ละหุ้นเป็นงบต่อเดือน ระบบจะรวมทุกแท็บให้ตรวจสอบ</div><details class="future-tier"><summary><span class="tier-badge">PRO · อนาคต</span> เครื่องมือสำหรับแพ็กเกจรายเดือน</summary><div class="future-feature-grid"><div>🔒 หลายพอร์ตและ Cloud Sync</div><div>🔒 กำหนดน้ำหนักงบรายหุ้น</div><div>🔒 Export / Import และรายงาน</div><div>🔒 Conditional DCA / Buy Zones</div></div></details></div>
+  <div class="dca-workbench">
+  <div class="dca-sticky-controls">
   <div class="dca-sticky-planbar"><button type="button" class="stock-menu-toggle" id="stockMenuOpen">☰ รายชื่อหุ้น</button><div class="dca-plan-tabs" id="dcaPlanTabs"></div></div>
 
   <div class="panel risk-form dca-essential-form">
@@ -441,6 +466,9 @@
     <button class="btn" id="riskCalculate">ประเมินความเสี่ยง</button>
   </div>
   <div class="budget-fit-notice" id="budgetFitNotice" role="status" aria-live="polite"></div>
+  </div>
+  <div class="dca-planner-columns">
+  <aside class="dca-scenario-column">
   <section class="panel scenario-controls" aria-labelledby="scenarioControlTitle">
     <div class="scenario-control-head"><div><div class="eyebrow">Scenario Lab</div><h2 id="scenarioControlTitle">ปรับสมมติฐานเพื่อทดสอบแผน</h2></div><span>ข้อมูลส่วนนี้เป็นสถานการณ์จำลอง ไม่ใช่ราคาคาดการณ์</span></div>
     <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
@@ -454,6 +482,8 @@
     </div>
     <details class="dca-advanced"><summary>ตั้งค่าขั้นสูง</summary><div class="dca-advanced-grid"><label class="dca-check cycle-time-check"><input type="checkbox" id="riskUseCycleTime" checked> ใช้ระยะขาลงเฉลี่ยจาก Cycle</label><label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label><label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label><label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label></div></details>
   </section>
+  </aside>
+  <main class="dca-results-column">
 
   <div class="panel dca-result" id="riskResult">
     <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>
@@ -463,6 +493,9 @@
     <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
     <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>
     <details class="dca-ledger" open><summary>ตารางซื้อและกำไร/ขาดทุนระหว่างทาง</summary><div class="dca-table-wrap"><table class="dca-table"><thead><tr><th>งวด</th><th>ช่วง</th><th>ราคาซื้อ</th><th>เงินซื้อ</th><th>หุ้นที่ซื้อ</th><th>หุ้นสะสม</th><th>เงินลงทุนสะสม</th><th>ต้นทุนเฉลี่ย</th><th>มูลค่าพอร์ต</th><th>กำไร/ขาดทุน</th><th>ผลตอบแทน</th></tr></thead><tbody id="riskLedgerBody"></tbody></table></div></details>
+  </div>
+  </main>
+  </div>
   </div>
 
   <details class="history-panel panel">
@@ -897,7 +930,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-03 10:58";
+const UPDATED_AT = "2026-08-03 11:10";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 

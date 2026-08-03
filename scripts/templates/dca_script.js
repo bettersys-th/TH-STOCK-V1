@@ -1,5 +1,6 @@
 (function(){
 let DATA=__DCA_JSON__;
+const {SCENARIO_PRESETS,boardLotPurchase,simulateScenario,contributionPerPeriod}=window.DcaDomain;
 const ticker=document.getElementById('riskTicker'),start=document.getElementById('dcaStart'),end=document.getElementById('dcaEnd'),dcaSourceStatus=document.getElementById('dcaSourceStatus');
 const PLAN_FIELDS=['riskInitial','riskBudget','riskFrequency','riskMonths','riskDecline','riskDeclineMonths','riskUseCycleTime','riskTarget','riskTolerance','riskDividend'];
 const plans=new Map();let activePlan=null;
@@ -91,20 +92,34 @@ function applyCycleTime(){
  if(check.checked)input.value=Math.min(120,Math.max(1,Math.round(days/30.44)));
 }
 function updateContribution(){
- const frequency=document.getElementById('riskFrequency').value,periodsPerMonth=frequency==='daily'?21:frequency==='weekly'?4:1,months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),steps=months*periodsPerMonth,initial=Math.max(0,+document.getElementById('riskInitial').value||0),budget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=Math.max(0,(budget-initial)/steps);
+ const frequency=document.getElementById('riskFrequency').value,months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),initial=Math.max(0,+document.getElementById('riskInitial').value||0),budget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=contributionPerPeriod({budget,initial,months,frequency});
  document.getElementById('riskMonthly').value=contribution.toFixed(2);return contribution;
 }
-function boardLotPurchase(cash,price){const shares=price>0?Math.floor((Math.max(0,cash)+1e-8)/price/100)*100:0;return{shares,cost:shares*price}}
-function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear}){
- let reserve=initial,allocated=initial,dividendCash=0,first=boardLotPurchase(reserve,current),shares=first.shares,invested=first.cost,worst=0;reserve-=first.cost;
- for(let i=1;i<=steps;i++){const price=i<=downSteps?current+(bottom-current)*i/downSteps:bottom+(target-bottom)*(i-downSteps)/Math.max(1,steps-downSteps);if(annualDiv){dividendCash+=shares*(annualDiv/periodsPerYear);const reinvest=boardLotPurchase(dividendCash,price);shares+=reinvest.shares;dividendCash-=reinvest.cost}if(contribution>0&&allocated+contribution<=budget+.01){reserve+=contribution;allocated+=contribution}const purchase=boardLotPurchase(reserve,price);shares+=purchase.shares;invested+=purchase.cost;reserve-=purchase.cost;const pct=invested?(shares*price+dividendCash)/invested-1:0;worst=Math.min(worst,pct);}
- const value=shares*target+dividendCash,pnl=value-invested;return{invested,value,pnl,pct:invested?pnl/invested*100:0,worst:worst*100};
+function setScenarioPresetActive(id){document.querySelectorAll('.scenario-presets button').forEach(button=>button.classList.toggle('active',button.dataset.preset===id))}
+function updateScenarioLabels(){
+ const drop=Math.max(0,+document.getElementById('riskDecline').value||0),downMonths=Math.max(1,+document.getElementById('riskDeclineMonths').value||1),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0);
+ document.getElementById('riskDeclineValue').textContent=`${fmt(drop,0)}%`;document.getElementById('riskDeclineMonthsValue').textContent=`${fmt(downMonths,0)} เดือน`;
+ document.getElementById('riskRecoveryValue').textContent=recovery===0?'ไม่ฟื้นตัว':recovery===100?'กลับถึงราคาปัจจุบัน':recovery<100?`ฟื้นกลับ ${fmt(recovery,0)}%`:`สูงกว่าราคาปัจจุบัน ${fmt(recovery-100,0)}%`;
+}
+function applyRecoveryTarget(){
+ const x=stock();if(!x)return;const current=x.m.at(-1)[1],drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),bottom=current*(1-drop),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0)/100;
+ document.getElementById('riskTarget').value=Math.max(.01,bottom+(current-bottom)*recovery).toFixed(2);
+}
+function syncScenarioControls(){
+ const x=stock();if(!x)return;const current=x.m.at(-1)[1],drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),bottom=current*(1-drop),target=Math.max(.01,+document.getElementById('riskTarget').value||current),recovery=current===bottom?100:(target-bottom)/(current-bottom)*100;
+ document.getElementById('riskDeclineSlider').value=Math.min(80,drop*100);document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));document.getElementById('riskRecoverySlider').value=Math.min(150,Math.max(0,Math.round(recovery/5)*5));updateScenarioLabels();
+}
+function applyScenarioPreset(id){
+ const preset=SCENARIO_PRESETS[id],x=stock();if(!preset||!x)return;const risk=x.r||{};
+ if(id==='cycle'){document.getElementById('riskDecline').value=Math.min(80,Math.max(5,Math.abs(Number(risk.maxDrawdown)||30))).toFixed(0);document.getElementById('riskUseCycleTime').checked=true;applyCycleTime();}
+ else{document.getElementById('riskDecline').value=preset.drawdownPercent;document.getElementById('riskDeclineMonths').value=preset.declineMonths;document.getElementById('riskUseCycleTime').checked=false;}
+ document.getElementById('riskRecoverySlider').value=preset.recoveryPercent;document.getElementById('riskDeclineSlider').value=document.getElementById('riskDecline').value;document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,+document.getElementById('riskDeclineMonths').value||1);applyRecoveryTarget();updateScenarioLabels();setScenarioPresetActive(id);calculateRisk();renderPlanTabs();
 }
 function loadStock(savedValues=null){
  const x=stock();if(!x)return;const months=x.m.map(r=>r[0]),current=x.m.at(-1)[1],risk=x.r||{};
  start.innerHTML=months.map((m,i)=>`<option value="${m}" ${i===Math.max(0,months.length-120)?'selected':''}>${m}</option>`).join('');
  end.innerHTML=months.map((m,i)=>`<option value="${m}" ${i===months.length-1?'selected':''}>${m}</option>`).join('');
- restorePlan(savedValues);if(!savedValues||savedValues.riskTarget==null)document.getElementById('riskTarget').value=(risk.peak||current).toFixed(2);if(!savedValues||savedValues.riskDeclineMonths==null)document.getElementById('riskUseCycleTime').checked=true;applyCycleTime();calculateRisk();
+ restorePlan(savedValues);if(!savedValues||savedValues.riskTarget==null)document.getElementById('riskTarget').value=(risk.peak||current).toFixed(2);if(!savedValues||savedValues.riskDeclineMonths==null)document.getElementById('riskUseCycleTime').checked=true;applyCycleTime();syncScenarioControls();calculateRisk();
 }
 function calculateRisk(){
  const x=stock();if(!x)return;
@@ -162,8 +177,13 @@ document.getElementById('navDca').addEventListener('click',loadCloudDca);
 ticker.addEventListener('change',()=>activatePlan(ticker.value.trim().toUpperCase()));ticker.addEventListener('input',()=>{const symbol=ticker.value.trim().toUpperCase();if(DATA[symbol])activatePlan(symbol)});document.getElementById('riskCalculate').onclick=()=>{calculateRisk();renderPlanTabs()};
 document.getElementById('riskFrequency').addEventListener('change',()=>{const f=document.getElementById('riskFrequency').value;document.getElementById('riskContributionLabel').childNodes[0].nodeValue=f==='daily'?'DCA ต่อวันทำการ — คำนวณอัตโนมัติ (บาท)':f==='weekly'?'DCA ต่อสัปดาห์ — คำนวณอัตโนมัติ (บาท)':'DCA ต่อเดือน — คำนวณอัตโนมัติ (บาท)';calculateRisk();});
 ['riskInitial','riskBudget','riskMonths'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateContribution();if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();renderPlanTabs()}));
-document.getElementById('riskUseCycleTime').addEventListener('change',()=>{applyCycleTime();calculateRisk();});document.getElementById('riskDeclineMonths').addEventListener('input',()=>{document.getElementById('riskUseCycleTime').checked=false;});
-document.querySelectorAll('.stress-presets button').forEach(b=>b.onclick=()=>{document.getElementById('riskDecline').value=b.dataset.drop;calculateRisk();renderPlanTabs()});document.getElementById('dcaCalculate').onclick=calculateHistory;
+document.getElementById('riskUseCycleTime').addEventListener('change',()=>{applyCycleTime();syncScenarioControls();calculateRisk();});document.getElementById('riskDeclineMonths').addEventListener('input',()=>{document.getElementById('riskUseCycleTime').checked=false;document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));setScenarioPresetActive('custom');updateScenarioLabels();calculateRisk();});
+document.querySelectorAll('.scenario-presets button[data-preset]').forEach(button=>button.onclick=()=>{if(button.dataset.preset==='custom'){setScenarioPresetActive('custom');return}applyScenarioPreset(button.dataset.preset)});
+document.getElementById('riskDeclineSlider').addEventListener('input',event=>{document.getElementById('riskDecline').value=event.target.value;setScenarioPresetActive('custom');applyRecoveryTarget();updateScenarioLabels();calculateRisk()});
+document.getElementById('riskDeclineMonthsSlider').addEventListener('input',event=>{document.getElementById('riskDeclineMonths').value=event.target.value;document.getElementById('riskUseCycleTime').checked=false;setScenarioPresetActive('custom');updateScenarioLabels();calculateRisk()});
+document.getElementById('riskRecoverySlider').addEventListener('input',()=>{setScenarioPresetActive('custom');applyRecoveryTarget();updateScenarioLabels();calculateRisk()});
+document.getElementById('riskDecline').addEventListener('input',()=>{document.getElementById('riskDeclineSlider').value=Math.min(80,+document.getElementById('riskDecline').value||0);setScenarioPresetActive('custom');applyRecoveryTarget();updateScenarioLabels();calculateRisk()});
+document.getElementById('riskTarget').addEventListener('input',()=>{setScenarioPresetActive('custom');syncScenarioControls();calculateRisk()});document.getElementById('dcaCalculate').onclick=calculateHistory;
 document.getElementById('dcaBatchCreate').addEventListener('click',()=>{const raw=document.getElementById('dcaBatchTickers').value.toUpperCase(),symbols=[...new Set(raw.split(/[\s,;]+/).filter(Boolean))],valid=symbols.filter(s=>DATA[s]),invalid=symbols.filter(s=>!DATA[s]);if(!valid.length){document.getElementById('dcaBatchNote').textContent='ไม่พบ Ticker ที่กรอกในฐานข้อมูล';return;}saveActivePlan();const base=capturePlan();valid.slice(0,12).forEach(s=>{if(!plans.has(s))plans.set(s,{values:{...base,riskTarget:null,riskDeclineMonths:null,riskUseCycleTime:true}})});if(document.getElementById('dcaAllocationMode').value==='equal')applyAllocation();activatePlan(valid[0]);document.getElementById('dcaBatchTickers').value='';if(invalid.length)document.getElementById('dcaBatchNote').innerHTML+=` · ไม่พบ: ${invalid.join(', ')}`;});
 document.getElementById('stockMenuOpen').onclick=()=>openStockMenu('dca');document.getElementById('stockMenuClose').onclick=closeStockMenu;document.getElementById('stockMenuBackdrop').onclick=closeStockMenu;document.getElementById('stockMenuSearch').addEventListener('input',e=>renderStockMenu(e.target.value));document.getElementById('safetyToggle').onclick=()=>{const box=document.getElementById('safetyBox'),collapsed=box.classList.toggle('collapsed');document.getElementById('safetyToggle').textContent=collapsed?'+':'−'};initSafetyDrag();
 document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStockMenu()});

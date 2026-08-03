@@ -38,6 +38,7 @@ def build(data_dir, output_path):
     swing_script = _read("swing_script.js")
     dca_style = _read("dca_style.css")
     dca_wrap = _read("dca_wrap.html")
+    dca_domain = _read("dca_domain.js")
     dca_script = _read("dca_script.js")
 
     swing_backtest = _read_json(data_dir, "swing_backtest.json", {})
@@ -242,6 +243,7 @@ Object.keys(navButtons).forEach(navId => {{
 
 {scan_script}
 {swing_script}
+{dca_domain}
 {dca_script}
 document.getElementById('navScan').click();
 </script>

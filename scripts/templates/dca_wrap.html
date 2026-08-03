@@ -4,22 +4,25 @@
   <div class="panel dca-batch-panel"><div class="dca-batch-row"><label>สร้างแผนหลายหุ้นพร้อมกัน<input id="dcaBatchTickers" placeholder="เช่น PTT, ADVANC, TKN"></label><button class="btn" id="dcaBatchCreate">สร้างแผน</button></div><div class="dca-workspace-row"><label>การจัดสรรงบ<select id="dcaAllocationMode"><option value="perStock">กำหนดแยกต่อหุ้น</option><option value="equal">แบ่งงบรวมเท่ากัน</option></select></label><label id="dcaPortfolioBudgetLabel">งบรวมทั้งพอร์ต (บาท)<input type="number" id="dcaPortfolioBudget" min="1" step="1000" value="500000"></label><div class="workspace-actions"><button type="button" id="dcaSaveWorkspace">บันทึกแผนหลัก</button><button type="button" id="dcaLoadWorkspace">โหลดแผนหลัก</button><span id="dcaSaveStatus">Auto-save ในเครื่อง</span></div></div><div class="dca-batch-note" id="dcaBatchNote">งบของแต่ละหุ้นเป็นคนละแผน ระบบจะรวมงบทุกแท็บให้ตรวจสอบ</div><details class="future-tier"><summary><span class="tier-badge">PRO · อนาคต</span> เครื่องมือสำหรับแพ็กเกจรายเดือน</summary><div class="future-feature-grid"><div>🔒 หลายพอร์ตและ Cloud Sync</div><div>🔒 กำหนดน้ำหนักงบรายหุ้น</div><div>🔒 Export / Import และรายงาน</div><div>🔒 Conditional DCA / Buy Zones</div></div></details></div>
   <div class="dca-sticky-planbar"><button type="button" class="stock-menu-toggle" id="stockMenuOpen">☰ รายชื่อหุ้น</button><div class="dca-plan-tabs" id="dcaPlanTabs"></div></div>
 
-  <div class="panel risk-form">
+  <div class="panel risk-form dca-essential-form">
     <label>Ticker<input list="dcaTickerList" id="riskTicker" value="PTT"><datalist id="dcaTickerList"></datalist></label>
     <label>ซื้อครั้งแรกวันนี้ (บาท)<input type="number" id="riskInitial" min="0" step="1000" value="10000"><small class="cycle-time-note">ซื้อทันทีที่ราคาปัจจุบัน และรวมในต้นทุนเฉลี่ย</small></label>
     <label>งบลงทุนรวมสูงสุด (บาท)<input type="number" id="riskBudget" min="1" step="1000" value="130000"></label>
-    <label id="riskContributionLabel">DCA ต่องวด — คำนวณอัตโนมัติ (บาท)<input type="number" id="riskMonthly" readonly value="5000"><small class="cycle-time-note">(งบรวม − ซื้อครั้งแรก) ÷ จำนวนงวด · ซื้อขั้นต่ำ 100 หุ้นและเพิ่มทีละ 100 หุ้น · เงินไม่ครบ lot สะสมรองวดถัดไป</small></label>
     <label>ความถี่ DCA<select id="riskFrequency"><option value="daily">ทุกวันทำการ</option><option value="weekly">ทุกสัปดาห์</option><option value="monthly" selected>ทุกเดือน</option></select></label>
     <label>ระยะเวลาแผน (เดือน)<input type="number" id="riskMonths" min="1" max="120" value="24"></label>
-    <label>ราคาลงจากวันนี้ (%)<input type="number" id="riskDecline" min="0" max="95" value="30"></label>
-    <label>ใช้เวลาลง (เดือน)<input type="number" id="riskDeclineMonths" min="1" max="120" value="12"><small class="cycle-time-note" id="cycleTimeNote"></small></label>
-    <label class="dca-check cycle-time-check"><input type="checkbox" id="riskUseCycleTime" checked> ใช้ระยะขาลงเฉลี่ยจาก Cycle</label>
-    <label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label>
-    <label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label>
-    <label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label>
+    <label id="riskContributionLabel">DCA ต่องวด — คำนวณอัตโนมัติ (บาท)<input type="number" id="riskMonthly" readonly value="5000"><small class="cycle-time-note">(งบรวม − ซื้อครั้งแรก) ÷ จำนวนงวด · ซื้อขั้นต่ำ 100 หุ้นและเพิ่มทีละ 100 หุ้น · เงินไม่ครบ lot สะสมรองวดถัดไป</small></label>
     <button class="btn" id="riskCalculate">ประเมินความเสี่ยง</button>
   </div>
-  <div class="stress-presets"><span>Stress Test:</span><button data-drop="10">ลง 10%</button><button data-drop="20">ลง 20%</button><button data-drop="30">ลง 30%</button><button data-drop="40">ลง 40%</button><button data-drop="50">ลง 50%</button></div>
+  <section class="panel scenario-controls" aria-labelledby="scenarioControlTitle">
+    <div class="scenario-control-head"><div><div class="eyebrow">Scenario Lab</div><h2 id="scenarioControlTitle">ปรับสมมติฐานเพื่อทดสอบแผน</h2></div><span>ข้อมูลส่วนนี้เป็นสถานการณ์จำลอง ไม่ใช่ราคาคาดการณ์</span></div>
+    <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
+    <div class="scenario-sliders">
+      <label><span>ราคาลดลงสูงสุด <b id="riskDeclineValue">30%</b></span><input type="range" id="riskDeclineSlider" min="0" max="80" step="1" value="30"><input type="number" id="riskDecline" min="0" max="95" value="30" aria-label="ราคาลดลงจากวันนี้เป็นเปอร์เซ็นต์"></label>
+      <label><span>ระยะเวลาขาลง <b id="riskDeclineMonthsValue">12 เดือน</b></span><input type="range" id="riskDeclineMonthsSlider" min="1" max="36" step="1" value="12"><input type="number" id="riskDeclineMonths" min="1" max="120" value="12" aria-label="ระยะเวลาขาลงเป็นเดือน"><small class="cycle-time-note" id="cycleTimeNote"></small></label>
+      <label><span>ระดับการฟื้นตัว <b id="riskRecoveryValue">กลับถึงราคาปัจจุบัน</b></span><input type="range" id="riskRecoverySlider" min="0" max="150" step="5" value="100"><small class="cycle-time-note">0% = ไม่ฟื้นจากจุดต่ำสุด · 100% = กลับถึงราคาปัจจุบัน</small></label>
+    </div>
+    <details class="dca-advanced"><summary>ตั้งค่าขั้นสูง</summary><div class="dca-advanced-grid"><label class="dca-check cycle-time-check"><input type="checkbox" id="riskUseCycleTime" checked> ใช้ระยะขาลงเฉลี่ยจาก Cycle</label><label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label><label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label><label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label></div></details>
+  </section>
 
   <div class="panel dca-result" id="riskResult">
     <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>

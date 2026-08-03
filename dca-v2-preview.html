@@ -10,6 +10,7 @@
 .modal-backdrop{position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:20px;background:rgba(2,7,11,.78);backdrop-filter:blur(5px)}.modal-backdrop.open{display:grid}.modal{width:min(680px,100%);max-height:min(760px,90dvh);display:flex;flex-direction:column;border:1px solid #3a5065;border-radius:15px;background:#101a25;box-shadow:0 28px 80px rgba(0,0,0,.65);overflow:hidden}.modal-head,.modal-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px}.modal-head{border-bottom:1px solid var(--line)}.modal-foot{border-top:1px solid var(--line)}.modal-head h2{margin:4px 0 0}.modal-head button{border:0;background:transparent;color:var(--muted);font-size:25px;cursor:pointer}.modal-body{padding:16px 18px;overflow:auto}.stock-search{width:100%;border:1px solid var(--line);border-radius:9px;background:#081119;color:var(--text);padding:12px;margin-bottom:12px}.stock-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stock-option{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:11px;background:#0b141d;cursor:pointer}.stock-option:has(input:checked){border-color:var(--gold);background:#211a0d}.stock-option input{accent-color:var(--gold)}.stock-option strong,.stock-option small{display:block}.stock-option small{margin-top:3px;color:var(--muted);font-size:9px}.modal-actions{display:flex;gap:8px}.modal-actions button{width:auto}.modal-count{color:var(--gold);font-size:11px}@media(max-width:650px){.stock-list{grid-template-columns:1fr}.modal-foot{align-items:stretch;flex-direction:column}.modal-actions button{flex:1}}
 </style><style>
 .stocks{display:grid;gap:7px}.allocation-row{display:grid;grid-template-columns:minmax(70px,1fr) 90px 120px 28px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:#0a141d}.allocation-row strong{color:var(--gold)}.allocation-row label{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:9px}.allocation-row input{width:62px;border:1px solid var(--line);border-radius:6px;background:#071018;color:var(--text);padding:7px}.allocation-budget{color:var(--muted);font-size:9px;text-align:right}.allocation-row button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:17px}.weight-status{display:flex;justify-content:space-between;margin-top:8px;padding:8px 10px;border-radius:7px;background:#102d28;color:var(--green);font-size:10px}.weight-status.invalid{background:#3a1c23;color:#ff8997}@media(max-width:650px){.allocation-row{grid-template-columns:1fr 90px 28px}.allocation-budget{grid-column:1/-1;text-align:left}}
+.plan-allocation{display:grid;gap:7px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}.plan-allocation div{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;font-size:10px}.plan-allocation strong{color:var(--gold)}.plan-allocation span{color:var(--muted)}.plan-feedback{margin-top:10px;padding:9px 11px;border:1px solid #1e665b;border-radius:8px;background:#0d2b27;color:var(--green);font-size:10px}.summary .btn.primary:disabled{cursor:not-allowed;opacity:.45;filter:grayscale(.4)}@media(min-width:1100px){.step1{grid-template-columns:minmax(340px,390px) minmax(480px,720px) minmax(260px,290px);justify-content:space-between;align-items:start}.step1 .form{grid-template-columns:repeat(2,minmax(190px,1fr));align-content:start}.step1 .summary{align-self:stretch}}
 </style>
 </head>
 <body><div class="shell">
@@ -73,4 +74,42 @@ buildPlanButton?.addEventListener('click',e=>{
   }
 });
 updateAllocation();
+</script>
+<script>
+const initialInvestmentInput=document.querySelector('.step1 .form .field:first-child input');
+const durationSelect=document.querySelector('.step1 .form .field:nth-child(3) select');
+const frequencySelect=document.querySelector('.step1 .form .field:nth-child(4) select');
+const hero=document.querySelector('.hero');
+const scenarioPanel=document.querySelector('.scenario');
+const scheduleStockFilter=document.querySelector('.table-tools select:first-child');
+function numberFromInput(el){return Number(String(el?.value||0).replace(/,/g,''))||0}
+function updatePlanPreview(scrollToResult=false){
+  const symbols=[...selected],monthly=numberFromInput(input),initial=numberFromInput(initialInvestmentInput);
+  const months=parseInt(durationSelect?.value,10)||24,totalPlan=initial+(monthly*months);
+  const title=symbols.join(' + '),frequency=frequencySelect?.value||'';
+  total.textContent=totalPlan.toLocaleString('en-US')+' บาท';
+  hero.querySelector('h2').textContent=title;
+  hero.querySelector('.muted').textContent=`Portfolio จำลอง ${symbols.length} หุ้น · ${months} เดือน · ${frequency}`;
+  const heroMetrics=hero.querySelectorAll('.metric b');
+  if(heroMetrics[3])heroMetrics[3].textContent=totalPlan.toLocaleString('en-US')+' บาท';
+  const scenarioResult=scenarioPanel.querySelectorAll('.scenario-result b');
+  if(scenarioResult[1])scenarioResult[1].textContent=totalPlan.toLocaleString('en-US')+' บาท';
+  let allocation=scenarioPanel.querySelector('.plan-allocation');
+  if(!allocation){allocation=document.createElement('div');allocation.className='plan-allocation';scenarioPanel.querySelector('.scenario-result').prepend(allocation)}
+  allocation.innerHTML=symbols.map(s=>`<div><strong>${s}</strong><span>${Number(weights[s]||0)}%</span><b>${Math.round(monthly*Number(weights[s]||0)/100).toLocaleString('en-US')} บาท/เดือน</b></div>`).join('');
+  scheduleStockFilter.innerHTML='<option value="">ทุกหุ้น</option>'+symbols.map(s=>`<option>${s}</option>`).join('');
+  let feedback=document.querySelector('.plan-feedback');
+  if(!feedback){feedback=document.createElement('div');feedback.className='plan-feedback';document.querySelector('.step1 .summary').insertBefore(feedback,buildPlanButton)}
+  feedback.textContent=`พร้อมจำลอง ${symbols.length} หุ้น · งบ ${monthly.toLocaleString('en-US')} บาท/เดือน · รวม ${totalPlan.toLocaleString('en-US')} บาท`;
+  if(scrollToResult)hero.scrollIntoView({behavior:'smooth',block:'start'});
+}
+buildPlanButton?.addEventListener('click',()=>{if(allocationIsValid())updatePlanPreview(true)});
+initialInvestmentInput?.addEventListener('input',()=>updatePlanPreview(false));
+durationSelect?.addEventListener('change',()=>updatePlanPreview(false));
+frequencySelect?.addEventListener('change',()=>updatePlanPreview(false));
+const previewSync=sync;
+sync=function(v){previewSync(v);updatePlanPreview(false)};
+const previewRenderChips=renderChips;
+renderChips=function(){previewRenderChips();updatePlanPreview(false)};
+updatePlanPreview(false);
 </script></body></html>

@@ -14,9 +14,8 @@
 
  function periodsPerMonth(frequency){return frequency==='daily'?21:frequency==='weekly'?4:1}
 
- function contributionPerPeriod({budget,initial,months,frequency}){
-  const steps=Math.max(1,Math.round(Number(months)||1))*periodsPerMonth(frequency);
-  return Math.max(0,(Math.max(0,Number(budget)||0)-Math.max(0,Number(initial)||0))/steps);
+ function contributionPerPeriod({monthlyBudget,frequency}){
+  return Math.max(0,Number(monthlyBudget)||0)/periodsPerMonth(frequency);
  }
 
  function boardLotPurchase(cash,price){

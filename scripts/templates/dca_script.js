@@ -44,10 +44,12 @@ function stock(){return DATA[ticker.value.trim().toUpperCase()]}
 function capturePlan(){const values={};PLAN_FIELDS.forEach(id=>{const el=document.getElementById(id);values[id]=el.type==='checkbox'?el.checked:el.value});return values;}
 function restorePlan(values){if(!values)return;PLAN_FIELDS.forEach(id=>{if(!(id in values))return;const el=document.getElementById(id);if(el.type==='checkbox')el.checked=Boolean(values[id]);else el.value=values[id]});}
 function saveActivePlan(){if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();}
-function workspaceData(){saveActivePlan();return{version:1,activePlan,allocationMode:document.getElementById('dcaAllocationMode').value,portfolioBudget:document.getElementById('dcaPortfolioBudget').value,plans:[...plans.entries()]}}
+function workspaceData(){saveActivePlan();return{version:2,budgetMode:'monthly',activePlan,allocationMode:document.getElementById('dcaAllocationMode').value,portfolioBudget:document.getElementById('dcaPortfolioBudget').value,plans:[...plans.entries()]}}
 function autoSaveWorkspace(){if(!plans.size)return;try{localStorage.setItem(WORKSPACE_AUTO_KEY,JSON.stringify(workspaceData()));document.getElementById('dcaSaveStatus').textContent='Auto-save แล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}catch(e){document.getElementById('dcaSaveStatus').textContent='Browser ไม่อนุญาตให้บันทึก'}}
 function restoreWorkspace(data){
- if(!data||data.version!==1||!Array.isArray(data.plans))return false;const valid=data.plans.filter(([symbol])=>DATA[symbol]);if(!valid.length)return false;plans.clear();valid.slice(0,12).forEach(([symbol,p])=>plans.set(symbol,{values:p?.values||null}));document.getElementById('dcaAllocationMode').value=data.allocationMode==='equal'?'equal':'perStock';document.getElementById('dcaPortfolioBudget').value=data.portfolioBudget||500000;activePlan=null;activatePlan(plans.has(data.activePlan)?data.activePlan:plans.keys().next().value,false);updateAllocationUI();return true;
+ if(!data||![1,2].includes(data.version)||!Array.isArray(data.plans))return false;let valid=data.plans.filter(([symbol])=>DATA[symbol]);if(!valid.length)return false;
+ if(data.version===1)valid=valid.map(([symbol,p])=>{const values={...(p?.values||{})},months=Math.max(1,Number(values.riskMonths)||24),initial=Math.max(0,Number(values.riskInitial)||0),total=Math.max(0,Number(values.riskBudget)||0);values.riskBudget=(Math.max(0,total-initial)/months).toFixed(2);return[symbol,{values}];});
+ plans.clear();valid.slice(0,12).forEach(([symbol,p])=>plans.set(symbol,{values:p?.values||null}));document.getElementById('dcaAllocationMode').value=data.allocationMode==='equal'?'equal':'perStock';document.getElementById('dcaPortfolioBudget').value=data.version===1?[...plans.values()].reduce((sum,p)=>sum+(Number(p.values?.riskBudget)||0),0).toFixed(2):(data.portfolioBudget||20000);activePlan=null;activatePlan(plans.has(data.activePlan)?data.activePlan:plans.keys().next().value,false);updateAllocationUI();return true;
 }
 function updateAllocationUI(){const equal=document.getElementById('dcaAllocationMode').value==='equal';document.getElementById('dcaPortfolioBudgetLabel').style.display=equal?'block':'none';document.getElementById('riskBudget').readOnly=equal}
 function applyAllocation(){
@@ -55,8 +57,8 @@ function applyAllocation(){
 }
 function renderPlanTabs(){
  saveActivePlan();let total=0;plans.forEach(p=>total+=Math.max(0,Number(p.values?.riskBudget)||0));
- document.getElementById('dcaPlanTabs').innerHTML=[...plans.entries()].map(([symbol,p])=>`<div class="dca-plan-tab ${symbol===activePlan?'active':''}" data-symbol="${symbol}"><b>${symbol}</b><small>${fmt(Number(p.values?.riskBudget)||0,0)} บ.</small>${plans.size>1?'<button type="button" title="ลบแผน">×</button>':''}</div>`).join('');
- document.getElementById('dcaBatchNote').innerHTML=`งบของแต่ละหุ้นเป็นคนละแผน · งบรวมทุกแท็บ <span class="dca-plan-total">${fmt(total,0)} บาท</span>`;
+ document.getElementById('dcaPlanTabs').innerHTML=[...plans.entries()].map(([symbol,p])=>`<div class="dca-plan-tab ${symbol===activePlan?'active':''}" data-symbol="${symbol}"><b>${symbol}</b><small>${fmt(Number(p.values?.riskBudget)||0,0)} บ./เดือน</small>${plans.size>1?'<button type="button" title="ลบแผน">×</button>':''}</div>`).join('');
+ document.getElementById('dcaBatchNote').innerHTML=`งบของแต่ละหุ้นเป็นคนละแผน · งบต่อเดือนรวมทุกแท็บ <span class="dca-plan-total">${fmt(total,0)} บาท</span>`;
  document.querySelectorAll('.dca-plan-tab').forEach(tab=>{tab.addEventListener('click',()=>activatePlan(tab.dataset.symbol));const remove=tab.querySelector('button');if(remove)remove.addEventListener('click',e=>{e.stopPropagation();removePlan(tab.dataset.symbol)})});
  autoSaveWorkspace();
 }
@@ -92,13 +94,13 @@ function applyCycleTime(){
  if(check.checked)input.value=Math.min(120,Math.max(1,Math.round(days/30.44)));
 }
 function updateContribution(){
- const frequency=document.getElementById('riskFrequency').value,months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),initial=Math.max(0,+document.getElementById('riskInitial').value||0),budget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=contributionPerPeriod({budget,initial,months,frequency});
+ const frequency=document.getElementById('riskFrequency').value,monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=contributionPerPeriod({monthlyBudget,frequency});
  document.getElementById('riskMonthly').value=contribution.toFixed(2);return contribution;
 }
 function setScenarioPresetActive(id){document.querySelectorAll('.scenario-presets button').forEach(button=>button.classList.toggle('active',button.dataset.preset===id))}
 function updateScenarioLabels(){
- const drop=Math.max(0,+document.getElementById('riskDecline').value||0),downMonths=Math.max(1,+document.getElementById('riskDeclineMonths').value||1),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0);
- document.getElementById('riskDeclineValue').textContent=`${fmt(drop,0)}%`;document.getElementById('riskDeclineMonthsValue').textContent=`${fmt(downMonths,0)} เดือน`;
+ const monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),drop=Math.max(0,+document.getElementById('riskDecline').value||0),downMonths=Math.max(1,+document.getElementById('riskDeclineMonths').value||1),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0);
+ document.getElementById('riskBudgetValue').textContent=`${fmt(monthlyBudget,0)} บาท`;document.getElementById('riskDeclineValue').textContent=`${fmt(drop,0)}%`;document.getElementById('riskDeclineMonthsValue').textContent=`${fmt(downMonths,0)} เดือน`;
  document.getElementById('riskRecoveryValue').textContent=recovery===0?'ไม่ฟื้นตัว':recovery===100?'กลับถึงราคาปัจจุบัน':recovery<100?`ฟื้นกลับ ${fmt(recovery,0)}%`:`สูงกว่าราคาปัจจุบัน ${fmt(recovery-100,0)}%`;
 }
 function applyRecoveryTarget(){
@@ -107,7 +109,7 @@ function applyRecoveryTarget(){
 }
 function syncScenarioControls(){
  const x=stock();if(!x)return;const current=x.m.at(-1)[1],drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),bottom=current*(1-drop),target=Math.max(.01,+document.getElementById('riskTarget').value||current),recovery=current===bottom?100:(target-bottom)/(current-bottom)*100;
- document.getElementById('riskDeclineSlider').value=Math.min(80,drop*100);document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));document.getElementById('riskRecoverySlider').value=Math.min(150,Math.max(0,Math.round(recovery/5)*5));updateScenarioLabels();
+ const monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),budgetSlider=document.getElementById('riskBudgetSlider');budgetSlider.max=Math.max(50000,Math.ceil(monthlyBudget/10000)*10000);budgetSlider.value=monthlyBudget;document.getElementById('riskDeclineSlider').value=Math.min(80,drop*100);document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));document.getElementById('riskRecoverySlider').value=Math.min(150,Math.max(0,Math.round(recovery/5)*5));updateScenarioLabels();
 }
 function applyScenarioPreset(id){
  const preset=SCENARIO_PRESETS[id],x=stock();if(!preset||!x)return;const risk=x.r||{};
@@ -123,7 +125,7 @@ function loadStock(savedValues=null){
 }
 function calculateRisk(){
  const x=stock();if(!x)return;
- const symbol=ticker.value.trim().toUpperCase(),current=x.m.at(-1)[1],risk=x.r||{},initial=Math.max(0,+document.getElementById('riskInitial').value||0),months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),downMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskDeclineMonths').value||1))),frequency=document.getElementById('riskFrequency').value,periodsPerMonth=frequency==='daily'?21:frequency==='weekly'?4:1,periodsPerYear=periodsPerMonth*12,steps=months*periodsPerMonth,downSteps=downMonths*periodsPerMonth,frequencyLabel=frequency==='daily'?'ทุกวันทำการ':frequency==='weekly'?'ทุกสัปดาห์':'ทุกเดือน',drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),target=Math.max(.01,+document.getElementById('riskTarget').value||current),budget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=updateContribution(),tolerance=Math.max(0,+document.getElementById('riskTolerance').value||0),withDiv=document.getElementById('riskDividend').checked,stress=current*(1-drop),annualDiv=withDiv?(risk.div12||0):0;
+ const symbol=ticker.value.trim().toUpperCase(),current=x.m.at(-1)[1],risk=x.r||{},initial=Math.max(0,+document.getElementById('riskInitial').value||0),months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),downMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskDeclineMonths').value||1))),frequency=document.getElementById('riskFrequency').value,periodsPerMonth=frequency==='daily'?21:frequency==='weekly'?4:1,periodsPerYear=periodsPerMonth*12,steps=months*periodsPerMonth,downSteps=downMonths*periodsPerMonth,frequencyLabel=frequency==='daily'?'ทุกวันทำการ':frequency==='weekly'?'ทุกสัปดาห์':'ทุกเดือน',drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),target=Math.max(.01,+document.getElementById('riskTarget').value||current),monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),budget=initial+monthlyBudget*months,contribution=updateContribution(),tolerance=Math.max(0,+document.getElementById('riskTolerance').value||0),withDiv=document.getElementById('riskDividend').checked,stress=current*(1-drop),annualDiv=withDiv?(risk.div12||0):0;
  let reserve=initial,allocated=initial,dividendCash=0,firstPurchase=boardLotPurchase(reserve,current),shares=firstPurchase.shares,invested=firstPurchase.cost,worstPct=0,troughValue=shares*current,usedPeriods=0,divTotal=0;reserve-=firstPurchase.cost;
  const ledger=[];
  if(initial>0)ledger.push({period:'เริ่มต้น',phase:firstPurchase.shares?'ราคาปัจจุบัน':'รอเงินครบ 100 หุ้น',price:current,buy:firstPurchase.cost,bought:firstPurchase.shares,shares,invested,value:shares*current,pnl:shares*current-invested,pct:0});
@@ -136,7 +138,7 @@ function calculateRisk(){
   if(pct/100<worstPct)worstPct=pct/100;if(i===downSteps)troughValue=value;
   ledger.push({period:`${i}/${steps}`,phase:bought?(i<=downSteps?'ราคาลง':'ราคาฟื้น'):'รอเงินครบ 100 หุ้น',price,buy,bought,shares,invested,value,pnl,pct});
  }
- const endValue=shares*target+dividendCash,pnl=endValue-invested,avg=shares?invested/shares:0,downside=avg?stress/avg-1:0,upside=avg?target/avg-1:0,desired=budget,shortfall=Math.max(0,initial-budget),overRisk=Math.abs(worstPct*100)>tolerance,liquid=(risk.medianValue30||0)>=1000000;
+ const endValue=shares*target+dividendCash,pnl=endValue-invested,avg=shares?invested/shares:0,downside=avg?stress/avg-1:0,upside=avg?target/avg-1:0,desired=budget,overRisk=Math.abs(worstPct*100)>tolerance,liquid=(risk.medianValue30||0)>=1000000;
  const stats=[['ราคาปัจจุบัน',fmt(current)+' บาท'],['ราคาวิกฤต',fmt(stress)+' บาท'],['เงินที่ใช้จริง',fmt(invested)+' บาท'],['ต้นทุนเฉลี่ย',fmt(avg)+' บาท'],['มูลค่าที่จุดต่ำ',fmt(troughValue)+' บาท'],['ขาดทุนสูงสุด',`${fmt(worstPct*100)}%`],['Downside จากต้นทุน',`${fmt(downside*100)}%`],['Upside ถึงเป้าหมาย',`${upside>=0?'+':''}${fmt(upside*100)}%`],['มูลค่าเมื่อถึงเป้า',fmt(endValue)+' บาท'],['กำไร/ขาดทุนเป้า',`${pnl>=0?'+':''}${fmt(pnl)} บาท`],['เงินที่แผนต้องการ',fmt(desired)+' บาท'],['DCA ได้จริง',`${usedPeriods}/${steps} งวด`]];
  document.getElementById('riskGrid').innerHTML=stats.map(s=>`<div class="dca-stat"><small>${s[0]}</small><b>${s[1]}</b></div>`).join('');
  document.getElementById('riskLedgerBody').innerHTML=ledger.map(r=>`<tr><td>${r.period}</td><td>${r.phase}</td><td>${fmt(r.price)}</td><td>${fmt(r.buy)}</td><td>${fmt(r.bought,0)}</td><td>${fmt(r.shares,0)}</td><td>${fmt(r.invested)}</td><td>${r.shares?fmt(r.invested/r.shares):'—'}</td><td>${fmt(r.value)}</td>${pnlCell(r.pnl,r.pct)}</tr>`).join('');
@@ -146,7 +148,7 @@ function calculateRisk(){
   ['ขาลงยาว','ลงลึกขึ้นและใช้เวลานาน 1.5 เท่า',current*(1-Math.min(.95,drop*1.25)),target,Math.min(steps,Math.max(1,Math.round(downSteps*1.5)))],
   ['ไม่ฟื้น','ลงลึกแล้วทรงตัวถึงจบแผน',current*(1-Math.min(.95,drop*1.25)),current*(1-Math.min(.95,drop*1.25)),downSteps]
  ].map(s=>({name:s[0],desc:s[1],...simulateScenario({...common,bottom:s[2],target:s[3],downSteps:s[4]})}));
- document.getElementById('dcaScenarioGrid').innerHTML=scenarios.length?scenarios.map(s=>`<div class="scenario-card"><small>${s.name}</small><b class="${s.pnl>=0?'gain':'loss'}">${signed(s.pnl)} บาท</b><small>ผลตอบแทน ${signed(s.pct)}%<br>ขาดทุนสูงสุด ${fmt(s.worst)}%<br>${s.desc}</small></div>`).join(''):'<div class="scenario-placeholder">ไม่สามารถคำนวณสถานการณ์ได้ กรุณาตรวจค่าที่กรอก</div>';
+ document.getElementById('dcaScenarioGrid').innerHTML=scenarios.length?scenarios.map(s=>`<div class="scenario-card ${s.pnl>=0?'gain':'loss'}"><small>${s.name}</small><b>${signed(s.pnl)} บาท</b><small>ผลตอบแทน ${signed(s.pct)}%<br>ขาดทุนสูงสุด ${fmt(s.worst)}%<br>${s.desc}</small></div>`).join(''):'<div class="scenario-placeholder">ไม่สามารถคำนวณสถานการณ์ได้ กรุณาตรวจค่าที่กรอก</div>';
  const safety=[];const addSafety=(level,text)=>safety.push({level,text});
  if(current<=Number(risk.low252||0)*1.02)addSafety('danger',`ราคาอยู่ใกล้จุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);else addSafety('ok',`ราคายังเหนือจุดต่ำสุด 52 สัปดาห์ ${fmt(risk.low252)} บาท`);
  if(risk.return60<=-20)addSafety('danger',`ราคาลด ${fmt(Math.abs(risk.return60))}% ใน 60 วันทำการ`);else if(risk.return60<=-10)addSafety('watch',`Momentum 60 วันยังติดลบ ${fmt(risk.return60)}%`);else addSafety('ok',`Momentum 60 วัน ${signed(risk.return60||0)}%`);
@@ -155,11 +157,11 @@ function calculateRisk(){
  document.getElementById('safetyMonitor').innerHTML=safety.map(s=>`<div class="safety-item ${s.level}">${s.level==='danger'?'⚠':s.level==='watch'?'•':'✓'} ${s.text}</div>`).join('');
  const headline=document.getElementById('riskHeadline');headline.className='risk-headline '+(overRisk?'danger':'safe');headline.textContent=overRisk?'⚠ Scenario นี้ขาดทุนเกินระดับที่คุณรับได้':'✓ Scenario นี้ยังอยู่ในกรอบขาดทุนที่กำหนด';
  document.getElementById('riskPathFill').style.width=Math.min(100,invested/(budget||desired)*100)+'%';document.getElementById('riskPathText').textContent=`ใช้งบ ${fmt(invested)} จาก ${fmt(budget||desired)} บาท`;
- const warnings=[];if(shortfall)warnings.push(`เงินซื้อครั้งแรกสูงกว่างบรวม ${fmt(shortfall)} บาท กรุณาปรับงบ`);if(overRisk)warnings.push(`ขาดทุนสูงสุด ${fmt(Math.abs(worstPct*100))}% มากกว่าเกณฑ์ ${fmt(tolerance)}%`);if(!liquid)warnings.push('มูลค่าซื้อขายมัธยฐานต่ำกว่า 1 ล้านบาท/วัน อาจซื้อหรือขายตามแผนได้ยาก');if(risk.trough&&stress<risk.trough)warnings.push(`ราคาวิกฤตต่ำกว่าแนวรับอ้างอิง ${fmt(risk.trough)} บาท`);
+ const warnings=[];if(overRisk)warnings.push(`ขาดทุนสูงสุด ${fmt(Math.abs(worstPct*100))}% มากกว่าเกณฑ์ ${fmt(tolerance)}%`);if(!liquid)warnings.push('มูลค่าซื้อขายมัธยฐานต่ำกว่า 1 ล้านบาท/วัน อาจซื้อหรือขายตามแผนได้ยาก');if(risk.trough&&stress<risk.trough)warnings.push(`ราคาวิกฤตต่ำกว่าแนวรับอ้างอิง ${fmt(risk.trough)} บาท`);
  document.getElementById('riskWarnings').innerHTML=(warnings.length?warnings:['เงื่อนไขงบประมาณ ความเสี่ยง และสภาพคล่องผ่านเกณฑ์ที่ตั้งไว้']).map(w=>`<div class="risk-warning ${warnings.length?'':'risk-ok'}">${warnings.length?'⚠ ':''}${w}</div>`).join('');
  const peakLabel=risk.peakProjected?'เป้าขาขึ้นประมาณจากรอบในอดีต':'แนวต้าน peak เดิมที่อยู่เหนือราคาปัจจุบัน',troughLabel=risk.troughProjected?'แนวรับประมาณจากรอบในอดีต':'แนวรับ trough เดิมที่อยู่ต่ำกว่าราคาปัจจุบัน';
  const cycleTimeText=document.getElementById('riskUseCycleTime').checked&&risk.downDays?`ใช้ระยะขาลงเฉลี่ยจาก Cycle ${risk.downDays} วัน (ประมาณ ${downMonths} เดือน)`:`กำหนดระยะขาลงเอง ${downMonths} เดือน`;
- document.getElementById('riskDetail').textContent=`${symbol}: DCA ${frequencyLabel} งวดละ ${fmt(contribution)} บาท · ${cycleTimeText} · สมมติราคาลง ${fmt(drop*100)}% แล้วฟื้นไป ${fmt(target)} บาทภายในเดือนที่ ${months} · ${peakLabel} ${fmt(risk.peak)} บาท · ${troughLabel} ${fmt(risk.trough)} บาท · ปันผลจำลองสะสม ${fmt(divTotal)} บาท`;
+ document.getElementById('riskDetail').textContent=`${symbol}: งบ ${fmt(monthlyBudget)} บาท/เดือน · DCA ${frequencyLabel} งวดละ ${fmt(contribution)} บาท · ${cycleTimeText} · สมมติราคาลง ${fmt(drop*100)}% แล้วฟื้นไป ${fmt(target)} บาทภายในเดือนที่ ${months} · ${peakLabel} ${fmt(risk.peak)} บาท · ${troughLabel} ${fmt(risk.trough)} บาท · ปันผลจำลองสะสม ${fmt(divTotal)} บาท`;
  document.getElementById('riskResult').classList.add('show');
  if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();
 }
@@ -175,8 +177,10 @@ function calculateHistory(){
 }
 document.getElementById('navDca').addEventListener('click',loadCloudDca);
 ticker.addEventListener('change',()=>activatePlan(ticker.value.trim().toUpperCase()));ticker.addEventListener('input',()=>{const symbol=ticker.value.trim().toUpperCase();if(DATA[symbol])activatePlan(symbol)});document.getElementById('riskCalculate').onclick=()=>{calculateRisk();renderPlanTabs()};
-document.getElementById('riskFrequency').addEventListener('change',()=>{const f=document.getElementById('riskFrequency').value;document.getElementById('riskContributionLabel').childNodes[0].nodeValue=f==='daily'?'DCA ต่อวันทำการ — คำนวณอัตโนมัติ (บาท)':f==='weekly'?'DCA ต่อสัปดาห์ — คำนวณอัตโนมัติ (บาท)':'DCA ต่อเดือน — คำนวณอัตโนมัติ (บาท)';calculateRisk();});
-['riskInitial','riskBudget','riskMonths'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateContribution();if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();renderPlanTabs()}));
+document.getElementById('riskFrequency').addEventListener('change',()=>{const f=document.getElementById('riskFrequency').value;document.querySelector('#riskContributionLabel>span').childNodes[0].nodeValue=f==='daily'?'DCA ต่อวันทำการ — คำนวณอัตโนมัติ (บาท) ':f==='weekly'?'DCA ต่อสัปดาห์ — คำนวณอัตโนมัติ (บาท) ':'DCA ต่อเดือน — คำนวณอัตโนมัติ (บาท) ';calculateRisk();});
+['riskInitial','riskMonths'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{updateContribution();calculateRisk();renderPlanTabs()}));
+document.getElementById('riskBudget').addEventListener('input',()=>{const value=Math.max(0,+document.getElementById('riskBudget').value||0),slider=document.getElementById('riskBudgetSlider');slider.max=Math.max(50000,Math.ceil(value/10000)*10000);slider.value=value;setScenarioPresetActive('custom');updateContribution();updateScenarioLabels();calculateRisk();renderPlanTabs()});
+document.getElementById('riskBudgetSlider').addEventListener('input',event=>{document.getElementById('riskBudget').value=event.target.value;setScenarioPresetActive('custom');updateContribution();updateScenarioLabels();calculateRisk();renderPlanTabs()});
 document.getElementById('riskUseCycleTime').addEventListener('change',()=>{applyCycleTime();syncScenarioControls();calculateRisk();});document.getElementById('riskDeclineMonths').addEventListener('input',()=>{document.getElementById('riskUseCycleTime').checked=false;document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));setScenarioPresetActive('custom');updateScenarioLabels();calculateRisk();});
 document.querySelectorAll('.scenario-presets button[data-preset]').forEach(button=>button.onclick=()=>{if(button.dataset.preset==='custom'){setScenarioPresetActive('custom');return}applyScenarioPreset(button.dataset.preset)});
 document.getElementById('riskDeclineSlider').addEventListener('input',event=>{document.getElementById('riskDecline').value=event.target.value;setScenarioPresetActive('custom');applyRecoveryTarget();updateScenarioLabels();calculateRisk()});

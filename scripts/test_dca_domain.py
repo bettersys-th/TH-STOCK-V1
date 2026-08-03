@@ -21,11 +21,11 @@ class DcaDomainBaselineTests(unittest.TestCase):
         self.assertEqual(run_domain("d.boardLotPurchase(5000,50)"), {"shares": 100, "cost": 5000})
         self.assertEqual(run_domain("d.boardLotPurchase(12550,50)"), {"shares": 200, "cost": 10000})
 
-    def test_contribution_uses_remaining_budget_and_frequency(self):
-        daily = run_domain("d.contributionPerPeriod({budget:130000,initial:10000,months:24,frequency:'daily'})")
-        weekly = run_domain("d.contributionPerPeriod({budget:130000,initial:10000,months:24,frequency:'weekly'})")
-        monthly = run_domain("d.contributionPerPeriod({budget:130000,initial:10000,months:24,frequency:'monthly'})")
-        self.assertAlmostEqual(daily, 120000 / (24 * 21))
+    def test_contribution_splits_monthly_budget_by_frequency(self):
+        daily = run_domain("d.contributionPerPeriod({monthlyBudget:5000,frequency:'daily'})")
+        weekly = run_domain("d.contributionPerPeriod({monthlyBudget:5000,frequency:'weekly'})")
+        monthly = run_domain("d.contributionPerPeriod({monthlyBudget:5000,frequency:'monthly'})")
+        self.assertAlmostEqual(daily, 5000 / 21)
         self.assertAlmostEqual(weekly, 1250)
         self.assertAlmostEqual(monthly, 5000)
 

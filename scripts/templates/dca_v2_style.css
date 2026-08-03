@@ -25,7 +25,9 @@
  .dca-sticky-controls .budget-fit-notice{margin:8px 0 0}
  .dca-planner-columns{display:grid;grid-template-columns:minmax(350px,32%) minmax(0,68%);gap:18px;align-items:start}
  .dca-scenario-column,.dca-results-column{min-width:0}
- .dca-scenario-column .scenario-controls{margin:0;padding:18px}
+ .dca-scenario-column{position:sticky;top:var(--dca-scenario-top,190px);height:calc(100vh - var(--dca-scenario-top,190px) - 8px);align-self:start}
+ .dca-scenario-column .scenario-controls{height:100%;margin:0;padding:18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+ .dca-scenario-column .scenario-controls::-webkit-scrollbar{width:7px}.dca-scenario-column .scenario-controls::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
  .dca-scenario-column .scenario-control-head{align-items:flex-start;flex-direction:column}
 .dca-scenario-column .scenario-presets{margin:13px 0}
 .rise-correction-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px;padding:12px;border:1px solid rgba(228,169,54,.45);border-radius:9px;background:rgba(228,169,54,.06)}

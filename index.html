@@ -245,7 +245,9 @@
  .dca-sticky-controls .budget-fit-notice{margin:8px 0 0}
  .dca-planner-columns{display:grid;grid-template-columns:minmax(350px,32%) minmax(0,68%);gap:18px;align-items:start}
  .dca-scenario-column,.dca-results-column{min-width:0}
- .dca-scenario-column .scenario-controls{margin:0;padding:18px}
+ .dca-scenario-column{position:sticky;top:var(--dca-scenario-top,190px);height:calc(100vh - var(--dca-scenario-top,190px) - 8px);align-self:start}
+ .dca-scenario-column .scenario-controls{height:100%;margin:0;padding:18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+ .dca-scenario-column .scenario-controls::-webkit-scrollbar{width:7px}.dca-scenario-column .scenario-controls::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
  .dca-scenario-column .scenario-control-head{align-items:flex-start;flex-direction:column}
 .dca-scenario-column .scenario-presets{margin:13px 0}
 .rise-correction-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px;padding:12px;border:1px solid rgba(228,169,54,.45);border-radius:9px;background:rgba(228,169,54,.06)}
@@ -948,7 +950,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-03 11:26";
+const UPDATED_AT = "2026-08-03 11:40";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -1453,6 +1455,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStockMe
 document.getElementById('dcaAllocationMode').addEventListener('change',applyAllocation);document.getElementById('dcaPortfolioBudget').addEventListener('input',()=>{if(document.getElementById('dcaAllocationMode').value==='equal')applyAllocation()});
 document.getElementById('dcaSaveWorkspace').onclick=()=>{try{localStorage.setItem(WORKSPACE_MAIN_KEY,JSON.stringify(workspaceData()));document.getElementById('dcaSaveStatus').textContent='บันทึกแผนหลักแล้ว';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='บันทึกไม่สำเร็จ'}};
 document.getElementById('dcaLoadWorkspace').onclick=()=>{try{const data=JSON.parse(localStorage.getItem(WORKSPACE_MAIN_KEY));document.getElementById('dcaSaveStatus').textContent=restoreWorkspace(data)?'โหลดแผนหลักแล้ว':'ยังไม่มีแผนหลักที่บันทึก';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='ข้อมูลแผนหลักเสียหาย'}};
+const stickyControls=document.querySelector('.dca-sticky-controls'),syncScenarioStickyOffset=()=>{if(!stickyControls)return;const offset=Math.ceil(stickyControls.getBoundingClientRect().height)+24;document.documentElement.style.setProperty('--dca-scenario-top',`${offset}px`)};syncScenarioStickyOffset();if(window.ResizeObserver)new ResizeObserver(syncScenarioStickyOffset).observe(stickyControls);window.addEventListener('resize',syncScenarioStickyOffset);
 let restored=false;try{restored=restoreWorkspace(JSON.parse(localStorage.getItem(WORKSPACE_AUTO_KEY)))}catch(e){}if(!restored){plans.set(ticker.value.trim().toUpperCase(),{values:null});activatePlan(ticker.value.trim().toUpperCase(),false)}updateAllocationUI();renderStockMenu();
 })();
 

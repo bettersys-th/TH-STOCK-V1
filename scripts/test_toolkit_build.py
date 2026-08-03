@@ -63,6 +63,8 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn('class="dca-sticky-controls"', html)
         self.assertIn('class="dca-planner-columns"', html)
         self.assertIn('class="dca-scenario-column"', html)
+        self.assertIn("--dca-scenario-top", html)
+        self.assertIn("new ResizeObserver(syncScenarioStickyOffset)", html)
         self.assertIn('class="dca-results-column"', html)
         self.assertIn("@media(min-width:1680px)", html)
         self.assertIn("width:calc(100vw - 48px);max-width:none!important", html)

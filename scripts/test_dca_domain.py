@@ -74,12 +74,25 @@ class DcaDomainBaselineTests(unittest.TestCase):
         self.assertEqual(result["modelUsed"], "linear")
         self.assertEqual(result["fallbackReason"], "recent-data-unavailable")
 
+    def test_rise_correction_path_hits_each_turning_point(self):
+        result = run_domain("d.buildRiseCorrectionPath({model:'linear',current:100,peak:125,bottom:87.5,target:100,steps:12,riseSteps:3,declineSteps:4})")
+        self.assertEqual(result["prices"][0], 100)
+        self.assertEqual(result["prices"][3], 125)
+        self.assertEqual(result["prices"][7], 87.5)
+        self.assertEqual(result["prices"][12], 100)
+        self.assertEqual(result["declineEndPeriod"], 7)
+
+    def test_simulation_accepts_explicit_price_path(self):
+        result = run_domain("d.simulateScenario({current:10,bottom:8,target:10,steps:3,downSteps:1,initial:1000,contribution:0,budget:1000,annualDiv:0,periodsPerYear:12,pricePath:[10,12,8,10]})")
+        self.assertEqual(result["value"], 1000)
+
     def test_presets_keep_market_assumptions_separate(self):
         presets = run_domain("d.SCENARIO_PRESETS")
         self.assertTrue(presets["cycle"]["useCycleReference"])
         self.assertIsNone(presets["cycle"]["drawdownPercent"])
         self.assertEqual(presets["correction"]["drawdownPercent"], 25)
         self.assertEqual(presets["crisis"]["recoveryMode"], "none")
+        self.assertEqual(presets["rallyCorrection"]["sequence"], "rise-correction")
 
 
 if __name__ == "__main__":

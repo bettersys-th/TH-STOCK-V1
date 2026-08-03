@@ -21,7 +21,7 @@
   <aside class="dca-scenario-column">
   <section class="panel scenario-controls" aria-labelledby="scenarioControlTitle">
     <div class="scenario-control-head"><div><div class="eyebrow">Scenario Lab</div><h2 id="scenarioControlTitle">ปรับสมมติฐานเพื่อทดสอบแผน</h2></div><span>ข้อมูลส่วนนี้เป็นสถานการณ์จำลอง ไม่ใช่ราคาคาดการณ์</span></div>
-    <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
+    <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="rallyCorrection">ขึ้นก่อนแล้วปรับฐาน</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
     <div class="path-model-row"><label>รูปแบบเส้นทางราคา <button type="button" class="metric-help" data-tip="เส้นตรงใช้ตรวจสูตร, 3 เดือนใช้ความผันผวนล่าสุดเมื่อข้อมูลพร้อม, Cycle ใช้เส้นโค้งตามรอบ และ Stress เพิ่มความผันผวนแบบกำหนดซ้ำได้" aria-label="คำอธิบายรูปแบบเส้นทางราคา">?</button><select id="riskPathModel"><option value="linear">เส้นตรง — Baseline</option><option value="recent3m">พฤติกรรม 3 เดือนล่าสุด</option><option value="cycle" selected>เส้นโค้งตาม Cycle</option><option value="stress">Stress แบบผันผวน</option></select></label><span id="pathModelNote"></span></div>
     <div class="scenario-sliders">
       <label><span>งบลงทุนต่อเดือน <button type="button" class="metric-help" data-tip="เลื่อนเพื่อทดลองเพิ่มหรือลดวงเงินรายเดือน ผลลัพธ์จะคำนวณใหม่ทันที" aria-label="คำอธิบาย slider งบต่อเดือน">?</button> <b id="riskBudgetValue">5,000 บาท</b></span><input type="range" id="riskBudgetSlider" min="0" max="50000" step="1000" value="5000"></label>
@@ -29,6 +29,12 @@
       <label><span>ราคาลดลงสูงสุด <b id="riskDeclineValue">30%</b></span><input type="range" id="riskDeclineSlider" min="0" max="80" step="1" value="30"><input type="hidden" id="riskDecline" value="30"></label>
       <label><span>ระยะเวลาขาลง <b id="riskDeclineMonthsValue">12 เดือน</b></span><input type="range" id="riskDeclineMonthsSlider" min="1" max="36" step="1" value="12"><input type="hidden" id="riskDeclineMonths" value="12"><small class="cycle-time-note" id="cycleTimeNote"></small></label>
       <label><span>ระดับการฟื้นตัว <button type="button" class="metric-help" data-tip="0% คือราคาคงอยู่ที่จุดต่ำสุด และ 100% คือฟื้นกลับถึงราคาปัจจุบัน" aria-label="คำอธิบายระดับการฟื้นตัว">?</button> <b id="riskRecoveryValue">กลับถึงราคาปัจจุบัน</b></span><input type="range" id="riskRecoverySlider" min="0" max="150" step="5" value="100"></label>
+    </div>
+    <div class="rise-correction-controls" id="riseCorrectionControls" hidden>
+      <input type="hidden" id="riskSequence" value="decline-recovery">
+      <label><span>ราคาขึ้นก่อน <b id="riskRiseValue">25%</b></span><input type="range" id="riskRiseSlider" min="5" max="100" step="1" value="25"><input type="hidden" id="riskRise" value="25"></label>
+      <label><span>ระยะขาขึ้น <b id="riskRiseMonthsValue">4 เดือน</b></span><input type="range" id="riskRiseMonthsSlider" min="1" max="24" step="1" value="4"><input type="hidden" id="riskRiseMonths" value="4"></label>
+      <p>จากนั้นราคาจะย่อลงตามค่า “ราคาลดลงสูงสุด” ซึ่งคำนวณจากจุดสูงสุดใหม่ ไม่ใช่จากราคาวันนี้</p>
     </div>
     <details class="dca-advanced"><summary>ตั้งค่าขั้นสูง</summary><div class="dca-advanced-grid"><label class="dca-check cycle-time-check"><input type="checkbox" id="riskUseCycleTime" checked> ใช้ระยะขาลงเฉลี่ยจาก Cycle</label><label>ราคาฟื้นเป้าหมาย (บาท)<input type="number" id="riskTarget" min="0.01" step="0.01"></label><label>ขาดทุนที่รับได้สูงสุด (%)<input type="number" id="riskTolerance" min="1" max="100" value="30"></label><label class="dca-check"><input type="checkbox" id="riskDividend"> สมมติปันผลเท่า 12 เดือนล่าสุด</label></div></details>
   </section>

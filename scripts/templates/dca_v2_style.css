@@ -27,7 +27,11 @@
  .dca-scenario-column,.dca-results-column{min-width:0}
  .dca-scenario-column .scenario-controls{margin:0;padding:18px}
  .dca-scenario-column .scenario-control-head{align-items:flex-start;flex-direction:column}
- .dca-scenario-column .scenario-presets{margin:13px 0}
+.dca-scenario-column .scenario-presets{margin:13px 0}
+.rise-correction-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px;padding:12px;border:1px solid rgba(228,169,54,.45);border-radius:9px;background:rgba(228,169,54,.06)}
+.rise-correction-controls[hidden]{display:none}
+.rise-correction-controls label{margin:0;color:var(--muted);font-size:11px}.rise-correction-controls label span{display:flex;justify-content:space-between;gap:8px}.rise-correction-controls b{color:var(--amber)}.rise-correction-controls input[type=range]{width:100%;margin-top:10px;accent-color:var(--amber)}
+.rise-correction-controls p{grid-column:1/-1;margin:0;color:var(--muted);font-size:10px;line-height:1.5}
  .dca-scenario-column .path-model-row{align-items:stretch;flex-direction:column;margin-bottom:13px}
  .dca-scenario-column .path-model-row label{min-width:0;width:100%}
  .dca-scenario-column .scenario-sliders{grid-template-columns:1fr}

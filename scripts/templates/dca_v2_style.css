@@ -39,6 +39,14 @@
  .dca-results-column .outcome-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
  .dca-results-column .scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+@media(min-width:1680px){
+ .wrap{width:calc(100vw - 48px);max-width:none!important;margin-left:auto;margin-right:auto}
+ .dca-planner-columns{grid-template-columns:minmax(390px,440px) minmax(0,1fr);gap:22px}
+ .dca-results-column .dca-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .dca-results-column .outcome-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .dca-results-column .scenario-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .dca-results-column>#riskResult{padding:22px}
+}
 @media(min-width:901px) and (max-width:1099px){.scenario-controls .scenario-sliders{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.outcome-grid{grid-template-columns:repeat(2,1fr)}.scenario-controls .scenario-sliders{grid-template-columns:1fr}}
 @media(max-width:760px){.workspace-menu-popover{left:0;right:auto}.outcome-head,.portfolio-chart-head{align-items:flex-start;flex-direction:column}.path-model-row{align-items:stretch;flex-direction:column}.path-model-row label{min-width:0;width:100%}}

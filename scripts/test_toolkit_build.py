@@ -62,6 +62,8 @@ class ToolkitBuildTests(unittest.TestCase):
         self.assertIn('class="dca-planner-columns"', html)
         self.assertIn('class="dca-scenario-column"', html)
         self.assertIn('class="dca-results-column"', html)
+        self.assertIn("@media(min-width:1680px)", html)
+        self.assertIn("width:calc(100vw - 48px);max-width:none!important", html)
         self.assertIn('class="workspace-menu"', html)
         self.assertIn("rankAffordableAlternatives", html)
         self.assertIn('class="dca-advanced"', html)

@@ -286,6 +286,23 @@
 @media(max-width:1099px){.dca-v2-hero{grid-template-columns:1fr 130px}.dca-v2-hero-metrics{grid-column:1/-1}.dca-v2-page-head{align-items:flex-start}.dca-v2-page-badge{display:none}}
 @media(max-width:700px){.dca-v2-page-head h1{font-size:28px}.dca-v2-section-head,.dca-v2-table-toolbar{align-items:flex-start;flex-direction:column}.dca-v2-table-toolbar>div:last-child{width:100%}.dca-v2-table-toolbar select,.dca-v2-table-toolbar button{flex:1}.dca-v2-hero{grid-template-columns:1fr;padding:16px}.dca-v2-score{width:108px;height:108px}.dca-v2-score>div{width:82px;height:82px}.dca-v2-hero-metrics{grid-template-columns:1fr}.dca-v2-hero-note{margin:0 -16px -16px;padding:9px 16px}}
 
+/* V2 production layout: mockup-first information order, existing calculation engine. */
+.dca-v2-kpi-section>summary,.scenario-box>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer}.dca-v2-kpi-section>summary::-webkit-details-marker,.scenario-box>summary::-webkit-details-marker{display:none}.dca-v2-kpi-section>summary>span:first-child{display:grid;gap:4px}.dca-v2-kpi-section>summary>span:last-child,.scenario-box>summary span{color:var(--muted);font-size:9px}.dca-v2-kpi-section[open]>summary{margin-bottom:14px}.scenario-box[open]>summary{margin-bottom:14px}
+@media(min-width:1100px){
+ .dca-sticky-controls{position:static;top:auto;z-index:auto;box-shadow:none;background:transparent;backdrop-filter:none;padding:0;border:0}
+ .dca-planner-columns{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(330px,410px);gap:18px;align-items:start}
+ .dca-results-column,#riskResult.show{display:contents}
+ .dca-v2-hero{grid-column:1/-1;grid-row:1}
+ .portfolio-chart{grid-column:1;grid-row:2;margin:0;min-width:0}
+ .dca-scenario-column{grid-column:2;grid-row:2 / span 3;position:sticky;top:8px;height:auto;min-height:0;align-self:start}
+ .dca-scenario-column .scenario-controls{height:auto;max-height:calc(100dvh - 16px);overflow-y:auto;padding:18px}
+ .dca-v2-kpi-section{grid-column:1;grid-row:3;margin:0}
+ .outcome-timeline{grid-column:1;grid-row:4;margin:0}
+ .dca-analysis-row,.risk-path,.risk-warnings,.dca-detail,.dca-v2-table-toolbar,.dca-ledger{grid-column:1/-1}
+ .dca-analysis-row{margin-top:0}.scenario-box{width:100%}
+ .dca-v2-hero{grid-template-columns:minmax(220px,1.1fr) 130px minmax(390px,2fr)}
+}
+
 </style>
 </head>
 <body>
@@ -517,9 +534,9 @@
   <div class="panel dca-result" id="riskResult">
     <section class="dca-v2-hero" aria-label="สรุปแผน DCA"><div class="dca-v2-hero-identity"><span class="eyebrow">DCA PLAN SUMMARY</span><h2 id="dcaHeroSymbol">—</h2><p id="dcaHeroScenario">กำลังประเมิน Scenario</p><div class="risk-headline" id="riskHeadline"></div></div><div class="dca-v2-score" id="dcaHeroScoreRing"><div><span>Plan Score</span><b id="dcaHeroScore">—</b><small>/100</small></div></div><div class="dca-v2-hero-metrics"><article><span>ผลตอบแทนปลายทาง</span><b id="dcaHeroReturn">—</b><small>จาก Scenario ที่เลือก</small></article><article><span>จุดเท่าทุน</span><b id="dcaHeroBE">—</b><small id="dcaHeroBEHint">ไม่รวมค่าธรรมเนียม</small></article><article><span>ขาดทุนสูงสุด</span><b id="dcaHeroDrawdown">—</b><small>เทียบเกณฑ์ที่รับได้</small></article><article><span>เงินที่ใช้จริง</span><b id="dcaHeroInvested">—</b><small id="dcaHeroSuitability">กำลังตรวจสอบแผน</small></article></div><div class="dca-v2-hero-note">ผลลัพธ์เป็นการจำลองจากข้อมูลราคาและสมมติฐานที่กำหนด ไม่ใช่คำแนะนำหรือการรับประกันผลตอบแทน</div></section>
     <section class="portfolio-chart"><div class="portfolio-chart-head"><div><span class="eyebrow">LIVE RESULT</span><h3>ทิศทางราคาและมูลค่าพอร์ต</h3><span>แกนซ้าย = มูลค่าเงินบาท · แกนขวา = ราคาหุ้นจริง · วางเมาส์บนจุดรายเดือนเพื่อดูรายละเอียด</span></div><div class="chart-legend"><i class="price"></i>ราคา <i class="portfolio"></i>พอร์ต <i class="invested"></i>เงินลงทุน <i class="breakeven"></i>BE</div></div><div class="portfolio-chart-stage"><svg id="portfolioPathChart" viewBox="0 0 1000 330" role="img" aria-label="กราฟทิศทางราคาจริง มูลค่าพอร์ต เงินลงทุนสะสม และจุดเท่าทุนรายเดือน"></svg><div class="portfolio-chart-tooltip" id="portfolioChartTooltip" role="status"></div></div></section>
-    <section class="dca-v2-kpi-section"><div class="dca-v2-subhead"><div><span class="eyebrow">PLAN METRICS</span><h3>ตัวเลขสำคัญของแผน</h3></div></div><div class="dca-grid" id="riskGrid"></div></section>
+    <details class="dca-v2-kpi-section"><summary><span><span class="eyebrow">PLAN METRICS</span><b>ดูตัวเลขสำคัญทั้งหมดของแผน</b></span><span>12 รายการ ▾</span></summary><div class="dca-grid" id="riskGrid"></div></details>
     <section class="outcome-timeline"><div class="outcome-head"><div><span class="eyebrow">TIMELINE</span><h3>ระยะเวลาสู่ผลลัพธ์</h3></div><span id="outcomeSummary"></span></div><div class="outcome-grid" id="outcomeGrid"></div></section>
-    <div class="dca-analysis-row"><section class="scenario-box"><h3>เปรียบเทียบหลายสถานการณ์</h3><div class="scenario-grid" id="dcaScenarioGrid"><div class="scenario-placeholder">กำลังคำนวณสถานการณ์…</div></div></section><section class="safety-box" id="safetyBox"><div class="safety-head"><h3>คำแนะนำจาก Price-based Safety Monitor</h3><button type="button" id="safetyToggle">−</button></div><div id="safetyMonitor"></div></section></div>
+    <div class="dca-analysis-row"><details class="scenario-box"><summary>เปรียบเทียบหลายสถานการณ์ <span>ดูผลลัพธ์ 5 รูปแบบ ▾</span></summary><div class="scenario-grid" id="dcaScenarioGrid"><div class="scenario-placeholder">กำลังคำนวณสถานการณ์…</div></div></details><section class="safety-box" id="safetyBox"><div class="safety-head"><h3>คำแนะนำจาก Price-based Safety Monitor</h3><button type="button" id="safetyToggle">−</button></div><div id="safetyMonitor"></div></section></div>
     <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
     <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>
     <div class="dca-v2-table-toolbar"><div><span class="eyebrow">PURCHASE SCHEDULE</span><h3>ตารางซื้อและผลลัพธ์ระหว่างทาง</h3></div><div><select id="riskLedgerPeriod" aria-label="กรองช่วงเวลา"><option value="all">ทุกเดือน</option><option value="1-12">เดือน 1–12</option><option value="13-24">เดือน 13–24</option><option value="25-60">เดือน 25–60</option><option value="61-120">เดือน 61–120</option></select><button type="button" id="riskLedgerExport">ส่งออก CSV</button></div></div><details class="dca-ledger" open><summary>แสดงตารางรายละเอียด</summary><div class="dca-table-wrap"><table class="dca-table"><thead><tr><th>งวด</th><th>ช่วง</th><th>ราคาซื้อ</th><th>เงินซื้อ</th><th>หุ้นที่ซื้อ</th><th>หุ้นสะสม</th><th>เงินลงทุนสะสม</th><th>ต้นทุนเฉลี่ย</th><th>มูลค่าพอร์ต</th><th>กำไร/ขาดทุน</th><th>ผลตอบแทน</th></tr></thead><tbody id="riskLedgerBody"></tbody></table></div></details>
@@ -960,7 +977,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-03 13:11";
+const UPDATED_AT = "2026-08-03 13:43";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -1473,7 +1490,7 @@ document.getElementById('dcaAllocationMode').addEventListener('change',applyAllo
 document.getElementById('dcaSaveWorkspace').onclick=()=>{try{localStorage.setItem(WORKSPACE_MAIN_KEY,JSON.stringify(workspaceData()));document.getElementById('dcaSaveStatus').textContent='บันทึกแผนหลักแล้ว';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='บันทึกไม่สำเร็จ'}};
 document.getElementById('dcaLoadWorkspace').onclick=()=>{try{const data=JSON.parse(localStorage.getItem(WORKSPACE_MAIN_KEY));document.getElementById('dcaSaveStatus').textContent=restoreWorkspace(data)?'โหลดแผนหลักแล้ว':'ยังไม่มีแผนหลักที่บันทึก';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='ข้อมูลแผนหลักเสียหาย'}};
 document.getElementById('riskLedgerPeriod').addEventListener('change',renderRiskLedger);document.getElementById('riskLedgerExport').onclick=()=>{const rows=filteredRiskLedger(),header=['Period','Phase','Price','Buy amount','Shares bought','Total shares','Invested','Average cost','Portfolio value','PnL','Return %'],csv=[header,...rows.map(r=>[r.period,r.phase,r.price,r.buy,r.bought,r.shares,r.invested,r.shares?r.invested/r.shares:'',r.value,r.pnl,r.pct])].map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(',')).join('\r\n'),blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`dca-${ticker.value.trim().toUpperCase()}-scenario.csv`;link.click();URL.revokeObjectURL(url)};
-const stickyControls=document.querySelector('.dca-sticky-controls'),syncScenarioStickyOffset=()=>{if(!stickyControls)return;const offset=Math.ceil(stickyControls.getBoundingClientRect().height)+24;document.documentElement.style.setProperty('--dca-scenario-top',`${offset}px`)};syncScenarioStickyOffset();if(window.ResizeObserver)new ResizeObserver(syncScenarioStickyOffset).observe(stickyControls);window.addEventListener('resize',syncScenarioStickyOffset);
+document.querySelector('#riskResult .dca-ledger').open=false;
 let restored=false;try{restored=restoreWorkspace(JSON.parse(localStorage.getItem(WORKSPACE_AUTO_KEY)))}catch(e){}if(!restored){plans.set(ticker.value.trim().toUpperCase(),{values:null});activatePlan(ticker.value.trim().toUpperCase(),false)}updateAllocationUI();renderStockMenu();
 })();
 

@@ -65,3 +65,20 @@
 .dca-v2-table-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:20px;padding:14px 16px;border:1px solid var(--line);border-radius:10px 10px 0 0;background:#111923}.dca-v2-table-toolbar h3{margin:3px 0 0;font-size:15px}.dca-v2-table-toolbar>div:last-child{display:flex;gap:8px}.dca-v2-table-toolbar select,.dca-v2-table-toolbar button{border:1px solid var(--line);border-radius:7px;background:#0b1118;color:var(--text);padding:9px 11px;font-size:10px}.dca-v2-table-toolbar button{cursor:pointer}.dca-v2-table-toolbar button:hover{border-color:var(--amber);color:var(--amber)}.dca-v2-table-toolbar+.dca-ledger{margin-top:0;border-radius:0 0 9px 9px}
 @media(max-width:1099px){.dca-v2-hero{grid-template-columns:1fr 130px}.dca-v2-hero-metrics{grid-column:1/-1}.dca-v2-page-head{align-items:flex-start}.dca-v2-page-badge{display:none}}
 @media(max-width:700px){.dca-v2-page-head h1{font-size:28px}.dca-v2-section-head,.dca-v2-table-toolbar{align-items:flex-start;flex-direction:column}.dca-v2-table-toolbar>div:last-child{width:100%}.dca-v2-table-toolbar select,.dca-v2-table-toolbar button{flex:1}.dca-v2-hero{grid-template-columns:1fr;padding:16px}.dca-v2-score{width:108px;height:108px}.dca-v2-score>div{width:82px;height:82px}.dca-v2-hero-metrics{grid-template-columns:1fr}.dca-v2-hero-note{margin:0 -16px -16px;padding:9px 16px}}
+
+/* V2 production layout: mockup-first information order, existing calculation engine. */
+.dca-v2-kpi-section>summary,.scenario-box>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer}.dca-v2-kpi-section>summary::-webkit-details-marker,.scenario-box>summary::-webkit-details-marker{display:none}.dca-v2-kpi-section>summary>span:first-child{display:grid;gap:4px}.dca-v2-kpi-section>summary>span:last-child,.scenario-box>summary span{color:var(--muted);font-size:9px}.dca-v2-kpi-section[open]>summary{margin-bottom:14px}.scenario-box[open]>summary{margin-bottom:14px}
+@media(min-width:1100px){
+ .dca-sticky-controls{position:static;top:auto;z-index:auto;box-shadow:none;background:transparent;backdrop-filter:none;padding:0;border:0}
+ .dca-planner-columns{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(330px,410px);gap:18px;align-items:start}
+ .dca-results-column,#riskResult.show{display:contents}
+ .dca-v2-hero{grid-column:1/-1;grid-row:1}
+ .portfolio-chart{grid-column:1;grid-row:2;margin:0;min-width:0}
+ .dca-scenario-column{grid-column:2;grid-row:2 / span 3;position:sticky;top:8px;height:auto;min-height:0;align-self:start}
+ .dca-scenario-column .scenario-controls{height:auto;max-height:calc(100dvh - 16px);overflow-y:auto;padding:18px}
+ .dca-v2-kpi-section{grid-column:1;grid-row:3;margin:0}
+ .outcome-timeline{grid-column:1;grid-row:4;margin:0}
+ .dca-analysis-row,.risk-path,.risk-warnings,.dca-detail,.dca-v2-table-toolbar,.dca-ledger{grid-column:1/-1}
+ .dca-analysis-row{margin-top:0}.scenario-box{width:100%}
+ .dca-v2-hero{grid-template-columns:minmax(220px,1.1fr) 130px minmax(390px,2fr)}
+}

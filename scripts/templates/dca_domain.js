@@ -50,11 +50,30 @@
   return{buyCompleteMonth,breakEvenMonth,firstProfitMonth:firstProfit?toMonth(firstProfit.period):null,sustainedProfitMonth:sustainedProfit?toMonth(sustainedProfit.period):null,returnToStartMonth:returned?toMonth(returned.period):null,monthsAfterBuyingToBreakEven:breakEvenMonth===null?null:Math.max(0,breakEvenMonth-buyCompleteMonth),experiencedLoss:firstLoss>=0};
  }
 
- function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear}){
+ function buildPricePath({model='linear',current,bottom,target,steps,downSteps,recentPrices=[]}){
+  const count=Math.max(1,Math.round(steps)),decline=Math.min(count,Math.max(1,Math.round(downSteps))),requested=model,history=Array.isArray(recentPrices)?recentPrices.map(Number).filter(value=>value>0):[],usableRecent=requested==='recent3m'&&history.length>=10,modelUsed=requested==='recent3m'&&!usableRecent?'linear':requested;
+  const smooth=t=>t*t*(3-2*t),sample=t=>{const index=t*(history.length-1),lo=Math.floor(index),hi=Math.min(history.length-1,lo+1),mix=index-lo;return history[lo]*(1-mix)+history[hi]*mix},historyStart=history[0]||1,historyEnd=history.at(-1)||historyStart;
+  const prices=[current];
+  for(let i=1;i<=count;i++){
+   const falling=i<=decline,t=falling?i/decline:(i-decline)/Math.max(1,count-decline),from=falling?current:bottom,to=falling?bottom:target,eased=modelUsed==='cycle'?smooth(t):t;
+   let price=from+(to-from)*eased;
+   if(modelUsed==='recent3m'){
+    const observed=sample(t)/historyStart,trend=1+(historyEnd/historyStart-1)*t,residual=Math.max(-.12,Math.min(.12,observed/Math.max(.0001,trend)-1));price*=1+residual*Math.sin(Math.PI*t);
+   }else if(modelUsed==='stress'){
+    const wiggle=(Math.sin(i*1.71)+Math.sin(i*.47))*.022;price*=1+wiggle*Math.sin(Math.PI*t);
+   }
+   prices.push(Math.max(.01,price));
+  }
+  prices[decline]=bottom;prices[count]=target;
+  return{prices,modelUsed,requestedModel:requested,sourcePoints:usableRecent?history.length:0,fallbackReason:requested==='recent3m'&&!usableRecent?'recent-data-unavailable':null};
+ }
+
+ function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear,model='linear',recentPrices=[]}){
+  const path=buildPricePath({model,current,bottom,target,steps,downSteps,recentPrices}).prices;
   let reserve=initial,allocated=initial,dividendCash=0,first=boardLotPurchase(reserve,current),shares=first.shares,invested=first.cost,worst=0;
   reserve-=first.cost;
   for(let i=1;i<=steps;i++){
-   const price=i<=downSteps?current+(bottom-current)*i/downSteps:bottom+(target-bottom)*(i-downSteps)/Math.max(1,steps-downSteps);
+   const price=path[i];
    if(annualDiv){
     dividendCash+=shares*(annualDiv/periodsPerYear);
     const reinvest=boardLotPurchase(dividendCash,price);
@@ -69,9 +88,9 @@
    const pct=invested?(shares*price+dividendCash)/invested-1:0;
    worst=Math.min(worst,pct);
   }
-  const value=shares*target+dividendCash,pnl=value-invested;
+  const value=shares*path.at(-1)+dividendCash,pnl=value-invested;
   return{invested,value,pnl,pct:invested?pnl/invested*100:0,worst:worst*100};
  }
 
- return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,simulateScenario});
+ return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,buildPricePath,simulateScenario});
 });

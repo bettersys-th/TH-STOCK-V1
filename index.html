@@ -233,10 +233,12 @@
 .budget-alternatives{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
 .budget-alternative{border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:5px 8px;cursor:pointer;font-size:10px}
 .scenario-controls .scenario-sliders{grid-template-columns:repeat(5,minmax(0,1fr))}
+.path-model-row{display:flex;align-items:flex-end;gap:14px;margin:-5px 0 16px}.path-model-row label{margin:0;min-width:290px}.path-model-row select{display:block;width:100%;margin-top:6px;background:#0b1017;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:7px}.path-model-row>span{color:var(--muted);font-size:10px;line-height:1.5}
 .outcome-timeline{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:10px;background:#0c1219}.outcome-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.outcome-head h3{margin:0;font-size:15px}.outcome-head span{color:var(--muted);font-size:10px}.outcome-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.outcome-item{padding:12px;border:1px solid var(--line);border-radius:8px;background:#111923}.outcome-item small{display:block;color:var(--muted);font-size:9px;line-height:1.4;margin-bottom:6px}.outcome-item b{font-family:'JetBrains Mono',monospace;font-size:14px}.outcome-item.positive b{color:var(--teal)}.outcome-item.wait b{color:var(--amber)}
+.portfolio-chart{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:10px;background:#0c1219}.portfolio-chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}.portfolio-chart-head h3{margin:0 0 4px;font-size:15px}.portfolio-chart-head span,.chart-legend{color:var(--muted);font-size:9px}.chart-legend{display:flex;align-items:center;gap:5px;white-space:nowrap}.chart-legend i{width:18px;height:3px;border-radius:2px;margin-left:7px}.chart-legend .price{background:var(--amber)}.chart-legend .portfolio{background:var(--teal)}.chart-legend .invested{background:#7c8ba0}.portfolio-chart svg{width:100%;height:auto;min-height:220px}.chart-grid-line{stroke:#223040;stroke-width:1}.chart-axis-text{fill:#7c8ba0;font:10px 'JetBrains Mono',monospace}.chart-line-price{fill:none;stroke:var(--amber);stroke-width:3}.chart-line-portfolio{fill:none;stroke:var(--teal);stroke-width:3}.chart-line-invested{fill:none;stroke:#7c8ba0;stroke-width:2;stroke-dasharray:7 5}
 @media(max-width:1200px){.scenario-controls .scenario-sliders{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.outcome-grid{grid-template-columns:repeat(2,1fr)}.scenario-controls .scenario-sliders{grid-template-columns:1fr}}
-@media(max-width:760px){.workspace-menu-popover{left:0;right:auto}.outcome-head{align-items:flex-start;flex-direction:column}}
+@media(max-width:760px){.workspace-menu-popover{left:0;right:auto}.outcome-head,.portfolio-chart-head{align-items:flex-start;flex-direction:column}.path-model-row{align-items:stretch;flex-direction:column}.path-model-row label{min-width:0;width:100%}}
 
 </style>
 </head>
@@ -442,6 +444,7 @@
   <section class="panel scenario-controls" aria-labelledby="scenarioControlTitle">
     <div class="scenario-control-head"><div><div class="eyebrow">Scenario Lab</div><h2 id="scenarioControlTitle">ปรับสมมติฐานเพื่อทดสอบแผน</h2></div><span>ข้อมูลส่วนนี้เป็นสถานการณ์จำลอง ไม่ใช่ราคาคาดการณ์</span></div>
     <div class="scenario-presets" role="group" aria-label="สถานการณ์สำเร็จรูป"><button type="button" data-preset="cycle">อิง Cycle</button><button type="button" data-preset="mild">ลงเล็กน้อย</button><button type="button" data-preset="correction">ตลาดปรับฐาน</button><button type="button" data-preset="crisis">วิกฤต</button><button type="button" data-preset="custom" class="active">กำหนดเอง</button></div>
+    <div class="path-model-row"><label>รูปแบบเส้นทางราคา <button type="button" class="metric-help" data-tip="เส้นตรงใช้ตรวจสูตร, 3 เดือนใช้ความผันผวนล่าสุดเมื่อข้อมูลพร้อม, Cycle ใช้เส้นโค้งตามรอบ และ Stress เพิ่มความผันผวนแบบกำหนดซ้ำได้" aria-label="คำอธิบายรูปแบบเส้นทางราคา">?</button><select id="riskPathModel"><option value="linear">เส้นตรง — Baseline</option><option value="recent3m">พฤติกรรม 3 เดือนล่าสุด</option><option value="cycle" selected>เส้นโค้งตาม Cycle</option><option value="stress">Stress แบบผันผวน</option></select></label><span id="pathModelNote"></span></div>
     <div class="scenario-sliders">
       <label><span>งบลงทุนต่อเดือน <button type="button" class="metric-help" data-tip="เลื่อนเพื่อทดลองเพิ่มหรือลดวงเงินรายเดือน ผลลัพธ์จะคำนวณใหม่ทันที" aria-label="คำอธิบาย slider งบต่อเดือน">?</button> <b id="riskBudgetValue">5,000 บาท</b></span><input type="range" id="riskBudgetSlider" min="0" max="50000" step="1000" value="5000"></label>
       <label><span>ซื้อสะสมนาน <button type="button" class="metric-help" data-tip="ระบบจะเติมเงินตามงบรายเดือนเฉพาะช่วงนี้ หลังจากนั้นหยุดซื้อแต่ยังติดตามพอร์ตจนจบระยะเวลาจำลอง" aria-label="คำอธิบายระยะเวลาซื้อสะสม">?</button> <b id="riskBuyMonthsValue">3 เดือน</b></span><input type="range" id="riskBuyMonthsSlider" min="1" max="24" step="1" value="3"><input type="hidden" id="riskBuyMonths" value="3"></label>
@@ -455,6 +458,7 @@
   <div class="panel dca-result" id="riskResult">
     <div class="risk-headline" id="riskHeadline"></div><div class="dca-grid" id="riskGrid"></div>
     <section class="outcome-timeline"><div class="outcome-head"><h3>Timeline to Outcome</h3><span id="outcomeSummary"></span></div><div class="outcome-grid" id="outcomeGrid"></div></section>
+    <section class="portfolio-chart"><div class="portfolio-chart-head"><div><h3>ทิศทางราคาและมูลค่าพอร์ต</h3><span>ราคาเริ่มต้น = 100 · พอร์ตและเงินลงทุนแสดงเป็น % ของงบแผน</span></div><div class="chart-legend"><i class="price"></i>ราคา <i class="portfolio"></i>พอร์ต <i class="invested"></i>เงินลงทุน</div></div><svg id="portfolioPathChart" viewBox="0 0 1000 300" role="img" aria-label="กราฟทิศทางราคา มูลค่าพอร์ต และเงินลงทุนสะสม"></svg></section>
     <div class="dca-analysis-row"><section class="scenario-box"><h3>เปรียบเทียบหลายสถานการณ์</h3><div class="scenario-grid" id="dcaScenarioGrid"><div class="scenario-placeholder">กำลังคำนวณสถานการณ์…</div></div></section><section class="safety-box" id="safetyBox"><div class="safety-head"><h3>คำแนะนำจาก Price-based Safety Monitor</h3><button type="button" id="safetyToggle">−</button></div><div id="safetyMonitor"></div></section></div>
     <div class="risk-path"><div class="risk-path-bar"><i id="riskPathFill"></i></div><div id="riskPathText"></div></div>
     <div class="risk-warnings" id="riskWarnings"></div><div class="dca-detail" id="riskDetail"></div>
@@ -893,7 +897,7 @@ checkTicker();
 
 (function(){
 let SIGNALS = [];
-const UPDATED_AT = "2026-08-03 10:42";
+const UPDATED_AT = "2026-08-03 10:58";
 let DIVIDENDS = {};
 const LABELS = {confirmed:'Confirmed',building:'Building Base',watch:'Watch',invalidated:'Invalidated',neutral:'Neutral',illiquid:'สภาพคล่องต่ำ'};
 
@@ -1116,11 +1120,30 @@ renderValidation();
   return{buyCompleteMonth,breakEvenMonth,firstProfitMonth:firstProfit?toMonth(firstProfit.period):null,sustainedProfitMonth:sustainedProfit?toMonth(sustainedProfit.period):null,returnToStartMonth:returned?toMonth(returned.period):null,monthsAfterBuyingToBreakEven:breakEvenMonth===null?null:Math.max(0,breakEvenMonth-buyCompleteMonth),experiencedLoss:firstLoss>=0};
  }
 
- function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear}){
+ function buildPricePath({model='linear',current,bottom,target,steps,downSteps,recentPrices=[]}){
+  const count=Math.max(1,Math.round(steps)),decline=Math.min(count,Math.max(1,Math.round(downSteps))),requested=model,history=Array.isArray(recentPrices)?recentPrices.map(Number).filter(value=>value>0):[],usableRecent=requested==='recent3m'&&history.length>=10,modelUsed=requested==='recent3m'&&!usableRecent?'linear':requested;
+  const smooth=t=>t*t*(3-2*t),sample=t=>{const index=t*(history.length-1),lo=Math.floor(index),hi=Math.min(history.length-1,lo+1),mix=index-lo;return history[lo]*(1-mix)+history[hi]*mix},historyStart=history[0]||1,historyEnd=history.at(-1)||historyStart;
+  const prices=[current];
+  for(let i=1;i<=count;i++){
+   const falling=i<=decline,t=falling?i/decline:(i-decline)/Math.max(1,count-decline),from=falling?current:bottom,to=falling?bottom:target,eased=modelUsed==='cycle'?smooth(t):t;
+   let price=from+(to-from)*eased;
+   if(modelUsed==='recent3m'){
+    const observed=sample(t)/historyStart,trend=1+(historyEnd/historyStart-1)*t,residual=Math.max(-.12,Math.min(.12,observed/Math.max(.0001,trend)-1));price*=1+residual*Math.sin(Math.PI*t);
+   }else if(modelUsed==='stress'){
+    const wiggle=(Math.sin(i*1.71)+Math.sin(i*.47))*.022;price*=1+wiggle*Math.sin(Math.PI*t);
+   }
+   prices.push(Math.max(.01,price));
+  }
+  prices[decline]=bottom;prices[count]=target;
+  return{prices,modelUsed,requestedModel:requested,sourcePoints:usableRecent?history.length:0,fallbackReason:requested==='recent3m'&&!usableRecent?'recent-data-unavailable':null};
+ }
+
+ function simulateScenario({current,bottom,target,steps,downSteps,initial,contribution,budget,annualDiv,periodsPerYear,model='linear',recentPrices=[]}){
+  const path=buildPricePath({model,current,bottom,target,steps,downSteps,recentPrices}).prices;
   let reserve=initial,allocated=initial,dividendCash=0,first=boardLotPurchase(reserve,current),shares=first.shares,invested=first.cost,worst=0;
   reserve-=first.cost;
   for(let i=1;i<=steps;i++){
-   const price=i<=downSteps?current+(bottom-current)*i/downSteps:bottom+(target-bottom)*(i-downSteps)/Math.max(1,steps-downSteps);
+   const price=path[i];
    if(annualDiv){
     dividendCash+=shares*(annualDiv/periodsPerYear);
     const reinvest=boardLotPurchase(dividendCash,price);
@@ -1135,18 +1158,18 @@ renderValidation();
    const pct=invested?(shares*price+dividendCash)/invested-1:0;
    worst=Math.min(worst,pct);
   }
-  const value=shares*target+dividendCash,pnl=value-invested;
+  const value=shares*path.at(-1)+dividendCash,pnl=value-invested;
   return{invested,value,pnl,pct:invested?pnl/invested*100:0,worst:worst*100};
  }
 
- return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,simulateScenario});
+ return Object.freeze({SCENARIO_PRESETS,periodsPerMonth,contributionPerPeriod,boardLotPurchase,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,buildPricePath,simulateScenario});
 });
 
 (function(){
 let DATA={};
-const {SCENARIO_PRESETS,boardLotPurchase,simulateScenario,contributionPerPeriod,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline}=window.DcaDomain;
+const {SCENARIO_PRESETS,boardLotPurchase,simulateScenario,contributionPerPeriod,assessMonthlyBudget,rankAffordableAlternatives,analyzeOutcomeTimeline,buildPricePath}=window.DcaDomain;
 const ticker=document.getElementById('riskTicker'),start=document.getElementById('dcaStart'),end=document.getElementById('dcaEnd'),dcaSourceStatus=document.getElementById('dcaSourceStatus');
-const PLAN_FIELDS=['riskInitial','riskBudget','riskFrequency','riskMonths','riskBuyMonths','riskDecline','riskDeclineMonths','riskUseCycleTime','riskTarget','riskTolerance','riskDividend'];
+const PLAN_FIELDS=['riskInitial','riskBudget','riskFrequency','riskMonths','riskBuyMonths','riskPathModel','riskDecline','riskDeclineMonths','riskUseCycleTime','riskTarget','riskTolerance','riskDividend'];
 const plans=new Map();let activePlan=null;
 const WORKSPACE_AUTO_KEY='dcaWorkspaceAutoV1',WORKSPACE_MAIN_KEY='dcaWorkspaceMainV1';
 Object.keys(DATA).sort().forEach(t=>{const o=document.createElement('option');o.value=t;document.getElementById('dcaTickerList').appendChild(o)});
@@ -1252,6 +1275,10 @@ function renderBudgetFit(){
  notice.className=`budget-fit-notice show ${level}`;notice.innerHTML=`<div>${message}</div>${suggestion}`;
  notice.querySelectorAll('.budget-alternative').forEach(button=>button.onclick=()=>{const next=button.dataset.symbol;saveActivePlan();if(!plans.has(next)){const base=capturePlan();plans.set(next,{values:{...base,riskTarget:null,riskDeclineMonths:null,riskUseCycleTime:true}})}activatePlan(next)});
 }
+function renderPortfolioChart(ledger,current,budget,months){
+ const svg=document.getElementById('portfolioPathChart'),rows=ledger.filter(row=>Number.isFinite(row.price)),maxPoints=320,stride=Math.max(1,Math.ceil(rows.length/maxPoints)),sampled=rows.filter((_,index)=>index%stride===0||index===rows.length-1),denominator=Math.max(1,budget),series={price:sampled.map(row=>row.price/current*100),portfolio:sampled.map(row=>(row.value+(row.reserve||0))/denominator*100),invested:sampled.map(row=>row.invested/denominator*100)},all=[...series.price,...series.portfolio,...series.invested],min=Math.min(...all,0),max=Math.max(...all,100),pad=Math.max(5,(max-min)*.08),low=min-pad,high=max+pad,x=index=>55+index/Math.max(1,sampled.length-1)*910,y=value=>265-(value-low)/Math.max(1,high-low)*225,line=values=>values.map((value,index)=>`${index?'L':'M'}${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' '),ticks=[0,.25,.5,.75,1];
+ svg.innerHTML=`${ticks.map(t=>{const value=low+(high-low)*(1-t),py=40+t*225;return`<line class="chart-grid-line" x1="55" y1="${py}" x2="965" y2="${py}"></line><text class="chart-axis-text" x="6" y="${py+4}">${fmt(value,0)}</text>`}).join('')}<path class="chart-line-invested" d="${line(series.invested)}"></path><path class="chart-line-price" d="${line(series.price)}"></path><path class="chart-line-portfolio" d="${line(series.portfolio)}"></path><text class="chart-axis-text" x="55" y="290">เริ่มต้น</text><text class="chart-axis-text" x="900" y="290">เดือน ${months}</text>`;
+}
 function setScenarioPresetActive(id){document.querySelectorAll('.scenario-presets button').forEach(button=>button.classList.toggle('active',button.dataset.preset===id))}
 function updateScenarioLabels(){
  const monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),buyMonths=Math.max(1,+document.getElementById('riskBuyMonths').value||1),drop=Math.max(0,+document.getElementById('riskDecline').value||0),downMonths=Math.max(1,+document.getElementById('riskDeclineMonths').value||1),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0);
@@ -1280,18 +1307,18 @@ function loadStock(savedValues=null){
 }
 function calculateRisk(){
  const x=stock();if(!x)return;
- const symbol=ticker.value.trim().toUpperCase(),current=x.m.at(-1)[1],risk=x.r||{},initial=Math.max(0,+document.getElementById('riskInitial').value||0),months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),buyMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskBuyMonths').value||1))),downMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskDeclineMonths').value||1))),frequency=document.getElementById('riskFrequency').value,periodsPerMonth=frequency==='daily'?21:frequency==='weekly'?4:1,periodsPerYear=periodsPerMonth*12,steps=months*periodsPerMonth,buySteps=buyMonths*periodsPerMonth,downSteps=downMonths*periodsPerMonth,frequencyLabel=frequency==='daily'?'ทุกวันทำการ':frequency==='weekly'?'ทุกสัปดาห์':'ทุกเดือน',drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),target=Math.max(.01,+document.getElementById('riskTarget').value||current),monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),budget=initial+monthlyBudget*buyMonths,contribution=updateContribution(),tolerance=Math.max(0,+document.getElementById('riskTolerance').value||0),withDiv=document.getElementById('riskDividend').checked,stress=current*(1-drop),annualDiv=withDiv?(risk.div12||0):0;
+ const symbol=ticker.value.trim().toUpperCase(),current=x.m.at(-1)[1],risk=x.r||{},initial=Math.max(0,+document.getElementById('riskInitial').value||0),months=Math.max(1,Math.round(+document.getElementById('riskMonths').value||1)),buyMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskBuyMonths').value||1))),downMonths=Math.min(months,Math.max(1,Math.round(+document.getElementById('riskDeclineMonths').value||1))),frequency=document.getElementById('riskFrequency').value,periodsPerMonth=frequency==='daily'?21:frequency==='weekly'?4:1,periodsPerYear=periodsPerMonth*12,steps=months*periodsPerMonth,buySteps=buyMonths*periodsPerMonth,downSteps=downMonths*periodsPerMonth,frequencyLabel=frequency==='daily'?'ทุกวันทำการ':frequency==='weekly'?'ทุกสัปดาห์':'ทุกเดือน',drop=Math.min(.95,Math.max(0,(+document.getElementById('riskDecline').value||0)/100)),target=Math.max(.01,+document.getElementById('riskTarget').value||current),monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),budget=initial+monthlyBudget*buyMonths,contribution=updateContribution(),tolerance=Math.max(0,+document.getElementById('riskTolerance').value||0),withDiv=document.getElementById('riskDividend').checked,stress=current*(1-drop),annualDiv=withDiv?(risk.div12||0):0,pathModel=document.getElementById('riskPathModel').value,pathResult=buildPricePath({model:pathModel,current,bottom:stress,target,steps,downSteps,recentPrices:x.p3||[]}),pricePath=pathResult.prices;
  let reserve=initial,allocated=initial,dividendCash=0,firstPurchase=boardLotPurchase(reserve,current),shares=firstPurchase.shares,invested=firstPurchase.cost,worstPct=0,troughValue=shares*current,usedPeriods=0,divTotal=0;reserve-=firstPurchase.cost;
  const ledger=[];
- if(initial>0)ledger.push({step:0,period:'เริ่มต้น',phase:firstPurchase.shares?'ราคาปัจจุบัน':'รอเงินครบ 100 หุ้น',price:current,buy:firstPurchase.cost,bought:firstPurchase.shares,shares,invested,value:shares*current,pnl:shares*current-invested,pct:0});
+ if(initial>0)ledger.push({step:0,period:'เริ่มต้น',phase:firstPurchase.shares?'ราคาปัจจุบัน':'รอเงินครบ 100 หุ้น',price:current,buy:firstPurchase.cost,bought:firstPurchase.shares,shares,invested,reserve,value:shares*current,pnl:shares*current-invested,pct:0});
  for(let i=1;i<=steps;i++){
-  const price=i<=downSteps?current+(stress-current)*i/downSteps:stress+(target-stress)*(i-downSteps)/Math.max(1,steps-downSteps);
+  const price=pricePath[i];
   if(annualDiv){const div=shares*(annualDiv/periodsPerYear);divTotal+=div;dividendCash+=div;const reinvest=boardLotPurchase(dividendCash,price);shares+=reinvest.shares;dividendCash-=reinvest.cost;}
   let buy=0,bought=0;
   if(contribution>0&&allocated+contribution<=budget+.01){reserve+=contribution;allocated+=contribution;}const purchase=boardLotPurchase(reserve,price);buy=purchase.cost;bought=purchase.shares;if(bought){shares+=bought;invested+=buy;reserve-=buy;usedPeriods++;}
   const value=shares*price+dividendCash,pnl=value-invested,pct=invested?pnl/invested*100:0;
   if(pct/100<worstPct)worstPct=pct/100;if(i===downSteps)troughValue=value;
-  ledger.push({step:i,period:`${i}/${steps}`,phase:i>buySteps?'หยุดซื้อและติดตามพอร์ต':bought?(i<=downSteps?'ราคาลง':'ราคาฟื้น'):'รอเงินครบ 100 หุ้น',price,buy,bought,shares,invested,value,pnl,pct});
+  ledger.push({step:i,period:`${i}/${steps}`,phase:i>buySteps?'หยุดซื้อและติดตามพอร์ต':bought?(i<=downSteps?'ราคาลง':'ราคาฟื้น'):'รอเงินครบ 100 หุ้น',price,buy,bought,shares,invested,reserve,value,pnl,pct});
  }
  const endValue=shares*target+dividendCash,pnl=endValue-invested,avg=shares?invested/shares:0,downside=avg?stress/avg-1:0,upside=avg?target/avg-1:0,desired=budget,overRisk=Math.abs(worstPct*100)>tolerance,liquid=(risk.medianValue30||0)>=1000000;
  const stats=[['ราคาปัจจุบัน',fmt(current)+' บาท'],['ราคาวิกฤต',fmt(stress)+' บาท'],['เงินที่ใช้จริง',fmt(invested)+' บาท'],['ต้นทุนเฉลี่ย',fmt(avg)+' บาท'],['มูลค่าที่จุดต่ำ',fmt(troughValue)+' บาท'],['ขาดทุนสูงสุด',`${fmt(worstPct*100)}%`],['Downside จากต้นทุน',`${fmt(downside*100)}%`],['Upside ถึงเป้าหมาย',`${upside>=0?'+':''}${fmt(upside*100)}%`],['มูลค่าเมื่อถึงเป้า',fmt(endValue)+' บาท'],['กำไร/ขาดทุนเป้า',`${pnl>=0?'+':''}${fmt(pnl)} บาท`],['เงินที่แผนต้องการ',fmt(desired)+' บาท'],['DCA ได้จริง',`${usedPeriods}/${buySteps} งวด`]];
@@ -1300,7 +1327,8 @@ function calculateRisk(){
  const outcome=analyzeOutcomeTimeline({points:ledger.map(row=>({period:row.step,price:row.price,invested:row.invested,value:row.value})),periodsPerMonth,buyPeriods:buySteps,startPrice:current,declineEndPeriod:downSteps}),monthText=value=>value===null?`ยังไม่เกิดใน ${months} เดือน`:value===0?'ทันที':`เดือนที่ ${value}`;
  document.getElementById('outcomeGrid').innerHTML=[['ซื้อสะสมครบ',monthText(outcome.buyCompleteMonth),''],['เท่าทุนครั้งแรก',monthText(outcome.breakEvenMonth),outcome.breakEvenMonth===null?'wait':'positive'],['เริ่มมีกำไร',monthText(outcome.firstProfitMonth),outcome.firstProfitMonth===null?'wait':'positive'],['กำไรต่อเนื่อง',monthText(outcome.sustainedProfitMonth),outcome.sustainedProfitMonth===null?'wait':'positive'],['กลับถึงราคาเริ่มต้น',monthText(outcome.returnToStartMonth),outcome.returnToStartMonth===null?'wait':'positive']].map(item=>`<div class="outcome-item ${item[2]}"><small>${item[0]}</small><b>${item[1]}</b></div>`).join('');
  document.getElementById('outcomeSummary').textContent=outcome.breakEvenMonth===null?`ยังไม่เท่าทุนใน Scenario นี้ · ไม่รวมค่าธรรมเนียม`:outcome.monthsAfterBuyingToBreakEven===0?`เท่าทุนก่อนหรือเมื่อซื้อครบ · ไม่รวมค่าธรรมเนียม`:`ใช้เวลา ${outcome.monthsAfterBuyingToBreakEven} เดือนหลังหยุดซื้อจนเท่าทุน · ไม่รวมค่าธรรมเนียม`;
- const common={current,steps,initial,contribution,budget,annualDiv,periodsPerYear},scenarios=[
+ renderPortfolioChart(ledger,current,budget,months);document.getElementById('pathModelNote').textContent=pathResult.fallbackReason?'ข้อมูลรายวัน 3 เดือนยังไม่มีใน Cloud ชุดนี้ จึงใช้เส้นตรงแทน':pathResult.modelUsed==='recent3m'?`ใช้ราคาปิดย้อนหลัง ${pathResult.sourcePoints} วัน ปรับขนาดตาม Scenario`:pathResult.modelUsed==='cycle'?'ใช้เส้นโค้ง Smooth Cycle ตามระยะขาลงและการฟื้นตัว':pathResult.modelUsed==='stress'?'ใช้เส้นทางผันผวนแบบ deterministic เพื่อให้ตรวจซ้ำได้':'ใช้การลดและฟื้นแบบคงที่สำหรับตรวจสูตร';
+ const common={current,steps,initial,contribution,budget,annualDiv,periodsPerYear,model:pathModel,recentPrices:x.p3||[]},scenarios=[
   ['ฟื้นเร็ว','ลงน้อยกว่าและใช้เวลาครึ่งหนึ่ง',current*(1-drop*.75),target,Math.max(1,Math.round(downSteps*.5))],
   ['ตาม Cycle','ค่ากลางของแผนปัจจุบัน',stress,target,downSteps],
   ['ขาลงยาว','ลงลึกขึ้นและใช้เวลานาน 1.5 เท่า',current*(1-Math.min(.95,drop*1.25)),target,Math.min(steps,Math.max(1,Math.round(downSteps*1.5)))],
@@ -1340,6 +1368,7 @@ document.getElementById('riskFrequency').addEventListener('change',()=>{const f=
 document.getElementById('riskInitial').addEventListener('input',()=>{updateContribution();calculateRisk();renderPlanTabs()});document.getElementById('riskMonths').addEventListener('input',()=>{syncScenarioControls();calculateRisk();renderPlanTabs()});
 document.getElementById('riskBudget').addEventListener('input',()=>{const value=Math.max(0,+document.getElementById('riskBudget').value||0),slider=document.getElementById('riskBudgetSlider');slider.max=Math.max(50000,Math.ceil(value/10000)*10000);slider.value=value;setScenarioPresetActive('custom');updateContribution();updateScenarioLabels();calculateRisk();renderPlanTabs()});
 document.getElementById('riskBudgetSlider').addEventListener('input',event=>{document.getElementById('riskBudget').value=event.target.value;setScenarioPresetActive('custom');updateContribution();updateScenarioLabels();calculateRisk();renderPlanTabs()});
+document.getElementById('riskPathModel').addEventListener('change',()=>{setScenarioPresetActive('custom');calculateRisk();renderPlanTabs()});
 document.getElementById('riskBuyMonthsSlider').addEventListener('input',event=>{document.getElementById('riskBuyMonths').value=event.target.value;setScenarioPresetActive('custom');updateScenarioLabels();calculateRisk();renderPlanTabs()});
 document.getElementById('riskUseCycleTime').addEventListener('change',()=>{applyCycleTime();syncScenarioControls();calculateRisk();});document.getElementById('riskDeclineMonths').addEventListener('input',()=>{document.getElementById('riskUseCycleTime').checked=false;document.getElementById('riskDeclineMonthsSlider').value=Math.min(36,Math.max(1,+document.getElementById('riskDeclineMonths').value||1));setScenarioPresetActive('custom');updateScenarioLabels();calculateRisk();});
 document.querySelectorAll('.scenario-presets button[data-preset]').forEach(button=>button.onclick=()=>{if(button.dataset.preset==='custom'){setScenarioPresetActive('custom');return}applyScenarioPreset(button.dataset.preset)});

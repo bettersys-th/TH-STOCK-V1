@@ -158,6 +158,7 @@ def build_dca_compact(prices, splits, dividends, tickers, cycles=None):
         trailing_dividend = sum(amount for month, amount in div_by_month.items() if month > cutoff_month)
         out[ticker] = {
             "m": [[f"{month[:4]}-{month[4:]}", price] for month, price in monthly_items],
+            "p3": [round(price, 4) for price in close[-63:]],
             "dv": [[f"{month[:4]}-{month[4:]}", round(amount, 5)] for month, amount in sorted(div_by_month.items()) if amount and month >= first_month],
             "r": {"peak": round(next_peak, 3), "trough": round(next_trough, 3),
                   "peakProjected": not bool(higher_peaks), "troughProjected": not bool(lower_troughs),

@@ -60,6 +60,20 @@ class DcaDomainBaselineTests(unittest.TestCase):
         self.assertEqual(result["returnToStartMonth"], 3)
         self.assertEqual(result["monthsAfterBuyingToBreakEven"], 1)
 
+    def test_price_path_models_keep_required_endpoints(self):
+        cycle = run_domain("d.buildPricePath({model:'cycle',current:100,bottom:70,target:110,steps:12,downSteps:4})")
+        recent = run_domain("d.buildPricePath({model:'recent3m',current:100,bottom:70,target:100,steps:12,downSteps:4,recentPrices:[10,10.2,9.8,10.4,10,9.7,10.1,10.5,10.2,10.6]})")
+        self.assertEqual(cycle["prices"][0], 100)
+        self.assertEqual(cycle["prices"][4], 70)
+        self.assertEqual(cycle["prices"][-1], 110)
+        self.assertEqual(recent["modelUsed"], "recent3m")
+        self.assertEqual(recent["sourcePoints"], 10)
+
+    def test_recent_path_falls_back_when_cloud_payload_is_old(self):
+        result = run_domain("d.buildPricePath({model:'recent3m',current:100,bottom:80,target:100,steps:6,downSteps:3,recentPrices:[]})")
+        self.assertEqual(result["modelUsed"], "linear")
+        self.assertEqual(result["fallbackReason"], "recent-data-unavailable")
+
     def test_presets_keep_market_assumptions_separate(self):
         presets = run_domain("d.SCENARIO_PRESETS")
         self.assertTrue(presets["cycle"]["useCycleReference"])

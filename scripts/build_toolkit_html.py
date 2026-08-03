@@ -37,6 +37,7 @@ def build(data_dir, output_path):
     swing_wrap = _read("swing_wrap.html")
     swing_script = _read("swing_script.js")
     dca_style = _read("dca_style.css")
+    dca_v2_style = _read("dca_v2_style.css")
     dca_wrap = _read("dca_wrap.html")
     dca_domain = _read("dca_domain.js")
     dca_script = _read("dca_script.js")
@@ -69,6 +70,7 @@ def build(data_dir, output_path):
 {scan_style}
 {swing_style}
 {dca_style}
+{dca_v2_style}
 </style>
 </head>
 <body>

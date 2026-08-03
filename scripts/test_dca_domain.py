@@ -37,6 +37,20 @@ class DcaDomainBaselineTests(unittest.TestCase):
         self.assertAlmostEqual(result["pct"], 1100 / 4900 * 100)
         self.assertLess(result["worst"], 0)
 
+    def test_monthly_budget_fit_uses_one_hundred_share_lot(self):
+        fit = run_domain("d.assessMonthlyBudget({monthlyBudget:5000,currentPrice:40,initial:0})")
+        wait = run_domain("d.assessMonthlyBudget({monthlyBudget:3500,currentPrice:120,initial:10000})")
+        self.assertEqual(fit["status"], "fit")
+        self.assertEqual(fit["lotCost"], 4000)
+        self.assertEqual(wait["status"], "accumulate")
+        self.assertEqual(wait["monthsUntilFirstLot"], 1)
+        self.assertEqual(wait["monthsPerLot"], 4)
+
+    def test_affordable_alternatives_are_ranked_by_price_performance(self):
+        expression = "d.rankAffordableAlternatives({stocks:{A:{m:[['2026-01',100]],r:{return60:5,maxDrawdown:-20,medianValue30:2e6}},B:{m:[['2026-01',30]],r:{return60:6,maxDrawdown:-22,medianValue30:2e6}},C:{m:[['2026-01',20]],r:{return60:-30,maxDrawdown:-60,medianValue30:2e6}}},symbol:'A',monthlyBudget:3500})"
+        result = run_domain(expression)
+        self.assertEqual([item["symbol"] for item in result], ["B", "C"])
+
     def test_presets_keep_market_assumptions_separate(self):
         presets = run_domain("d.SCENARIO_PRESETS")
         self.assertTrue(presets["cycle"]["useCycleReference"])

@@ -1,6 +1,6 @@
 (function(){
 let DATA=__DCA_JSON__;
-const {SCENARIO_PRESETS,boardLotPurchase,simulateScenario,contributionPerPeriod}=window.DcaDomain;
+const {SCENARIO_PRESETS,boardLotPurchase,simulateScenario,contributionPerPeriod,assessMonthlyBudget,rankAffordableAlternatives}=window.DcaDomain;
 const ticker=document.getElementById('riskTicker'),start=document.getElementById('dcaStart'),end=document.getElementById('dcaEnd'),dcaSourceStatus=document.getElementById('dcaSourceStatus');
 const PLAN_FIELDS=['riskInitial','riskBudget','riskFrequency','riskMonths','riskDecline','riskDeclineMonths','riskUseCycleTime','riskTarget','riskTolerance','riskDividend'];
 const plans=new Map();let activePlan=null;
@@ -97,6 +97,17 @@ function updateContribution(){
  const frequency=document.getElementById('riskFrequency').value,monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),contribution=contributionPerPeriod({monthlyBudget,frequency});
  document.getElementById('riskMonthly').value=contribution.toFixed(2);return contribution;
 }
+function renderBudgetFit(){
+ const x=stock(),notice=document.getElementById('budgetFitNotice');if(!x){notice.className='budget-fit-notice';notice.innerHTML='';return;}
+ const symbol=ticker.value.trim().toUpperCase(),current=Number(x.m.at(-1)[1]),monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),initial=Math.max(0,+document.getElementById('riskInitial').value||0),fit=assessMonthlyBudget({monthlyBudget,currentPrice:current,initial}),alternatives=rankAffordableAlternatives({stocks:DATA,symbol,monthlyBudget,limit:5}),equal=document.getElementById('dcaAllocationMode').value==='equal';
+ let level='fit',message=`✓ งบ ${fmt(monthlyBudget,0)} บาท/เดือน ซื้อ ${symbol} ขั้นต่ำ 100 หุ้น (${fmt(fit.lotCost,0)} บาท) ได้อย่างน้อยเดือนละ 1 lot`;
+ if(fit.status==='accumulate'){level='watch';message=`⚠ งบ ${fmt(monthlyBudget,0)} บาท/เดือนยังไม่พอซื้อ ${symbol} 100 หุ้น ซึ่งต้องใช้ประมาณ ${fmt(fit.lotCost,0)} บาท ระบบจะสะสมเงินประมาณ ${fit.monthsPerLot} เดือนต่อ 1 lot${fit.monthsUntilFirstLot===0?' แต่เงินก้อนแรกซื้อ lot แรกได้':fit.monthsUntilFirstLot?` และคาดว่ารอ ${fit.monthsUntilFirstLot} เดือนสำหรับ lot แรก`:''}`;}
+ if(fit.status==='insufficient'){level='danger';message=`⚠ ยังไม่มีงบรายเดือนสำหรับสะสมซื้อ ${symbol} ซึ่งมีมูลค่า 100 หุ้นประมาณ ${fmt(fit.lotCost,0)} บาท`;}
+ if(equal&&fit.status!=='fit')message+=` · การแบ่งงบเท่ากันทำให้งบของหุ้นนี้ต่ำเกิน Board Lot ควรเพิ่มงบรวม ลดจำนวนหุ้น หรือกำหนดงบแยกรายหุ้น`;
+ const suggestion=fit.status==='fit'?'':alternatives.length?`<div>หุ้นที่ราคาเข้ากับงบและมี Momentum 60 วัน/Max Drawdown ใกล้เคียงกว่า:<div class="budget-alternatives">${alternatives.map(item=>`<button type="button" class="budget-alternative" data-symbol="${item.symbol}">${item.symbol} · ${fmt(item.current)} บ.</button>`).join('')}</div></div>`:'<div>ยังไม่พบหุ้นทางเลือกที่ผ่านเงื่อนไขราคาและมีข้อมูลเปรียบเทียบเพียงพอ</div>';
+ notice.className=`budget-fit-notice show ${level}`;notice.innerHTML=`<div>${message}</div>${suggestion}`;
+ notice.querySelectorAll('.budget-alternative').forEach(button=>button.onclick=()=>{const next=button.dataset.symbol;saveActivePlan();if(!plans.has(next)){const base=capturePlan();plans.set(next,{values:{...base,riskTarget:null,riskDeclineMonths:null,riskUseCycleTime:true}})}activatePlan(next)});
+}
 function setScenarioPresetActive(id){document.querySelectorAll('.scenario-presets button').forEach(button=>button.classList.toggle('active',button.dataset.preset===id))}
 function updateScenarioLabels(){
  const monthlyBudget=Math.max(0,+document.getElementById('riskBudget').value||0),drop=Math.max(0,+document.getElementById('riskDecline').value||0),downMonths=Math.max(1,+document.getElementById('riskDeclineMonths').value||1),recovery=Math.max(0,+document.getElementById('riskRecoverySlider').value||0);
@@ -163,6 +174,7 @@ function calculateRisk(){
  const cycleTimeText=document.getElementById('riskUseCycleTime').checked&&risk.downDays?`ใช้ระยะขาลงเฉลี่ยจาก Cycle ${risk.downDays} วัน (ประมาณ ${downMonths} เดือน)`:`กำหนดระยะขาลงเอง ${downMonths} เดือน`;
  document.getElementById('riskDetail').textContent=`${symbol}: งบ ${fmt(monthlyBudget)} บาท/เดือน · DCA ${frequencyLabel} งวดละ ${fmt(contribution)} บาท · ${cycleTimeText} · สมมติราคาลง ${fmt(drop*100)}% แล้วฟื้นไป ${fmt(target)} บาทภายในเดือนที่ ${months} · ${peakLabel} ${fmt(risk.peak)} บาท · ${troughLabel} ${fmt(risk.trough)} บาท · ปันผลจำลองสะสม ${fmt(divTotal)} บาท`;
  document.getElementById('riskResult').classList.add('show');
+ renderBudgetFit();
  if(activePlan&&plans.has(activePlan))plans.get(activePlan).values=capturePlan();
 }
 function xirr(flows){let lo=-.99,hi=10;const npv=r=>flows.reduce((s,f)=>s+f.amount/Math.pow(1+r,f.month/12),0);if(npv(lo)*npv(hi)>0)return null;for(let i=0;i<100;i++){const mid=(lo+hi)/2;if(npv(lo)*npv(mid)<=0)hi=mid;else lo=mid;}return (lo+hi)/2;}
@@ -192,7 +204,7 @@ document.getElementById('dcaBatchCreate').addEventListener('click',()=>{const ra
 document.getElementById('stockMenuOpen').onclick=()=>openStockMenu('dca');document.getElementById('stockMenuClose').onclick=closeStockMenu;document.getElementById('stockMenuBackdrop').onclick=closeStockMenu;document.getElementById('stockMenuSearch').addEventListener('input',e=>renderStockMenu(e.target.value));document.getElementById('safetyToggle').onclick=()=>{const box=document.getElementById('safetyBox'),collapsed=box.classList.toggle('collapsed');document.getElementById('safetyToggle').textContent=collapsed?'+':'−'};initSafetyDrag();
 document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStockMenu()});
 document.getElementById('dcaAllocationMode').addEventListener('change',applyAllocation);document.getElementById('dcaPortfolioBudget').addEventListener('input',()=>{if(document.getElementById('dcaAllocationMode').value==='equal')applyAllocation()});
-document.getElementById('dcaSaveWorkspace').onclick=()=>{try{localStorage.setItem(WORKSPACE_MAIN_KEY,JSON.stringify(workspaceData()));document.getElementById('dcaSaveStatus').textContent='บันทึกแผนหลักแล้ว'}catch(e){document.getElementById('dcaSaveStatus').textContent='บันทึกไม่สำเร็จ'}};
-document.getElementById('dcaLoadWorkspace').onclick=()=>{try{const data=JSON.parse(localStorage.getItem(WORKSPACE_MAIN_KEY));document.getElementById('dcaSaveStatus').textContent=restoreWorkspace(data)?'โหลดแผนหลักแล้ว':'ยังไม่มีแผนหลักที่บันทึก'}catch(e){document.getElementById('dcaSaveStatus').textContent='ข้อมูลแผนหลักเสียหาย'}};
+document.getElementById('dcaSaveWorkspace').onclick=()=>{try{localStorage.setItem(WORKSPACE_MAIN_KEY,JSON.stringify(workspaceData()));document.getElementById('dcaSaveStatus').textContent='บันทึกแผนหลักแล้ว';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='บันทึกไม่สำเร็จ'}};
+document.getElementById('dcaLoadWorkspace').onclick=()=>{try{const data=JSON.parse(localStorage.getItem(WORKSPACE_MAIN_KEY));document.getElementById('dcaSaveStatus').textContent=restoreWorkspace(data)?'โหลดแผนหลักแล้ว':'ยังไม่มีแผนหลักที่บันทึก';document.querySelector('.workspace-menu').open=false}catch(e){document.getElementById('dcaSaveStatus').textContent='ข้อมูลแผนหลักเสียหาย'}};
 let restored=false;try{restored=restoreWorkspace(JSON.parse(localStorage.getItem(WORKSPACE_AUTO_KEY)))}catch(e){}if(!restored){plans.set(ticker.value.trim().toUpperCase(),{values:null});activatePlan(ticker.value.trim().toUpperCase(),false)}updateAllocationUI();renderStockMenu();
 })();
